@@ -5,21 +5,23 @@ This document contains user stories derived from our personas and research. Each
 
 ---
 
-## User Story 1: [Short Title]
+## User Story 1: Playing Slots to "Beat" the Casino
 
-**As a** [type of user]  
-**I want** [feature/goal]  
-**So that** [benefit/value]
+**As an** Advantage Player  
+**I want** to maximize my wins while minimizing losses  
+**So that** I can make the most money possible
 
 ### Acceptance Criteria
-- [ ] Condition 1 (what must happen for this to work)
-- [ ] Condition 2
-- [ ] Condition 3
+- [ ] knowing the odds of winning
+- [ ] play with high odds of winning
+- [ ] play with high payout
 
 ### Notes (optional)
-- UX considerations
-- Edge cases
-- Design intent
+-[I went down the 'Advantage Player' slot rabbit hole so you don't have to. Here's what I discovered: : r/gambling](https://www.reddit.com/r/gambling/comments/19dqir8/i_went_down_the_advantage_player_slot_rabbit_hole/)
+- Slot Machines are false advertising to lure people to play more
+- People get played by the machine, and therefore by the Casino
+- Targets people who are addicted to slot machines
+- We should try to get people to believe that they are winning more than they actually are (within legal limits)
 
 ---
 
@@ -38,15 +40,56 @@ This document contains user stories derived from our personas and research. Each
 
 ## User Story 3: [Short Title]
 
-(Repeat same format)
+**As a** [type of user]  
+**I want** [feature/goal]  
+**So that** [benefit/value]
+
+### Acceptance Criteria
+- [ ] Condition 1 (what must happen for this to work)
+- [ ] Condition 2
+- [ ] Condition 3
+
+### Notes (optional)
+- UX considerations
+- Edge cases
+- Design intent
+
 
 ---
 
 ## User Story 4: [Short Title]
+**As a** [type of user]  
+**I want** [feature/goal]  
+**So that** [benefit/value]
+
+### Acceptance Criteria
+- [ ] Condition 1 (what must happen for this to work)
+- [ ] Condition 2
+- [ ] Condition 3
+
+### Notes (optional)
+- UX considerations
+- Edge cases
+- Design intent
+
 
 ---
 
 ## User Story 5: [Short Title]
+**As a** [type of user]  
+**I want** [feature/goal]  
+**So that** [benefit/value]
+
+### Acceptance Criteria
+- [ ] Condition 1 (what must happen for this to work)
+- [ ] Condition 2
+- [ ] Condition 3
+
+### Notes (optional)
+- UX considerations
+- Edge cases
+- Design intent
+
 
 ---
 
