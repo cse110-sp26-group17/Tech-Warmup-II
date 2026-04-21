@@ -1,30 +1,41 @@
-# Persona: [Name]
+# Persona: Jordan Kim
+
+Created by: Cathlyn Goldberg
 
 ## Overview
-- Name:
-- Age (optional):
-- Type of user: (casual player / competitive player / etc.)
+- Name: Jordan Kim
+- Age: 22
+- Type of user: Strategic / risk-oriented player
 
 ---
 
 ## Goals
-- Goal 1
-- Goal 2
+- Have more control over how the game is played
+- Experiment with different betting strategies
+- Understand patterns and outcomes over time
+- Get a more “skill-like” feeling from the game
 
 ---
 
 ## Behaviors
-- When/why they use the app
-- How they interact with similar games
+- Plays games more intentionally, not just for passing time
+- Pays attention to outcomes and adjusts behavior based on results
+- Likes tracking progress (wins, losses, balance changes)
+- May spend longer sessions analyzing results and testing bets
 
 ---
 
 ## Frustrations
-- What frustrates them
-- What they dislike in similar apps
+- Games that feel completely random with no sense of control
+- Lack of transparency in how outcomes are determined
+- No meaningful way to adjust gameplay strategy
+- Repetitive or unchanging game experience
 
 ---
 
 ## Needs from the Game
-- What they expect
-- What would make the experience good for them
+- Ability to adjust bet size and risk level
+- Clear display of balance and outcomes over time
+- Consistent and understandable game rules
+- Feedback that helps interpret results (win/loss patterns)
+- Optional informational elements (e.g., payout rules or odds explanation)

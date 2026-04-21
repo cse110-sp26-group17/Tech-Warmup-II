@@ -57,7 +57,7 @@ This document contains user stories derived from our personas and research. Each
 - [ ] Bonus stage as another form of rewarding
 - [ ] More tense moments (e.g., fake outs for losses but actually winning)
 
-### Notes (optional)
+### Notes
 - Russian Roulette style gameplay where you can set higher risk for higher rewards rather than an increased chance of rewards
 - https://community.gamcare.org.uk/forum/overcoming-problem-gambling/for-people-with-slot-machine-addiction/
 - First win → wanting more wins, creating a cycle
@@ -78,7 +78,7 @@ This document contains user stories derived from our personas and research. Each
 - [ ] Noise maker for big wins
 - [ ] Congratulatory messages
 
-### Notes (optional)
+### Notes
 - https://wonderlandcasino.com/2025/06/30/incredible-stories-of-big-slot-machine-wins/
 - Hearing stories about other people’s wins gives hope
 - Lots of hyping up to keep people going (“this vibrant community of dreamers”, “the thrill of standing shoulder to shoulder with fellow slot enthusiasts, united by the shared hope of hitting it big”)
@@ -86,20 +86,22 @@ This document contains user stories derived from our personas and research. Each
 
 ---
 
-## User Story 5: [Short Title]
-**As a** [type of user]  
-**I want** [feature/goal]  
-**So that** [benefit/value]
+## User Story 5: Engaging Gameplay Feedback
+**As a** player who enjoys interactive and responsive games
+**I want** visual and audio feedback during gameplay
+**So that** the experience feels engaging and satisfying
 
 ### Acceptance Criteria
-- [ ] Condition 1 (what must happen for this to work)
-- [ ] Condition 2
-- [ ] Condition 3
+- [ ] Animation of slots spinning
+- [ ] Win results are clearly shown
+- [ ] Sound effects for spin and win events
+- [ ] Visual feedback highlights outcomes
 
-### Notes (optional)
-- UX considerations
-- Edge cases
-- Design intent
+### Notes
+- https://uxmag.com/articles/designing-interface-animations-the-book-excerpt
+- Animations should not delay gameplay and be smooth
+- Keep effects consistent and not overwhelming
+- Satisfying game sounds
 
 
 ---
@@ -107,5 +109,6 @@ This document contains user stories derived from our personas and research. Each
 ## Summary
 These user stories guide the development of:
 - Core gameplay mechanics
-- User interface design
+- User experience and feedback systems
+- Player control and decision-making features
 - Engagement features (animations, feedback, sound)
