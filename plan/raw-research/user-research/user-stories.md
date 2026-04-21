@@ -67,21 +67,22 @@ This document contains user stories derived from our personas and research. Each
 
 ---
 
-## User Story 4: [Short Title]
-**As a** [type of user]  
-**I want** [feature/goal]  
-**So that** [benefit/value]
+## User Story 4: Boasting/Shareability
+**As a** player who like to come together with other people 
+**I want** to be able to share my results 
+**So that** I can memorialize my wins, show off, get attention, and feel part of a community
 
 ### Acceptance Criteria
-- [ ] Condition 1 (what must happen for this to work)
-- [ ] Condition 2
-- [ ] Condition 3
+- [ ] "Share results" feature
+- [ ] Linking to social media
+- [ ] Noise maker for big wins
+- [ ] Congratulatory messages
 
 ### Notes (optional)
-- UX considerations
-- Edge cases
-- Design intent
-
+- https://wonderlandcasino.com/2025/06/30/incredible-stories-of-big-slot-machine-wins/
+- Hearing stories about other people’s wins gives hope
+- Lots of hyping up to keep people going (“this vibrant community of dreamers”, “the thrill of standing shoulder to shoulder with fellow slot enthusiasts, united by the shared hope of hitting it big”)
+- A lot of push for community and bringing people together
 
 ---
 
