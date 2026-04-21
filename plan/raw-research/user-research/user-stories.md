@@ -25,16 +25,17 @@ This document contains user stories derived from our personas and research. Each
 
 ---
 
-## User Story 2: [Short Title]
+## User Story 2: Error Handling
 
-**As a** [type of user]  
-**I want** [feature/goal]  
-**So that** [benefit/value]
+**As a** player  
+**I want** clear messages when something goes wrong
+**So that** I understand what to do next
 
 ### Acceptance Criteria
-- [ ] ...
-- [ ] ...
-- [ ] ...
+- [ ] User is notified if balance is too low
+- [ ] Invalid actions are prevented
+- [ ] Messages are clear and visible
+- [ ] Option to contact support / FAQ
 
 ---
 

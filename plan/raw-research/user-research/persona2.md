@@ -3,7 +3,7 @@
 Created by: Cathlyn Goldberg
 
 ## Overview
-- Name: 
+- Name: Ryan Higa
 - Age (optional): 20
 - Type of user: (casual player )
 
