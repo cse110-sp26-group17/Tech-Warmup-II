@@ -16,8 +16,8 @@
 - Story 4: Clear Feedback on Outcomes
 - Story 5: Single-Button Spin Mechanic
 - Story 7: Visual and Audio Feedback
-- Story 11: Fast Gameplay and Mobile Optimization
-- Story 14: Educational Tutorial
+- Story 11: Fast Gameplay (for mobiles too)
+- Story 14: Game Tutorial
 
 **Both Personas:**
 - Story 6: Error Handling
@@ -285,7 +285,7 @@
 - [ ] Game is optimized for mobile screen sizes (vertical and horizontal)
 - [ ] Load time from start to playable state is under 2 seconds
 - [ ] No janky animations or stuttering during spin
-- [ ] Buttons are mobile-friendly (large enough to tap, spacing prevents accidental touches)
+- [ ] Buttons are mobile friendly 
 - [ ] Works offline or with poor connectivity (or clearly indicates need for connection)
 
 ### Notes
@@ -343,7 +343,7 @@
 
 ---
 
-## USER STORY 14: Educational "How to Play" Tutorial
+## USER STORY 14: Game Tutorial
 
 **As a** new player like Ryan who doesn't want to read instructions
 **I want** a quick, optional tutorial that shows me how to play
