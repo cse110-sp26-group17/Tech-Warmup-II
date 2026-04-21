@@ -19,7 +19,7 @@
 
 ---
 
-## Pain Points
+## Frustrations
 - What frustrates them
 - What they dislike in similar apps
 

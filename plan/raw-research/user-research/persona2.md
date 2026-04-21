@@ -1,30 +1,38 @@
 # Persona: [Name]
 
+Created by: Cathlyn Goldberg
+
 ## Overview
-- Name:
-- Age (optional):
-- Type of user: (casual player / competitive player / etc.)
+- Name: 
+- Age (optional): 20
+- Type of user: (casual player )
 
 ---
 
 ## Goals
-- Goal 1
-- Goal 2
+- Simple, easy-to-understand gameplay
+- Quick entertainment
+- Visually engaging
 
 ---
 
 ## Behaviors
-- When/why they use the app
-- How they interact with similar games
+- Plays games on phone/laptop during/between classes to kill time
+- Prefers games that don't require instructions (intuitive)
+- Would stop if it was buggy/slow/confusing
 
 ---
 
-## Pain Points
-- What frustrates them
-- What they dislike in similar apps
+## Frustrations
+- Too many buttons
+- Complicated UI
+- Slow/boring
+- Lack of feedback (unclear if they won/lost)
 
 ---
 
 ## Needs from the Game
-- What they expect
-- What would make the experience good for them
+- Clear visible and audible feedback
+- An obvious interaction point - only one button that spins the slot machine
+- Easily readable balance and results (net gain) sections
+- Fast gameplay
