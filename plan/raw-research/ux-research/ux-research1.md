@@ -174,3 +174,115 @@ These research findings guide the design and development of:
 - User interface design (HUD layout, controls, win feedback tiers)
 - Engagement features (animations, audio layers, bonus mechanics, psychological patterns)
 - Theming and narrative coherence across all visual and audio elements
+
+---
+
+## Finding 8: UX Flow Blueprint for Our Implementation
+
+### Recommended Core Flow
+To keep our version clean and user-friendly, the main flow should be:
+```
+Launch App -> Theme Intro -> Main HUD -> Set Bet -> Spin -> Result Feedback -> Next Action
+```
+Where the next action is one of:
+- Spin again
+- Adjust bet
+- Open paytable/settings
+- Trigger bonus flow (if eligible)
+
+### Screen Priority Order
+1. Reel area (primary focus)
+2. Spin action (primary control)
+3. Balance/Bet/Win values (financial state)
+4. Secondary menus (paytable/settings/lobby)
+
+### Notes
+- The user should never need to guess what state the game is in (idle, spinning, payout, bonus)
+- The next possible action should always be visible and obvious
+- Any transition longer than ~1.5 seconds should contain visible progress or animation cues
+
+---
+
+## Finding 9: Accessibility & Inclusive UX Considerations
+
+### Visual Accessibility
+- Use strong contrast between text and background for all numeric displays
+- Avoid color-only communication for win states (include icon/text/animation support)
+- Keep critical labels readable on small phones (balance, bet, win amount)
+
+### Interaction Accessibility
+- Primary controls should be reachable one-handed in portrait mode
+- Hit targets should be large enough to prevent accidental taps during rapid play
+- Motion-heavy effects should be reducible with a "reduced animation" toggle
+
+### Audio Accessibility
+- Separate controls for music, effects, and haptics (not just one master toggle)
+- Win-state feedback should still be understandable when sound is fully off
+
+### Notes
+- Accessibility is not a post-processing pass; it should be built into the first UI draft
+- Better accessibility directly improves retention across all user types, not only edge cases
+
+---
+
+## Finding 10: UX Requirements We Can Convert into Build Tasks
+
+### Must-Have UX Requirements
+| Requirement | Why It Matters |
+|---|---|
+| Persistent HUD (balance, bet, last win) | Prevents confusion and supports fast repeat play |
+| Clear spin state transitions | Avoids accidental double inputs and unclear outcomes |
+| Distinct win feedback tiers | Makes rewards feel proportional and understandable |
+| Fast replay path | Keeps loop engaging and reduces user drop-off |
+
+### Should-Have UX Requirements
+| Requirement | Why It Matters |
+|---|---|
+| Reduced motion toggle | Supports comfort and accessibility |
+| On-demand paytable overlay | Gives transparency without leaving gameplay |
+| Optional haptics control | Improves mobile feel while respecting preference |
+
+### Nice-to-Have UX Requirements
+| Requirement | Why It Matters |
+|---|---|
+| Themed intro transition | Improves first impression and identity |
+| Minor social proof element | Adds energy without blocking gameplay |
+| Personalization (favorite theme/audio preset) | Increases return-use familiarity |
+
+### Notes
+- These requirements can be directly turned into issues/tasks for implementation planning
+- Converting UX research into explicit requirements reduces ambiguity in AI prompting and coding
+
+---
+
+## Prompting Implications for AI-Assisted Development
+
+### Prompt Constraints to Include
+When prompting the coding model, we should explicitly request:
+- A persistent HUD with balance, bet, and last-win values
+- A clear state machine-driven UI flow (idle -> spinning -> result -> payout)
+- Distinct animation tiers for small/medium/big wins
+- Mobile-first portrait layout with thumb-zone spin button placement
+- User-facing settings for audio/haptics/animation intensity
+
+### Prompt Constraints to Avoid
+- Monolithic "single component" UI implementations
+- Hidden game states with no visual indicators
+- Hardcoded win animations that cannot scale by win tier
+- UI flows where secondary menus interrupt or block primary gameplay loop
+
+### Notes
+- UX quality depends on prompt specificity; generic prompts produce generic interfaces
+- Prompting should describe behavior and structure, not just visual style
+
+---
+
+## Extended Summary
+
+In addition to visual style and engagement mechanics, this UX research now defines:
+- A practical interaction flow blueprint for our implementation
+- Accessibility expectations for mobile-first usability
+- Task-ready UX requirements that map directly into development issues
+- Prompting constraints to improve AI-generated UI quality and consistency
+
+These additions make the UX research directly actionable for planning, prompting, implementation, and testing.
