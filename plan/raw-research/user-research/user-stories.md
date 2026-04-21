@@ -29,13 +29,20 @@ This document contains user stories derived from our personas and research. Each
 
 **As a** player  
 **I want** clear messages when something goes wrong
-**So that** I understand what to do next
+**So that** I understand what to do next and the game doesn't feel broken
 
 ### Acceptance Criteria
-- [ ] User is notified if balance is too low
+- [ ] User is notified if balance is too low (not silent)
 - [ ] Invalid actions are prevented
 - [ ] Messages are clear and visible
 - [ ] Option to contact support / FAQ
+- [ ] Game state doesn't break after an error
+
+### Notes
+- https://www.dreamjackpot.com/blog/slot-malfunctions-explained
+- Clicking the button multiple times (Disable while spinning)
+- Balance is 0
+- Error msgs shouldn't interrupt gameflow
 
 ---
 

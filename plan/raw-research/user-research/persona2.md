@@ -3,7 +3,7 @@
 Created by: Cathlyn Goldberg
 
 ## Overview
-- Name: Ryan Higa
+- Name: Ryan Higa (Or Lee if we don't want known names)
 - Age (optional): 20
 - Type of user: (casual player )
 
