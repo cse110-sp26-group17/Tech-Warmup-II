@@ -16,7 +16,7 @@ This document contains user stories derived from our personas and research. Each
 - [ ] play with high odds of winning
 - [ ] play with high payout
 
-### Notes (optional)
+### Notes
 -[I went down the 'Advantage Player' slot rabbit hole so you don't have to. Here's what I discovered: : r/gambling](https://www.reddit.com/r/gambling/comments/19dqir8/i_went_down_the_advantage_player_slot_rabbit_hole/)
 - Slot Machines are false advertising to lure people to play more
 - People get played by the machine, and therefore by the Casino

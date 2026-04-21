@@ -1,4 +1,4 @@
-# Persona: [Name]
+# Persona: Ryan Higa
 
 Created by: Cathlyn Goldberg
 
