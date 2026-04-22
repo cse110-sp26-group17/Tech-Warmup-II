@@ -179,6 +179,7 @@ Result: It expanded the GameState.js file and added the win detection algorithm.
 What we learned: The model handled feature growth reliably when tasks were decomposed into explicit, testable deltas (new methods + one targeted method modification). It inserted win detection and payout credit flow in the expected location without disrupting validation order, which suggests strong compliance with step-by-step constraints. However, this phase reinforced that correctness in isolated logic does not equal user-facing completeness; without an interface, it is hard to assess usability, feedback clarity, and end-to-end flow. The next phase should pair UI generation prompts with strict acceptance criteria so we can validate both functional behavior and presentation quality.
 
 Entry #4
+
 Prompt: "You are building a mobile-first slot machine UI that connects to an existing GameState class.
 Your goal is to create a polished, responsive frontend with clear state transitions, fast interaction, and strong visual feedback.
 ### CORE STRUCTURE
@@ -284,3 +285,143 @@ v. Controller
  - useSlotMachineController.js
 
 What We Learned: We have to be more specific in what files we need/want created. We should specify what technologies we want to deploy. This came as a result of us not being given an html file. 
+
+Entry #5
+
+Prompt: "You are building a COMPLETE, RUNNABLE slot machine web app using an existing GameState class.
+
+Your priority is NOT just UI components — your priority is a working app that can be opened and run locally.
+
+---
+
+## PRIMARY GOAL
+
+Generate a fully runnable project with:
+
+* index.html (entry point)
+* All JS/React files wired correctly
+* Styles (CSS or Tailwind)
+* Clear instructions to run the app
+
+The app must work when opened or started (no missing wiring).
+
+---
+
+## PROJECT STRUCTURE
+
+Provide a clean structure like:
+
+/src
+/components
+/state
+main.jsx or index.js
+index.html
+package.json (if using React + Vite or similar)
+
+* Ensure index.html properly mounts the app
+* Ensure all imports resolve correctly
+* No missing files
+
+---
+
+## CORE FUNCTIONALITY
+
+* Use GameState.spinWithPayout(betAmount)
+
+* Display:
+
+* Balance
+* Bet
+* Last Win
+
+* Allow:
+
+* Spin
+* Adjust bet
+
+* Implement state flow:
+idle → spinning → result → payout → idle
+
+---
+
+## UI/UX REQUIREMENTS (SIMPLIFIED)
+
+* Mobile-first layout (portrait style)
+
+* Large, dominant SPIN button (bottom)
+
+* Center reel display (animated)
+
+* Top HUD (balance, bet, last win)
+
+* Animate reels vertically
+
+* Show clear feedback for:
+
+* Loss
+* Win (small vs big visually different)
+
+---
+
+## IMPORTANT: RUNNABILITY
+
+You MUST:
+
+* Include index.html
+* Include script mounting (ReactDOM or equivalent)
+* Include package.json if needed
+* Include exact steps to run:
+(example: npm install → npm run dev)
+
+DO NOT:
+
+* Output only components without entry point
+* Leave the app in a non-runnable state
+
+---
+
+## CODE QUALITY REQUIREMENTS
+
+* Use small, modular components (no giant files)
+* Use clear naming
+* Avoid duplicate code
+* Include JSDoc comments for major functions
+* Handle errors (invalid bet, insufficient balance)
+
+---
+
+## TESTING (BASIC)
+
+* Include at least 1–2 simple unit tests (e.g., GameState behavior)
+* Use a simple framework (Vitest or Jest)
+
+---
+
+
+
+## CONSTRAINTS FROM ASSIGNMENT
+
+* Code must be:
+
+* Clean (modular, readable)
+* Documented (JSDoc)
+* Testable
+* Everything must exist in the repo structure
+* Do NOT simulate commits — just generate files
+
+---
+
+## OUTPUT FORMAT
+
+* Show ALL files with filenames clearly labeled
+* Ensure nothing is missing
+* Include run instructions at the end
+
+---
+
+Goal: A clean, minimal but COMPLETE slot machine app that actually runs, not just a collection of components."
+
+Result:
+
+What We Learned: 
+
