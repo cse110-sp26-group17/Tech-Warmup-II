@@ -8,6 +8,7 @@ export default function SpinButton({
   onToggleTurbo,
   autoSpin,
   onToggleAutoSpin,
+  onStopAutoSpin,
 }) {
   const isSpinning = machineState === MACHINE_STATES.SPINNING;
 
@@ -44,6 +45,16 @@ export default function SpinButton({
           <span>Auto-Spin</span>
         </label>
       </div>
+
+      {autoSpin ? (
+        <button
+          type="button"
+          className="action-button stop-auto"
+          onClick={onStopAutoSpin}
+        >
+          Stop Auto-Spin
+        </button>
+      ) : null}
     </section>
   );
 }

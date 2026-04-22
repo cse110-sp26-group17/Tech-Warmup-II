@@ -37,6 +37,7 @@ export default function SlotMachine() {
     onReelStop,
     setTurboMode,
     setAutoSpin,
+    stopAutoSpin,
     setSettingsOpen,
     setSoundEnabled,
     setReducedMotion,
@@ -89,6 +90,7 @@ export default function SlotMachine() {
         onToggleTurbo={setTurboMode}
         autoSpin={autoSpin}
         onToggleAutoSpin={setAutoSpin}
+        onStopAutoSpin={stopAutoSpin}
       />
 
       <BetControls
@@ -101,6 +103,7 @@ export default function SlotMachine() {
 
       <SymbolInfoModal
         open={infoOpen}
+        betAmount={betAmount}
         symbolPayouts={symbolPayouts}
         onClose={() => setInfoOpen(false)}
       />

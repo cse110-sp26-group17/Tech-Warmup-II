@@ -180,7 +180,11 @@ class GameState {
    * @returns {Object} { isWin: boolean, symbolName: string, multiplier: number, payout: number }.
    */
   evaluateSpin(reels, betAmount = this.betAmount) {
-    if (!(reels[0] === reels[1] && reels[1] === reels[2])) {
+    const symbols = reels.map((reelValue) => this.getSymbolName(reelValue));
+    const allSymbolsMatch = symbols[0] === symbols[1] && symbols[1] === symbols[2];
+
+    // Win when all three symbols match, even if reel numbers differ inside a symbol bucket.
+    if (!allSymbolsMatch) {
       return {
         isWin: false,
         symbolName: 'none',
@@ -189,7 +193,7 @@ class GameState {
       };
     }
 
-    const symbolName = this.getSymbolName(reels[0]);
+    const symbolName = symbols[0];
     const multiplier = this.getSymbolMultiplier(symbolName);
     const payout = multiplier * betAmount;
 

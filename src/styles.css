@@ -210,6 +210,12 @@ body {
   color: #2b1700;
 }
 
+.action-button.stop-auto {
+  width: 100%;
+  border-color: #d56a75;
+  background: linear-gradient(180deg, #7a1121, #4c0814);
+}
+
 .spin-controls {
   display: grid;
   gap: 10px;

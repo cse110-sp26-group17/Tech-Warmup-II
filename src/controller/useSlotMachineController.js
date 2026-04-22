@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import GameState from '../state/GameState';
 import {
   MACHINE_STATES,
+  SYMBOL_DISPLAY,
   WIN_TIERS,
   createNearMissHint,
   getFeedbackLabel,
@@ -12,6 +13,7 @@ import {
 import { playSpinSound, playStopSound, playWinSound } from '../audio/soundHooks';
 
 const BET_OPTIONS = Object.freeze([5, 10, 25, 50, 100]);
+// Keep result popup visible for about 2-3 seconds.
 const RESULT_POPUP_DURATION_MS = 2400;
 
 /**
@@ -64,6 +66,7 @@ function pickValidBet(balance, currentBet) {
  *   onReelStop: (reelIndex?: number) => void,
  *   setTurboMode: (enabled: boolean) => void,
  *   setAutoSpin: (enabled: boolean) => void,
+ *   stopAutoSpin: () => void,
  *   setSettingsOpen: (open: boolean) => void,
  *   setSoundEnabled: (enabled: boolean) => void,
  *   setReducedMotion: (enabled: boolean) => void
@@ -103,21 +106,14 @@ export function useSlotMachineController() {
     () => getSpinProfile({ turboMode, reducedMotion }),
     [turboMode, reducedMotion]
   );
-  const symbolPayouts = useMemo(() => {
-    const symbolDisplay = {
-      cherry: { code: '🍒', label: 'Cherries' },
-      bar: { code: '🍋', label: 'Lemon' },
-      bell: { code: '🔔', label: 'Bell' },
-      seven: { code: '7️⃣', label: 'Seven' },
-      none: { code: '⭐', label: 'Star' },
-    };
 
+  const symbolPayouts = useMemo(() => {
     // Build UI payout info directly from GameState so the table and UI stay in sync.
     const payoutTable = gameStateRef.current.getPayoutTable();
     return Object.entries(payoutTable).map(([name, config]) => ({
       name,
-      label: symbolDisplay[name]?.label ?? name,
-      emoji: symbolDisplay[name]?.code ?? '❔',
+      label: SYMBOL_DISPLAY[name]?.label ?? name,
+      emoji: SYMBOL_DISPLAY[name]?.code ?? '?',
       multiplier: config.multiplier,
     }));
   }, []);
@@ -174,22 +170,20 @@ export function useSlotMachineController() {
     [reducedMotion]
   );
 
-  const selectBet = useCallback((nextBet) => {
-    if (controlsLocked) {
-      return;
-    }
-    if (!BET_OPTIONS.includes(nextBet)) {
-      return;
-    }
-    if (nextBet > balance) {
-      return;
-    }
-    setBetAmount(nextBet);
-  }, [controlsLocked, balance]);
-
-  const resultRevealDelay = Math.min(
-    2000,
-    Math.max(1000, spinProfile.totalSpinDuration, ...spinProfile.reelDurations)
+  const selectBet = useCallback(
+    (nextBet) => {
+      if (controlsLocked) {
+        return;
+      }
+      if (!BET_OPTIONS.includes(nextBet)) {
+        return;
+      }
+      if (nextBet > balance) {
+        return;
+      }
+      setBetAmount(nextBet);
+    },
+    [controlsLocked, balance]
   );
 
   const spin = useCallback(() => {
@@ -242,6 +236,12 @@ export function useSlotMachineController() {
       isWin: spinResult.result.isWin,
       finalSymbols,
     });
+
+    // Delay result phase until the slowest reel (and optional near-miss preview) finishes.
+    const nearMissDelay =
+      nearMiss && nearMiss.reelIndex === 2 && !reducedMotion ? nearMiss.previewDurationMs : 0;
+    const resultRevealDelay =
+      Math.max(1000, spinProfile.totalSpinDuration, ...spinProfile.reelDurations) + nearMissDelay + 40;
 
     setNearMissHint(nearMiss);
     setReelSymbols(finalSymbols);
@@ -297,8 +297,8 @@ export function useSlotMachineController() {
     clearAllTimers,
     turboMode,
     soundEnabled,
-    resultRevealDelay,
     reducedMotion,
+    spinProfile,
     startWinCounter,
   ]);
 
@@ -320,6 +320,11 @@ export function useSlotMachineController() {
     setNearMissHint(null);
     setAutoSpin(false);
   }, [clearAllTimers]);
+
+  const stopAutoSpin = useCallback(() => {
+    setAutoSpin(false);
+    setStatusMessage('Auto-spin stopped');
+  }, []);
 
   useEffect(() => {
     if (!autoSpin || controlsLocked || machineState !== MACHINE_STATES.IDLE) {
@@ -372,6 +377,7 @@ export function useSlotMachineController() {
     onReelStop,
     setTurboMode,
     setAutoSpin,
+    stopAutoSpin,
     setSettingsOpen,
     setSoundEnabled,
     setReducedMotion,
