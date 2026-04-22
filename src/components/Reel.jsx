@@ -18,8 +18,10 @@ export default function Reel({
   const [showNearMiss, setShowNearMiss] = useState(false);
 
   useEffect(() => {
-    setDisplaySymbol(finalSymbol);
-  }, [finalSymbol]);
+    if (machineState !== MACHINE_STATES.SPINNING) {
+      setDisplaySymbol(finalSymbol);
+    }
+  }, [finalSymbol, machineState]);
 
   useEffect(() => {
     if (machineState !== MACHINE_STATES.SPINNING) {
@@ -43,7 +45,7 @@ export default function Reel({
       setDisplaySymbol(finalSymbol);
       setIsSpinningVisual(false);
       setShowNearMiss(false);
-      stopTimerId = setTimeout(() => onStop(reelIndex), 40 + reelIndex * 35);
+      stopTimerId = setTimeout(() => onStop(reelIndex), spinDuration);
       return () => clearTimeout(stopTimerId);
     }
 

@@ -17,7 +17,10 @@ function getStateLabel(machineState) {
   return 'Idle';
 }
 
-export default function HUD({ balance, betAmount, lastWin, machineState }) {
+export default function HUD({ balance, betAmount, netGain, machineState }) {
+  const netGainPrefix = netGain >= 0 ? '+' : '-';
+  const netGainClass = netGain >= 0 ? 'positive' : 'negative';
+
   return (
     <section className="hud" aria-label="Game stats">
       <article className="hud-card">
@@ -31,8 +34,11 @@ export default function HUD({ balance, betAmount, lastWin, machineState }) {
       </article>
 
       <article className="hud-card">
-        <p className="hud-label">Last Win</p>
-        <p className="hud-value">{formatCredits(lastWin)}</p>
+        <p className="hud-label">Net Gain</p>
+        <p className={`hud-value net-gain ${netGainClass}`}>
+          {netGainPrefix}
+          {formatCredits(Math.abs(netGain))}
+        </p>
       </article>
 
       <p className="hud-state" role="status" aria-live="polite">

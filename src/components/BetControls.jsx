@@ -3,26 +3,34 @@ function formatValue(value) {
 }
 
 export default function BetControls({
+  betOptions,
   betAmount,
+  balance,
   disabled,
-  onDecrement,
-  onIncrement,
-  onMaxBet,
+  onSelectBet,
 }) {
   return (
     <section className="bet-controls" aria-label="Bet controls">
-      <button type="button" className="bet-button" onClick={onDecrement} disabled={disabled}>
-        -
-      </button>
       <div className="bet-display" aria-live="polite">
         Bet: {formatValue(betAmount)}
       </div>
-      <button type="button" className="bet-button" onClick={onIncrement} disabled={disabled}>
-        +
-      </button>
-      <button type="button" className="bet-button max" onClick={onMaxBet} disabled={disabled}>
-        Max
-      </button>
+      <div className="bet-options" role="group" aria-label="Select bet amount">
+        {betOptions.map((option) => {
+          const isSelected = option === betAmount;
+          return (
+            <button
+              key={option}
+              type="button"
+              className={`bet-button option ${isSelected ? 'selected' : ''}`}
+              onClick={() => onSelectBet(option)}
+              disabled={disabled || option > balance}
+              aria-pressed={isSelected}
+            >
+              {formatValue(option)}
+            </button>
+          );
+        })}
+      </div>
     </section>
   );
 }

@@ -10,7 +10,8 @@ export default function SlotMachine() {
   const {
     balance,
     betAmount,
-    lastWin,
+    betOptions,
+    netGain,
     displayedWin,
     machineState,
     result,
@@ -27,9 +28,7 @@ export default function SlotMachine() {
     reducedMotion,
     spinProfile,
     spin,
-    decrementBet,
-    incrementBet,
-    maxBet,
+    selectBet,
     onReelStop,
     setTurboMode,
     setAutoSpin,
@@ -40,7 +39,7 @@ export default function SlotMachine() {
 
   return (
     <div className={`slot-machine state-${machineState} ${reducedMotion ? 'reduced-motion' : ''}`}>
-      <HUD balance={balance} betAmount={betAmount} lastWin={lastWin} machineState={machineState} />
+      <HUD balance={balance} betAmount={betAmount} netGain={netGain} machineState={machineState} />
 
       <section className="reel-stage">
         <ReelSet
@@ -77,11 +76,11 @@ export default function SlotMachine() {
       />
 
       <BetControls
+        betOptions={betOptions}
         betAmount={betAmount}
         disabled={controlsLocked}
-        onDecrement={decrementBet}
-        onIncrement={incrementBet}
-        onMaxBet={maxBet}
+        balance={balance}
+        onSelectBet={selectBet}
       />
 
       <SettingsOverlay

@@ -14,11 +14,11 @@ export const WIN_TIERS = Object.freeze({
 });
 
 export const SYMBOL_DISPLAY = Object.freeze({
-  cherry: { code: 'CH', label: 'Cherry' },
-  bar: { code: 'BAR', label: 'Bar' },
-  bell: { code: 'BEL', label: 'Bell' },
-  seven: { code: '777', label: 'Seven' },
-  none: { code: '--', label: 'Blank' },
+  cherry: { code: '🍒', label: 'Cherries' },
+  bar: { code: '🍋', label: 'Lemon' },
+  bell: { code: '🔔', label: 'Bell' },
+  seven: { code: '7️⃣', label: 'Seven' },
+  none: { code: '⭐', label: 'Star' },
 });
 
 const SYMBOL_ORDER = ['cherry', 'bar', 'bell', 'seven', 'none'];
@@ -47,23 +47,23 @@ export function getRandomSymbol() {
 export function getSpinProfile({ turboMode, reducedMotion }) {
   if (reducedMotion) {
     return {
-      reelDurations: [120, 180, 240],
-      totalSpinDuration: 260,
+      reelDurations: [1000, 1160, 1320],
+      totalSpinDuration: 1360,
       resultHoldDuration: 160,
     };
   }
 
   if (turboMode) {
     return {
-      reelDurations: [260, 380, 520],
-      totalSpinDuration: 580,
+      reelDurations: [1050, 1250, 1450],
+      totalSpinDuration: 1520,
       resultHoldDuration: 130,
     };
   }
 
   return {
-    reelDurations: [1200, 1520, 1860],
-    totalSpinDuration: 1960,
+    reelDurations: [1160, 1420, 1680],
+    totalSpinDuration: 1760,
     resultHoldDuration: 280,
   };
 }

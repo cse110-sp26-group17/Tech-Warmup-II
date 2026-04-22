@@ -8,23 +8,27 @@ import {
   getPayoutDuration,
   getSpinProfile,
   getWinTier,
-  reelToSymbolName,
 } from '../animations/reelAnimation';
 import { playSpinSound, playStopSound, playWinSound } from '../audio/soundHooks';
 
-const BET_STEP = 10;
+const BET_OPTIONS = Object.freeze([5, 10, 25, 50, 100]);
 
 /**
- * Clamps a bet value to a valid integer range between 1 and current balance.
+ * Picks a valid fixed-option bet for the current balance.
  *
- * @param {number} value - Proposed bet value.
  * @param {number} balance - Current player balance.
- * @returns {number} Safe bet value.
+ * @param {number} currentBet - Current selected bet.
+ * @returns {number} Safe bet amount.
  */
-function clampBet(value, balance) {
-  const rounded = Math.floor(value);
-  const maxBet = Math.max(1, Math.floor(balance));
-  return Math.max(1, Math.min(rounded, maxBet));
+function pickValidBet(balance, currentBet) {
+  const affordableOptions = BET_OPTIONS.filter((option) => option <= balance);
+  if (affordableOptions.length === 0) {
+    return BET_OPTIONS[0];
+  }
+  if (affordableOptions.includes(currentBet)) {
+    return currentBet;
+  }
+  return affordableOptions[affordableOptions.length - 1];
 }
 
 /**
@@ -35,7 +39,8 @@ function clampBet(value, balance) {
  * @returns {{
  *   balance: number,
  *   betAmount: number,
- *   lastWin: number,
+ *   betOptions: number[],
+ *   netGain: number,
  *   displayedWin: number,
  *   machineState: string,
  *   result: Object | null,
@@ -52,9 +57,7 @@ function clampBet(value, balance) {
  *   reducedMotion: boolean,
  *   spinProfile: Object,
  *   spin: () => void,
- *   decrementBet: () => void,
- *   incrementBet: () => void,
- *   maxBet: () => void,
+ *   selectBet: (nextBet: number) => void,
  *   onReelStop: (reelIndex?: number) => void,
  *   setTurboMode: (enabled: boolean) => void,
  *   setAutoSpin: (enabled: boolean) => void,
@@ -69,8 +72,10 @@ export function useSlotMachineController() {
   const winCounterIntervalRef = useRef(null);
 
   const [balance, setBalance] = useState(gameStateRef.current.getBalance());
-  const [betAmount, setBetAmount] = useState(gameStateRef.current.betAmount);
-  const [lastWin, setLastWin] = useState(0);
+  const [betAmount, setBetAmount] = useState(() =>
+    pickValidBet(gameStateRef.current.getBalance(), gameStateRef.current.betAmount)
+  );
+  const [netGain, setNetGain] = useState(0);
   const [displayedWin, setDisplayedWin] = useState(0);
   const [machineState, setMachineState] = useState(MACHINE_STATES.IDLE);
   const [result, setResult] = useState(null);
@@ -109,7 +114,7 @@ export function useSlotMachineController() {
   useEffect(() => () => clearAllTimers(), [clearAllTimers]);
 
   useEffect(() => {
-    setBetAmount((currentBet) => clampBet(currentBet, balance));
+    setBetAmount((currentBet) => pickValidBet(balance, currentBet));
   }, [balance]);
 
   const startWinCounter = useCallback(
@@ -148,27 +153,23 @@ export function useSlotMachineController() {
     [reducedMotion]
   );
 
-  const decrementBet = useCallback(() => {
+  const selectBet = useCallback((nextBet) => {
     if (controlsLocked) {
       return;
     }
-    setBetAmount((currentBet) => clampBet(currentBet - BET_STEP, balance));
+    if (!BET_OPTIONS.includes(nextBet)) {
+      return;
+    }
+    if (nextBet > balance) {
+      return;
+    }
+    setBetAmount(nextBet);
   }, [controlsLocked, balance]);
 
-  const incrementBet = useCallback(() => {
-    if (controlsLocked) {
-      return;
-    }
-    setBetAmount((currentBet) => clampBet(currentBet + BET_STEP, balance));
-  }, [controlsLocked, balance]);
-
-  const maxBet = useCallback(() => {
-    if (controlsLocked) {
-      return;
-    }
-    const nextMax = Math.max(1, Math.floor(balance));
-    setBetAmount(nextMax);
-  }, [controlsLocked, balance]);
+  const resultRevealDelay = Math.min(
+    2000,
+    Math.max(1000, spinProfile.totalSpinDuration, ...spinProfile.reelDurations)
+  );
 
   const spin = useCallback(() => {
     if (machineState !== MACHINE_STATES.IDLE || controlsLocked) {
@@ -209,7 +210,7 @@ export function useSlotMachineController() {
       return;
     }
 
-    const finalSymbols = spinResult.reels.map((reelValue) => reelToSymbolName(reelValue));
+    const finalSymbols = spinResult.reels.map((reelValue) => gameState.getSymbolName(reelValue));
     const tier = getWinTier(spinResult.result);
     const payoutDuration = getPayoutDuration({
       tier,
@@ -234,7 +235,7 @@ export function useSlotMachineController() {
       setBalance(spinResult.balance);
       setResult(spinResult.result);
       setWinTier(tier);
-      setLastWin(spinResult.result.isWin ? spinResult.result.payout : 0);
+      setNetGain(spinResult.result.payout - spinResult.betAmount);
       setStatusMessage(
         spinResult.result.isWin
           ? `${getFeedbackLabel(tier)} on ${finalSymbols[0].toUpperCase()}`
@@ -242,7 +243,7 @@ export function useSlotMachineController() {
             ? nearMiss.message
             : 'No win this spin'
       );
-    }, spinProfile.totalSpinDuration);
+    }, resultRevealDelay);
 
     const payoutTimer = setTimeout(() => {
       setMachineState(MACHINE_STATES.PAYOUT);
@@ -252,7 +253,7 @@ export function useSlotMachineController() {
         }
         startWinCounter(spinResult.result.payout, payoutDuration);
       }
-    }, spinProfile.totalSpinDuration + spinProfile.resultHoldDuration);
+    }, resultRevealDelay + spinProfile.resultHoldDuration);
 
     const idleTimer = setTimeout(() => {
       setMachineState(MACHINE_STATES.IDLE);
@@ -264,7 +265,7 @@ export function useSlotMachineController() {
       } else {
         setDisplayedWin(0);
       }
-    }, spinProfile.totalSpinDuration + spinProfile.resultHoldDuration + payoutDuration);
+    }, resultRevealDelay + spinProfile.resultHoldDuration + payoutDuration);
 
     timeoutIdsRef.current.push(resultTimer, payoutTimer, idleTimer);
   }, [
@@ -275,7 +276,7 @@ export function useSlotMachineController() {
     clearAllTimers,
     turboMode,
     soundEnabled,
-    spinProfile.totalSpinDuration,
+    resultRevealDelay,
     spinProfile.resultHoldDuration,
     reducedMotion,
     startWinCounter,
@@ -308,7 +309,8 @@ export function useSlotMachineController() {
   return {
     balance,
     betAmount,
-    lastWin,
+    betOptions: BET_OPTIONS,
+    netGain,
     displayedWin,
     machineState,
     result,
@@ -325,9 +327,7 @@ export function useSlotMachineController() {
     reducedMotion,
     spinProfile,
     spin,
-    decrementBet,
-    incrementBet,
-    maxBet,
+    selectBet,
     onReelStop,
     setTurboMode,
     setAutoSpin,
