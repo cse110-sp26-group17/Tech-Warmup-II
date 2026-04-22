@@ -62,7 +62,7 @@ Deliverable: A working GameState.js file that manages game state and executes sp
 
 Result: It gave me a javascript file that runs in a browser console. Very barebones but it works properly. Since we specified only the core features I'm assuming that's why it didn't give me html and css.
 
-What we learned: We learned that Codex follows the directions very specifically. Since we gave it parameters only built what they were told to make.
+What we learned: Codex strongly optimized for instruction fidelity. Because the prompt constrained scope to a pure `GameState` logic module and explicitly excluded UI, it returned only JavaScript logic without adding HTML/CSS scaffolding. This was notable because the prompt was long and detailed, yet the model still did not drift into unrelated output. The practical takeaway is that tightly bounded prompts can reduce hallucinated extras and produce implementation-ready artifacts for one layer of the stack at a time.
 
 Entry #2
 
@@ -122,7 +122,7 @@ CODE REQUIREMENTS:
 
 Result: It added new functions in the GameState.js which calculates the RTP. It did not take a long time to generate since there's no formatting or styling
 
-What we learned: Gen AI is really good at generating smaller scale projects and creating algorithms. We still do not know what this project will look like towards the end since we have yet to deploy it.
+What we learned: Incremental extension prompts worked well for controlled evolution of the codebase. By saying "do NOT rewrite the class" and listing exact additions, the model preserved prior behavior while appending RTP and payout utilities with correct data-shape consistency. We also observed that response speed was high when prompts targeted backend logic only (no design or formatting requirements). The limitation remains visibility into final product quality until integration with UI and deployment, so future prompts should include lightweight verification checks after each extension.
 
 Entry #3 
 
@@ -176,4 +176,4 @@ CODE REQUIREMENTS:
 
 Result: It expanded the GameState.js file and added the win detection algorithm. It also edited the spin method with the specific instructions.
 
-What we learned: We have yet to see what the slot machine would look like since we can only deploy the Javascript on a browser console. It should be ready to move onto feature 2 which is the HTML.
+What we learned: The model handled feature growth reliably when tasks were decomposed into explicit, testable deltas (new methods + one targeted method modification). It inserted win detection and payout credit flow in the expected location without disrupting validation order, which suggests strong compliance with step-by-step constraints. However, this phase reinforced that correctness in isolated logic does not equal user-facing completeness; without an interface, it is hard to assess usability, feedback clarity, and end-to-end flow. The next phase should pair UI generation prompts with strict acceptance criteria so we can validate both functional behavior and presentation quality.
