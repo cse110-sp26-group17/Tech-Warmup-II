@@ -417,3 +417,43 @@ Result: There is now an html file. When running the program, the last slot in th
 
 What We Learned: Longer prompts take a lot longer. By making it shorter and reasonable, the AI will take less time to make the necessary files. We would also have to be more specific with what we want labelled. We learned also that we want changes to how the UI/UX turned out, since that affects how engaging. Because there was no reset button, the ease of starting over and playing was compromised, so we want to change what is displayed in the slot, change what is being tracked, and how we can change the bets.
 
+---
+Entry #6
+
+Prompt: "Update the existing slot machine UI code (do not rewrite from scratch). Fix and improve the following:
+
+1. Sound
+- Ensure sounds trigger reliably on spin and win
+- Prevent overlapping audio (stop or reset before replay)
+- Add clear separation: spin sound vs win sound
+
+2. Betting System
+- Replace free input with fixed bet options (e.g. 5, 10, 25, 50, 100)
+- Allow selection via buttons
+- Visually highlight the selected bet
+
+3. Spinning Animation
+- Fix any bugs where reels stop instantly or desync
+- Ensure a 1–2 second animation before showing results
+- Reels should stop sequentially (slight delay between each)
+
+4. Reel Display
+- Replace numbers with emoji symbols (:cherries: :lemon: :bell: :star: :seven:)
+- Use getSymbolName() to map values correctly
+
+5. Result Display
+- Replace “last win” with “net gain”
+- Net gain = payout - betAmount
+- Display clearly (+/-) and update after each spin
+
+Constraints:
+- Keep using the existing GameState class
+- Do not duplicate logic already in GameState
+- Keep UI simple and mobile-friendly
+- Only modify what’s necessary
+
+Return updated components and explain key fixes briefly."
+
+Result:
+
+What We Learned:
