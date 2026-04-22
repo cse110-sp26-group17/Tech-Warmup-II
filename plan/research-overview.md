@@ -32,4 +32,5 @@ Synthesizes visual language (color, typography, symbols), the fast spin cycle an
 ## Team roster 
 1. Jorell Jusay - User Stories 1, 3, 4
 2. Cathlyn Goldberg - User Stories 2, 5 + Persona 1, 2
+3. Aayan Lakhani - Reviewed User/Domain/UI/UX Research
 
