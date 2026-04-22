@@ -479,3 +479,29 @@ Return updated code."
 Result: There is a logic issue with how our payouts are calculated and monitored, since no matter the result our wins are not given. There are still no comments being made in the files.
 
 What We Learned: We should expand the test cases so that we are not just looking at the base functionality, but also the UI and edge cases. Because the auto-spin is difficult to turn off, we should hace a separate button. The info section was not clear, so we should specify what we want. We will likely be focusing out next prompt to debug our code with the specific issues and how we would want them to be fixed. 
+
+---
+Entry #8
+
+Prompt: "Update the existing slot machine UI (do not rewrite).
+
+Add/fix:
+- Stop Auto-Spin button (toggles auto-spin off immediately)
+- Fix last reel animation so all reels are synced and stop correctly
+- Fix win logic bug (user should win when all symbols match)
+- Improve info section: clearly show emoji + payout (e.g. :star::star: → +$100)
+- Result popup: stays ~2–3s, green (win) / red (loss)
+- Net gain: show winnings only (never negative, 0 if loss)
+- Reset button when balance = 0 → calls resetGame()
+- Add more unit tests for spin, payout, and edge cases
+- Add clear comments for readability
+
+Constraints:
+- Use GameState as source of truth
+- Keep UI simple and mobile-friendly
+
+Return updated code + tests."
+
+Result: The animation for the last spinner is fixed. Auto-spin has a button to stop it. Last win still applies to the last roll rather than the full game lifetime.
+
+What We Learned: The odds of winning are very low so we should improve those. We need to improve the information section because it has repition. We need more clarity on the results message. In future sessions, fix/adjust the UI since visually it is bland. There are two win displays, so we should get rid of the second underneath the slots because it serves little functionality and is repetitive. 
