@@ -1,11 +1,3 @@
----
-name: PR Template
-about: used for pr and pr review
-title: PR
-labels: ''
-assignees: ''
-
----
 
 # Abstract
 
