@@ -458,3 +458,24 @@ Result: Net gain is not working as intended. It is only counting with relative g
 
 What We Learned: Results showed on the screen should stay longer. We didn't see that many comments in the code produced, so we should include in the prompt that we want comments so that humans when looking back through it can understand what each prompt does.
 
+---
+Entry #7
+
+Prompt: "Update the existing slot machine UI (do not rewrite).
+
+Add/fix:
+- Reset button when balance = 0 → calls resetGame()
+- Info section/modal explaining symbols (emojis) + payouts
+- Result popup: stays ~2–3s, green for win, red for loss
+- “Net gain” should only show winnings (never negative, show 0 if loss)
+- Add clear comments for readability
+
+Constraints:
+- Use GameState as source of truth
+- Keep UI simple and mobile-friendly
+
+Return updated code."
+
+Result:
+
+What We Learned:
