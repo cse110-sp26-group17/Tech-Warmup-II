@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import GameState from '../GameState';
+import GameState from '../state/GameState';
 import {
   MACHINE_STATES,
   WIN_TIERS,
@@ -14,12 +14,55 @@ import { playSpinSound, playStopSound, playWinSound } from '../audio/soundHooks'
 
 const BET_STEP = 10;
 
+/**
+ * Clamps a bet value to a valid integer range between 1 and current balance.
+ *
+ * @param {number} value - Proposed bet value.
+ * @param {number} balance - Current player balance.
+ * @returns {number} Safe bet value.
+ */
 function clampBet(value, balance) {
   const rounded = Math.floor(value);
   const maxBet = Math.max(1, Math.floor(balance));
   return Math.max(1, Math.min(rounded, maxBet));
 }
 
+/**
+ * React controller for slot machine state flow and GameState integration.
+ *
+ * Flow: idle -> spinning -> result -> payout -> idle.
+ *
+ * @returns {{
+ *   balance: number,
+ *   betAmount: number,
+ *   lastWin: number,
+ *   displayedWin: number,
+ *   machineState: string,
+ *   result: Object | null,
+ *   winTier: string,
+ *   statusMessage: string,
+ *   controlsLocked: boolean,
+ *   reelSymbols: string[],
+ *   spinToken: number,
+ *   nearMissHint: Object | null,
+ *   soundEnabled: boolean,
+ *   turboMode: boolean,
+ *   autoSpin: boolean,
+ *   settingsOpen: boolean,
+ *   reducedMotion: boolean,
+ *   spinProfile: Object,
+ *   spin: () => void,
+ *   decrementBet: () => void,
+ *   incrementBet: () => void,
+ *   maxBet: () => void,
+ *   onReelStop: (reelIndex?: number) => void,
+ *   setTurboMode: (enabled: boolean) => void,
+ *   setAutoSpin: (enabled: boolean) => void,
+ *   setSettingsOpen: (open: boolean) => void,
+ *   setSoundEnabled: (enabled: boolean) => void,
+ *   setReducedMotion: (enabled: boolean) => void
+ * }}
+ */
 export function useSlotMachineController() {
   const gameStateRef = useRef(new GameState());
   const timeoutIdsRef = useRef([]);

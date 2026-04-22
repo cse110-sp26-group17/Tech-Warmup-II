@@ -1,19 +1,59 @@
-# Slot Machine Frontend
+# Slot Machine Web App
 
-## Added React UI
+A complete, runnable React + Vite slot machine app using the provided `GameState` class.
 
-- `main.jsx`: app entry.
-- `SlotMachine.jsx`: top-level screen layout.
-- `controller/useSlotMachineController.js`: state machine + GameState integration.
-- `components/*`: UI modules (`HUD`, `Reel`, `ReelSet`, `SpinButton`, `BetControls`, `WinOverlay`, `SettingsOverlay`).
-- `animations/reelAnimation.js`: reel/win timing helpers, win-tier classification, near-miss visuals.
-- `audio/soundHooks.js`: sound hook shims (`playSpinSound`, `playStopSound`, `playWinSound`).
-- `styles.css`: mobile-first casino theme + animations + accessibility-focused sizing.
+## Project Structure
 
-## Integration Points
+```text
+.
+|-- index.html
+|-- package.json
+|-- main.jsx
+|-- SlotMachine.jsx
+|-- styles.css
+|-- components/
+|-- controller/
+|-- animations/
+|-- audio/
+|-- state/
+|   `-- GameState.js
+`-- tests/
+    `-- GameState.test.js
+```
 
-- Spins call: `gameState.spinWithPayout(betAmount)`.
-- Sound hooks can be wired through:
-  - `window.slotSoundHooks.playSpinSound()`
-  - `window.slotSoundHooks.playStopSound()`
-  - `window.slotSoundHooks.playWinSound(tier)`
+## Features
+
+- Uses `GameState.spinWithPayout(betAmount)` for every spin.
+- HUD shows `Balance`, `Bet`, and `Last Win`.
+- State flow: `idle -> spinning -> result -> payout -> idle`.
+- Mobile-first layout with large bottom spin button and animated vertical reels.
+- Win feedback tiers (`small`, `medium`, `big`, `jackpot`) and distinct loss feedback.
+- Bet adjustment with validation and insufficient-funds handling.
+
+## Run Locally
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+3. Open the local URL printed by Vite (usually `http://localhost:5173`).
+
+## Test
+
+Run unit tests:
+
+```bash
+npm test
+```
+
+## Build
+
+Create a production build:
+
+```bash
+npm run build
+```
