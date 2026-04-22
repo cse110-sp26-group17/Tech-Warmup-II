@@ -18,8 +18,8 @@ function getStateLabel(machineState) {
 }
 
 export default function HUD({ balance, betAmount, netGain, machineState }) {
-  const netGainPrefix = netGain >= 0 ? '+' : '-';
-  const netGainClass = netGain >= 0 ? 'positive' : 'negative';
+  // Net gain is displayed as winnings-only (never negative).
+  const safeNetGain = Math.max(0, netGain);
 
   return (
     <section className="hud" aria-label="Game stats">
@@ -35,10 +35,7 @@ export default function HUD({ balance, betAmount, netGain, machineState }) {
 
       <article className="hud-card">
         <p className="hud-label">Net Gain</p>
-        <p className={`hud-value net-gain ${netGainClass}`}>
-          {netGainPrefix}
-          {formatCredits(Math.abs(netGain))}
-        </p>
+        <p className="hud-value net-gain positive">+{formatCredits(safeNetGain)}</p>
       </article>
 
       <p className="hud-state" role="status" aria-live="polite">

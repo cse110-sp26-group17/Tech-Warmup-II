@@ -188,6 +188,28 @@ body {
   text-align: center;
 }
 
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.action-button {
+  min-height: 46px;
+  border: 1px solid #7e5ec5;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #2d164d, #180d2c);
+  color: var(--text-main);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.action-button.reset {
+  border-color: #a08a47;
+  background: linear-gradient(180deg, #ffdd86, #e4ac29);
+  color: #2b1700;
+}
+
 .spin-controls {
   display: grid;
   gap: 10px;
@@ -343,6 +365,82 @@ body {
   height: 16px;
 }
 
+.info-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.info-modal-card {
+  width: min(100%, 380px);
+  max-height: 82vh;
+  overflow: auto;
+  border: 1px solid #8c70bf;
+  border-radius: 14px;
+  background: #1a102b;
+  padding: 12px;
+}
+
+.info-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.info-modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.info-close {
+  min-height: 36px;
+  border: 1px solid #7b65a6;
+  border-radius: 999px;
+  background: rgba(23, 13, 38, 0.92);
+  color: var(--text-main);
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+.info-note {
+  margin: 8px 0 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.info-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #7e5ec5;
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(13, 8, 24, 0.95);
+}
+
+.info-symbol {
+  font-weight: 700;
+}
+
+.info-multiplier {
+  color: #9cefbf;
+  font-weight: 800;
+}
+
 .win-overlay {
   position: absolute;
   inset: 0;
@@ -386,6 +484,24 @@ body {
 
 .win-overlay.tier-loss .win-card {
   border-color: #6b7386;
+}
+
+.win-overlay.result-win .win-card {
+  border-color: #4ccf8b;
+  background: rgba(5, 58, 28, 0.9);
+}
+
+.win-overlay.result-loss .win-card {
+  border-color: #d56a75;
+  background: rgba(74, 9, 19, 0.9);
+}
+
+.win-overlay.result-win {
+  background: rgba(49, 196, 108, 0.17);
+}
+
+.win-overlay.result-loss {
+  background: rgba(211, 58, 77, 0.2);
 }
 
 .win-overlay.tier-small .win-card {

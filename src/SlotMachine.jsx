@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import HUD from './components/HUD';
 import ReelSet from './components/ReelSet';
 import SpinButton from './components/SpinButton';
 import BetControls from './components/BetControls';
 import WinOverlay from './components/WinOverlay';
 import SettingsOverlay from './components/SettingsOverlay';
+import SymbolInfoModal from './components/SymbolInfoModal';
 import { useSlotMachineController } from './controller/useSlotMachineController';
 
 export default function SlotMachine() {
+  const [infoOpen, setInfoOpen] = useState(false);
   const {
     balance,
     betAmount,
@@ -27,7 +30,9 @@ export default function SlotMachine() {
     settingsOpen,
     reducedMotion,
     spinProfile,
+    symbolPayouts,
     spin,
+    resetGame,
     selectBet,
     onReelStop,
     setTurboMode,
@@ -65,6 +70,17 @@ export default function SlotMachine() {
         {statusMessage}
       </p>
 
+      <section className="action-row" aria-label="Game actions">
+        <button type="button" className="action-button" onClick={() => setInfoOpen(true)}>
+          Info
+        </button>
+        {balance === 0 ? (
+          <button type="button" className="action-button reset" onClick={resetGame}>
+            Reset Game
+          </button>
+        ) : null}
+      </section>
+
       <SpinButton
         machineState={machineState}
         disabled={controlsLocked}
@@ -81,6 +97,12 @@ export default function SlotMachine() {
         disabled={controlsLocked}
         balance={balance}
         onSelectBet={selectBet}
+      />
+
+      <SymbolInfoModal
+        open={infoOpen}
+        symbolPayouts={symbolPayouts}
+        onClose={() => setInfoOpen(false)}
       />
 
       <SettingsOverlay

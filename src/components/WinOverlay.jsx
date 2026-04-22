@@ -11,14 +11,15 @@ export default function WinOverlay({
   displayedWin,
   reducedMotion,
 }) {
-  if (!result || machineState === MACHINE_STATES.IDLE || machineState === MACHINE_STATES.SPINNING) {
+  // Keep popup strictly tied to the RESULT phase.
+  if (!result || machineState !== MACHINE_STATES.RESULT) {
     return null;
   }
 
   const showWin = result.isWin === true;
   const heading = showWin ? getFeedbackLabel(winTier) : 'No Win';
   const symbolLabel = SYMBOL_DISPLAY[result.symbolName].label;
-  const layerClass = showWin ? `tier-${winTier}` : 'tier-loss';
+  const layerClass = showWin ? `tier-${winTier} result-win` : 'tier-loss result-loss';
 
   return (
     <section

@@ -12,6 +12,7 @@ import {
 import { playSpinSound, playStopSound, playWinSound } from '../audio/soundHooks';
 
 const BET_OPTIONS = Object.freeze([5, 10, 25, 50, 100]);
+const RESULT_POPUP_DURATION_MS = 2400;
 
 /**
  * Picks a valid fixed-option bet for the current balance.
@@ -56,7 +57,9 @@ function pickValidBet(balance, currentBet) {
  *   settingsOpen: boolean,
  *   reducedMotion: boolean,
  *   spinProfile: Object,
+ *   symbolPayouts: Array<{name: string, label: string, emoji: string, multiplier: number}>,
  *   spin: () => void,
+ *   resetGame: () => void,
  *   selectBet: (nextBet: number) => void,
  *   onReelStop: (reelIndex?: number) => void,
  *   setTurboMode: (enabled: boolean) => void,
@@ -100,6 +103,24 @@ export function useSlotMachineController() {
     () => getSpinProfile({ turboMode, reducedMotion }),
     [turboMode, reducedMotion]
   );
+  const symbolPayouts = useMemo(() => {
+    const symbolDisplay = {
+      cherry: { code: '🍒', label: 'Cherries' },
+      bar: { code: '🍋', label: 'Lemon' },
+      bell: { code: '🔔', label: 'Bell' },
+      seven: { code: '7️⃣', label: 'Seven' },
+      none: { code: '⭐', label: 'Star' },
+    };
+
+    // Build UI payout info directly from GameState so the table and UI stay in sync.
+    const payoutTable = gameStateRef.current.getPayoutTable();
+    return Object.entries(payoutTable).map(([name, config]) => ({
+      name,
+      label: symbolDisplay[name]?.label ?? name,
+      emoji: symbolDisplay[name]?.code ?? '❔',
+      multiplier: config.multiplier,
+    }));
+  }, []);
 
   const clearAllTimers = useCallback(() => {
     timeoutIdsRef.current.forEach((id) => clearTimeout(id));
@@ -235,7 +256,7 @@ export function useSlotMachineController() {
       setBalance(spinResult.balance);
       setResult(spinResult.result);
       setWinTier(tier);
-      setNetGain(spinResult.result.payout - spinResult.betAmount);
+      setNetGain(spinResult.result.isWin ? spinResult.result.payout : 0);
       setStatusMessage(
         spinResult.result.isWin
           ? `${getFeedbackLabel(tier)} on ${finalSymbols[0].toUpperCase()}`
@@ -253,7 +274,7 @@ export function useSlotMachineController() {
         }
         startWinCounter(spinResult.result.payout, payoutDuration);
       }
-    }, resultRevealDelay + spinProfile.resultHoldDuration);
+    }, resultRevealDelay + RESULT_POPUP_DURATION_MS);
 
     const idleTimer = setTimeout(() => {
       setMachineState(MACHINE_STATES.IDLE);
@@ -265,7 +286,7 @@ export function useSlotMachineController() {
       } else {
         setDisplayedWin(0);
       }
-    }, resultRevealDelay + spinProfile.resultHoldDuration + payoutDuration);
+    }, resultRevealDelay + RESULT_POPUP_DURATION_MS + payoutDuration);
 
     timeoutIdsRef.current.push(resultTimer, payoutTimer, idleTimer);
   }, [
@@ -277,10 +298,28 @@ export function useSlotMachineController() {
     turboMode,
     soundEnabled,
     resultRevealDelay,
-    spinProfile.resultHoldDuration,
     reducedMotion,
     startWinCounter,
   ]);
+
+  const resetGame = useCallback(() => {
+    clearAllTimers();
+    gameStateRef.current.resetGame();
+
+    // Reset all derived UI state after GameState has been reset.
+    setBalance(gameStateRef.current.getBalance());
+    setBetAmount(pickValidBet(gameStateRef.current.getBalance(), gameStateRef.current.betAmount));
+    setNetGain(0);
+    setDisplayedWin(0);
+    setMachineState(MACHINE_STATES.IDLE);
+    setResult(null);
+    setWinTier(WIN_TIERS.LOSS);
+    setStatusMessage('Game reset. Place your bet.');
+    setControlsLocked(false);
+    setReelSymbols(['none', 'none', 'none']);
+    setNearMissHint(null);
+    setAutoSpin(false);
+  }, [clearAllTimers]);
 
   useEffect(() => {
     if (!autoSpin || controlsLocked || machineState !== MACHINE_STATES.IDLE) {
@@ -326,7 +365,9 @@ export function useSlotMachineController() {
     settingsOpen,
     reducedMotion,
     spinProfile,
+    symbolPayouts,
     spin,
+    resetGame,
     selectBet,
     onReelStop,
     setTurboMode,
