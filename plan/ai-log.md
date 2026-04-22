@@ -454,6 +454,28 @@ Constraints:
 
 Return updated components and explain key fixes briefly."
 
-Result:
+Result: Net gain is not working as intended. It is only counting with relative gain of the last turn rather than the total. Final slot spinner animation is not working. Betting functionality works as we asked. Sound is not working as intended. 
 
-What We Learned:
+What We Learned: Results showed on the screen should stay longer. We didn't see that many comments in the code produced, so we should include in the prompt that we want comments so that humans when looking back through it can understand what each prompt does.
+
+---
+Entry #7
+
+Prompt: "Update the existing slot machine UI (do not rewrite).
+
+Add/fix:
+- Reset button when balance = 0 → calls resetGame()
+- Info section/modal explaining symbols (emojis) + payouts
+- Result popup: stays ~2–3s, green for win, red for loss
+- “Net gain” should only show winnings (never negative, show 0 if loss)
+- Add clear comments for readability
+
+Constraints:
+- Use GameState as source of truth
+- Keep UI simple and mobile-friendly
+
+Return updated code."
+
+Result: There is a logic issue with how our payouts are calculated and monitored, since no matter the result our wins are not given. There are still no comments being made in the files.
+
+What We Learned: We should expand the test cases so that we are not just looking at the base functionality, but also the UI and edge cases. Because the auto-spin is difficult to turn off, we should hace a separate button. The info section was not clear, so we should specify what we want. We will likely be focusing out next prompt to debug our code with the specific issues and how we would want them to be fixed. 
