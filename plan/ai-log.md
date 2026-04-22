@@ -454,6 +454,7 @@ Constraints:
 
 Return updated components and explain key fixes briefly."
 
-Result:
+Result: Net gain is not working as intended. It is only counting with relative gain of the last turn rather than the total. Final slot spinner animation is not working. Betting functionality works as we asked. Sound is not working as intended. 
 
-What We Learned:
+What We Learned: Results showed on the screen should stay longer. We didn't see that many comments in the code produced, so we should include in the prompt that we want comments so that humans when looking back through it can understand what each prompt does.
+
