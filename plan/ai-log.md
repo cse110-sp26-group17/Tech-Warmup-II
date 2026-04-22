@@ -64,6 +64,7 @@ Result: It gave me a javascript file that runs in a browser console. Very barebo
 
 What we learned: Codex strongly optimized for instruction fidelity. Because the prompt constrained scope to a pure `GameState` logic module and explicitly excluded UI, it returned only JavaScript logic without adding HTML/CSS scaffolding. This was notable because the prompt was long and detailed, yet the model still did not drift into unrelated output. The practical takeaway is that tightly bounded prompts can reduce hallucinated extras and produce implementation-ready artifacts for one layer of the stack at a time.
 
+---
 Entry #2
 
 Prompt: Extend the existing GameState class with payout table and RTP (Return to Player) calculations. Do NOT rewrite the class—only add new properties and methods.
@@ -124,6 +125,7 @@ Result: It added new functions in the GameState.js which calculates the RTP. It 
 
 What we learned: Incremental extension prompts worked well for controlled evolution of the codebase. By saying "do NOT rewrite the class" and listing exact additions, the model preserved prior behavior while appending RTP and payout utilities with correct data-shape consistency. We also observed that response speed was high when prompts targeted backend logic only (no design or formatting requirements). The limitation remains visibility into final product quality until integration with UI and deployment, so future prompts should include lightweight verification checks after each extension.
 
+---
 Entry #3 
 
 Prompt: Extend the existing GameState class with win detection logic that evaluates spin results. Do NOT rewrite the class—only add new methods and modify the spin() method as specified.
@@ -178,6 +180,7 @@ Result: It expanded the GameState.js file and added the win detection algorithm.
 
 What we learned: The model handled feature growth reliably when tasks were decomposed into explicit, testable deltas (new methods + one targeted method modification). It inserted win detection and payout credit flow in the expected location without disrupting validation order, which suggests strong compliance with step-by-step constraints. However, this phase reinforced that correctness in isolated logic does not equal user-facing completeness; without an interface, it is hard to assess usability, feedback clarity, and end-to-end flow. The next phase should pair UI generation prompts with strict acceptance criteria so we can validate both functional behavior and presentation quality.
 
+---
 Entry #4
 
 Prompt: "You are building a mobile-first slot machine UI that connects to an existing GameState class.
@@ -286,15 +289,15 @@ v. Controller
 
 What We Learned: We have to be more specific in what files we need/want created. We should specify what technologies we want to deploy. This came as a result of us not being given an html file. 
 
+---
 Entry #5
 
 Prompt: "You are building a COMPLETE, RUNNABLE slot machine web app using an existing GameState class.
 
 Your priority is NOT just UI components — your priority is a working app that can be opened and run locally.
 
----
 
-## PRIMARY GOAL
+### PRIMARY GOAL
 
 Generate a fully runnable project with:
 
@@ -305,9 +308,8 @@ Generate a fully runnable project with:
 
 The app must work when opened or started (no missing wiring).
 
----
 
-## PROJECT STRUCTURE
+### PROJECT STRUCTURE
 
 Provide a clean structure like:
 
@@ -322,9 +324,8 @@ package.json (if using React + Vite or similar)
 * Ensure all imports resolve correctly
 * No missing files
 
----
 
-## CORE FUNCTIONALITY
+### CORE FUNCTIONALITY
 
 * Use GameState.spinWithPayout(betAmount)
 
@@ -342,9 +343,8 @@ package.json (if using React + Vite or similar)
 * Implement state flow:
 idle → spinning → result → payout → idle
 
----
 
-## UI/UX REQUIREMENTS (SIMPLIFIED)
+### UI/UX REQUIREMENTS (SIMPLIFIED)
 
 * Mobile-first layout (portrait style)
 
@@ -361,9 +361,8 @@ idle → spinning → result → payout → idle
 * Loss
 * Win (small vs big visually different)
 
----
 
-## IMPORTANT: RUNNABILITY
+### IMPORTANT: RUNNABILITY
 
 You MUST:
 
@@ -378,9 +377,8 @@ DO NOT:
 * Output only components without entry point
 * Leave the app in a non-runnable state
 
----
 
-## CODE QUALITY REQUIREMENTS
+### CODE QUALITY REQUIREMENTS
 
 * Use small, modular components (no giant files)
 * Use clear naming
@@ -388,18 +386,14 @@ DO NOT:
 * Include JSDoc comments for major functions
 * Handle errors (invalid bet, insufficient balance)
 
----
 
-## TESTING (BASIC)
+### TESTING (BASIC)
 
 * Include at least 1–2 simple unit tests (e.g., GameState behavior)
 * Use a simple framework (Vitest or Jest)
 
----
 
-
-
-## CONSTRAINTS FROM ASSIGNMENT
+### CONSTRAINTS FROM ASSIGNMENT
 
 * Code must be:
 
@@ -409,19 +403,17 @@ DO NOT:
 * Everything must exist in the repo structure
 * Do NOT simulate commits — just generate files
 
----
-
-## OUTPUT FORMAT
+### OUTPUT FORMAT
 
 * Show ALL files with filenames clearly labeled
 * Ensure nothing is missing
 * Include run instructions at the end
 
----
+
 
 Goal: A clean, minimal but COMPLETE slot machine app that actually runs, not just a collection of components."
 
-Result:
+Result: There is now an html file. When running the program, the last slot in the spinner may glitch and take longer before settling into place (animation). There is an option for enabling sound and reducing motion. Fix auto-spin not being able to stop
 
-What We Learned: 
+What We Learned: Longer prompts take a lot longer. By making it shorter and reasonable, the AI will take less time to make the necessary files. We would also have to be more specific with what we want labelled. We learned also that we want changes to how the UI/UX turned out, since that affects how engaging. Because there was no reset button, the ease of starting over and playing was compromised, so we want to change what is displayed in the slot, change what is being tracked, and how we can change the bets.
 
