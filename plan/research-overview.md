@@ -30,6 +30,6 @@ Maps fifteen detailed user stories to both personas (and shared needs), with acc
 Synthesizes visual language (color, typography, symbols), the fast spin cycle and primary controls, tiered audio and visual win feedback, HUD and navigation patterns, psychological patterns used in the genre, mobile layout and haptics, thematic cohesion, a recommended end-to-end flow, accessibility expectations, and explicit must/should/nice-to-have UX requirements plus prompting constraints for consistent, state-aware UI implementation.
 
 ## Team roster 
-1. 
+1. Jorell Jusay - User Stories 1, 3, 4
 2. 
 
