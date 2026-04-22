@@ -225,11 +225,11 @@ playSpinSound(), playStopSound(), playWinSound(tier)
 - Spin button (primary)
 - Bet +/- and Max Bet
 - Optional:
- - Auto-spin
- - Turbo mode
+  i Auto-spin
+  ii. Turbo mode
 - Simple settings overlay:
- - Sound toggle
- - Reduced motion toggle
+  i. Sound toggle
+  ii. Reduced motion toggle
 ### ACCESSIBILITY
 - High contrast for all numbers
 - Do not rely on color alone for feedback
@@ -238,9 +238,9 @@ playSpinSound(), playStopSound(), playWinSound(tier)
 ### ARCHITECTURE
 - Do NOT use a single monolithic component
 - Separate:
- - UI components
- - State controller
- - Animation logic
+  i. UI components
+  ii. State controller
+  iii. Animation logic
 Suggested components:
 Reel, SlotMachine, HUD, SpinButton, WinOverlay
 ### GAMESTATE INTEGRATION
@@ -267,12 +267,12 @@ DO NOT:
 Goal: A smooth, engaging slot machine UI with fast gameplay, clear feedback, and strong visual hierarchy."
 
 Result: We got a several jsx files and a css file, but no runnable html. 
-- Slot Machine.jsx
-- Animations
+i. Slot Machine.jsx
+ii. Animations
  - reelAnimation.js
-- Audio
+iii. Audio
  - soundHooks.js
-- Components
+iv. Components
  - BetControls.jsx
  - HUD.jsx
  - Reel.jsx
@@ -280,7 +280,7 @@ Result: We got a several jsx files and a css file, but no runnable html.
  - SettingsOverlay.jsx
  - SpinButton.jsx
  - WinOverlay.jsx
-- Controller
+v. Controller
  - useSlotMachineController.js
 
 What We Learned: We have to be more specific in what files we need/want created. We should specify what technologies we want to deploy. This came as a result of us not being given an html file. 
