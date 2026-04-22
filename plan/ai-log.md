@@ -177,3 +177,110 @@ CODE REQUIREMENTS:
 Result: It expanded the GameState.js file and added the win detection algorithm. It also edited the spin method with the specific instructions.
 
 What we learned: The model handled feature growth reliably when tasks were decomposed into explicit, testable deltas (new methods + one targeted method modification). It inserted win detection and payout credit flow in the expected location without disrupting validation order, which suggests strong compliance with step-by-step constraints. However, this phase reinforced that correctness in isolated logic does not equal user-facing completeness; without an interface, it is hard to assess usability, feedback clarity, and end-to-end flow. The next phase should pair UI generation prompts with strict acceptance criteria so we can validate both functional behavior and presentation quality.
+
+Entry #4
+Prompt: "You are building a mobile-first slot machine UI that connects to an existing GameState class.
+Your goal is to create a polished, responsive frontend with clear state transitions, fast interaction, and strong visual feedback.
+### CORE STRUCTURE
+- Use a clear state machine:
+- idle → spinning → result → payout → idle
+- Prevent input during spinning
+- Each state must have distinct visual feedback
+### LAYOUT (MOBILE-FIRST)
+1. Portrait layout with 3 sections:
+ - Top HUD:
+ - Balance
+ - Bet
+ - Last Win
+2. Center:
+ - 3 animated reels (main focus)
+3. Bottom:
+ - Large SPIN button (primary action)
+ - Bet controls (+ / - / Max)
+### VISUAL DESIGN
+- Dark casino theme (black/purple background)
+- Gold/red for wins and high-value symbols
+- Neon glow accents
+- Large, prominent win text
+- Spin button must be most visually dominant
+### INTERACTION LOOP
+Set Bet → Spin → Animate Reels → Show Result → Feedback → Idle
+- Total loop: ~2–4 seconds
+- Support turbo mode (<1s animation)
+### FEEDBACK SYSTEM
+Differentiate win tiers visually:
+- Loss → minimal feedback
+- Small win → highlight + small animation
+- Medium → screen flash + particles
+- Big → large animation + counting win text
+- Jackpot → full-screen celebration
+Include sound hooks:
+playSpinSound(), playStopSound(), playWinSound(tier)
+### GAME FEEL REQUIREMENTS
+- Reels spin vertically with staggered stops
+- Occasionally show near-miss visuals (no RNG impact)
+- Treat small payouts as wins (even if < bet)
+- Keep loop fast and frictionless
+### CONTROLS & SETTINGS
+- Spin button (primary)
+- Bet +/- and Max Bet
+- Optional:
+ - Auto-spin
+ - Turbo mode
+- Simple settings overlay:
+ - Sound toggle
+ - Reduced motion toggle
+### ACCESSIBILITY
+- High contrast for all numbers
+- Do not rely on color alone for feedback
+- Large tap targets
+- Support reduced motion
+### ARCHITECTURE
+- Do NOT use a single monolithic component
+- Separate:
+ - UI components
+ - State controller
+ - Animation logic
+Suggested components:
+Reel, SlotMachine, HUD, SpinButton, WinOverlay
+### GAMESTATE INTEGRATION
+Use:
+gameState.spinWithPayout(betAmount)
+Display:
+- Updated balance
+- Win/loss result
+- Last win
+### OUTPUT
+- Use React (preferred) or vanilla JS
+- Functional components
+- Include basic animations
+- Use placeholder symbols (text/emojis OK)
+### CONSTRAINTS
+DO:
+- Make spin button dominant
+- Clearly show state transitions
+- Use animation for feedback
+DO NOT:
+- Hide state changes
+- Use static reels
+- Block gameplay with menus
+Goal: A smooth, engaging slot machine UI with fast gameplay, clear feedback, and strong visual hierarchy."
+
+Result: We got a several jsx files and a css file, but no runnable html. 
+- Slot Machine.jsx
+- Animations
+ - reelAnimation.js
+- Audio
+ - soundHooks.js
+- Components
+ - BetControls.jsx
+ - HUD.jsx
+ - Reel.jsx
+ - ReelSet.jsx
+ - SettingsOverlay.jsx
+ - SpinButton.jsx
+ - WinOverlay.jsx
+- Controller
+ - useSlotMachineController.js
+
+What We Learned: We have to be more specific in what files we need/want created. We should specify what technologies we want to deploy. This came as a result of us not being given an html file. 
