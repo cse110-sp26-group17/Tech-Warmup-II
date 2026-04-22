@@ -64,6 +64,7 @@ Result: It gave me a javascript file that runs in a browser console. Very barebo
 
 What we learned: Codex strongly optimized for instruction fidelity. Because the prompt constrained scope to a pure `GameState` logic module and explicitly excluded UI, it returned only JavaScript logic without adding HTML/CSS scaffolding. This was notable because the prompt was long and detailed, yet the model still did not drift into unrelated output. The practical takeaway is that tightly bounded prompts can reduce hallucinated extras and produce implementation-ready artifacts for one layer of the stack at a time.
 
+---
 Entry #2
 
 Prompt: Extend the existing GameState class with payout table and RTP (Return to Player) calculations. Do NOT rewrite the class—only add new properties and methods.
@@ -124,6 +125,7 @@ Result: It added new functions in the GameState.js which calculates the RTP. It 
 
 What we learned: Incremental extension prompts worked well for controlled evolution of the codebase. By saying "do NOT rewrite the class" and listing exact additions, the model preserved prior behavior while appending RTP and payout utilities with correct data-shape consistency. We also observed that response speed was high when prompts targeted backend logic only (no design or formatting requirements). The limitation remains visibility into final product quality until integration with UI and deployment, so future prompts should include lightweight verification checks after each extension.
 
+---
 Entry #3 
 
 Prompt: Extend the existing GameState class with win detection logic that evaluates spin results. Do NOT rewrite the class—only add new methods and modify the spin() method as specified.
@@ -177,3 +179,329 @@ CODE REQUIREMENTS:
 Result: It expanded the GameState.js file and added the win detection algorithm. It also edited the spin method with the specific instructions.
 
 What we learned: The model handled feature growth reliably when tasks were decomposed into explicit, testable deltas (new methods + one targeted method modification). It inserted win detection and payout credit flow in the expected location without disrupting validation order, which suggests strong compliance with step-by-step constraints. However, this phase reinforced that correctness in isolated logic does not equal user-facing completeness; without an interface, it is hard to assess usability, feedback clarity, and end-to-end flow. The next phase should pair UI generation prompts with strict acceptance criteria so we can validate both functional behavior and presentation quality.
+
+---
+Entry #4
+
+Prompt: "You are building a mobile-first slot machine UI that connects to an existing GameState class.
+Your goal is to create a polished, responsive frontend with clear state transitions, fast interaction, and strong visual feedback.
+### CORE STRUCTURE
+- Use a clear state machine:
+- idle → spinning → result → payout → idle
+- Prevent input during spinning
+- Each state must have distinct visual feedback
+### LAYOUT (MOBILE-FIRST)
+1. Portrait layout with 3 sections:
+ - Top HUD:
+ - Balance
+ - Bet
+ - Last Win
+2. Center:
+ - 3 animated reels (main focus)
+3. Bottom:
+ - Large SPIN button (primary action)
+ - Bet controls (+ / - / Max)
+### VISUAL DESIGN
+- Dark casino theme (black/purple background)
+- Gold/red for wins and high-value symbols
+- Neon glow accents
+- Large, prominent win text
+- Spin button must be most visually dominant
+### INTERACTION LOOP
+Set Bet → Spin → Animate Reels → Show Result → Feedback → Idle
+- Total loop: ~2–4 seconds
+- Support turbo mode (<1s animation)
+### FEEDBACK SYSTEM
+Differentiate win tiers visually:
+- Loss → minimal feedback
+- Small win → highlight + small animation
+- Medium → screen flash + particles
+- Big → large animation + counting win text
+- Jackpot → full-screen celebration
+Include sound hooks:
+playSpinSound(), playStopSound(), playWinSound(tier)
+### GAME FEEL REQUIREMENTS
+- Reels spin vertically with staggered stops
+- Occasionally show near-miss visuals (no RNG impact)
+- Treat small payouts as wins (even if < bet)
+- Keep loop fast and frictionless
+### CONTROLS & SETTINGS
+- Spin button (primary)
+- Bet +/- and Max Bet
+- Optional:
+  i Auto-spin
+  ii. Turbo mode
+- Simple settings overlay:
+  i. Sound toggle
+  ii. Reduced motion toggle
+### ACCESSIBILITY
+- High contrast for all numbers
+- Do not rely on color alone for feedback
+- Large tap targets
+- Support reduced motion
+### ARCHITECTURE
+- Do NOT use a single monolithic component
+- Separate:
+  i. UI components
+  ii. State controller
+  iii. Animation logic
+Suggested components:
+Reel, SlotMachine, HUD, SpinButton, WinOverlay
+### GAMESTATE INTEGRATION
+Use:
+gameState.spinWithPayout(betAmount)
+Display:
+- Updated balance
+- Win/loss result
+- Last win
+### OUTPUT
+- Use React (preferred) or vanilla JS
+- Functional components
+- Include basic animations
+- Use placeholder symbols (text/emojis OK)
+### CONSTRAINTS
+DO:
+- Make spin button dominant
+- Clearly show state transitions
+- Use animation for feedback
+DO NOT:
+- Hide state changes
+- Use static reels
+- Block gameplay with menus
+Goal: A smooth, engaging slot machine UI with fast gameplay, clear feedback, and strong visual hierarchy."
+
+Result: We got a several jsx files and a css file, but no runnable html. 
+i. Slot Machine.jsx
+ii. Animations
+ - reelAnimation.js
+iii. Audio
+ - soundHooks.js
+iv. Components
+ - BetControls.jsx
+ - HUD.jsx
+ - Reel.jsx
+ - ReelSet.jsx
+ - SettingsOverlay.jsx
+ - SpinButton.jsx
+ - WinOverlay.jsx
+v. Controller
+ - useSlotMachineController.js
+
+What We Learned: We have to be more specific in what files we need/want created. We should specify what technologies we want to deploy. This came as a result of us not being given an html file. 
+
+---
+Entry #5
+
+Prompt: "You are building a COMPLETE, RUNNABLE slot machine web app using an existing GameState class.
+
+Your priority is NOT just UI components — your priority is a working app that can be opened and run locally.
+
+
+### PRIMARY GOAL
+
+Generate a fully runnable project with:
+
+* index.html (entry point)
+* All JS/React files wired correctly
+* Styles (CSS or Tailwind)
+* Clear instructions to run the app
+
+The app must work when opened or started (no missing wiring).
+
+
+### PROJECT STRUCTURE
+
+Provide a clean structure like:
+
+/src
+/components
+/state
+main.jsx or index.js
+index.html
+package.json (if using React + Vite or similar)
+
+* Ensure index.html properly mounts the app
+* Ensure all imports resolve correctly
+* No missing files
+
+
+### CORE FUNCTIONALITY
+
+* Use GameState.spinWithPayout(betAmount)
+
+* Display:
+
+* Balance
+* Bet
+* Last Win
+
+* Allow:
+
+* Spin
+* Adjust bet
+
+* Implement state flow:
+idle → spinning → result → payout → idle
+
+
+### UI/UX REQUIREMENTS (SIMPLIFIED)
+
+* Mobile-first layout (portrait style)
+
+* Large, dominant SPIN button (bottom)
+
+* Center reel display (animated)
+
+* Top HUD (balance, bet, last win)
+
+* Animate reels vertically
+
+* Show clear feedback for:
+
+* Loss
+* Win (small vs big visually different)
+
+
+### IMPORTANT: RUNNABILITY
+
+You MUST:
+
+* Include index.html
+* Include script mounting (ReactDOM or equivalent)
+* Include package.json if needed
+* Include exact steps to run:
+(example: npm install → npm run dev)
+
+DO NOT:
+
+* Output only components without entry point
+* Leave the app in a non-runnable state
+
+
+### CODE QUALITY REQUIREMENTS
+
+* Use small, modular components (no giant files)
+* Use clear naming
+* Avoid duplicate code
+* Include JSDoc comments for major functions
+* Handle errors (invalid bet, insufficient balance)
+
+
+### TESTING (BASIC)
+
+* Include at least 1–2 simple unit tests (e.g., GameState behavior)
+* Use a simple framework (Vitest or Jest)
+
+
+### CONSTRAINTS FROM ASSIGNMENT
+
+* Code must be:
+
+* Clean (modular, readable)
+* Documented (JSDoc)
+* Testable
+* Everything must exist in the repo structure
+* Do NOT simulate commits — just generate files
+
+### OUTPUT FORMAT
+
+* Show ALL files with filenames clearly labeled
+* Ensure nothing is missing
+* Include run instructions at the end
+
+
+
+Goal: A clean, minimal but COMPLETE slot machine app that actually runs, not just a collection of components."
+
+Result: There is now an html file. When running the program, the last slot in the spinner may glitch and take longer before settling into place (animation). There is an option for enabling sound and reducing motion. Fix auto-spin not being able to stop
+
+What We Learned: Longer prompts take a lot longer. By making it shorter and reasonable, the AI will take less time to make the necessary files. We would also have to be more specific with what we want labelled. We learned also that we want changes to how the UI/UX turned out, since that affects how engaging. Because there was no reset button, the ease of starting over and playing was compromised, so we want to change what is displayed in the slot, change what is being tracked, and how we can change the bets.
+
+---
+Entry #6
+
+Prompt: "Update the existing slot machine UI code (do not rewrite from scratch). Fix and improve the following:
+
+1. Sound
+- Ensure sounds trigger reliably on spin and win
+- Prevent overlapping audio (stop or reset before replay)
+- Add clear separation: spin sound vs win sound
+
+2. Betting System
+- Replace free input with fixed bet options (e.g. 5, 10, 25, 50, 100)
+- Allow selection via buttons
+- Visually highlight the selected bet
+
+3. Spinning Animation
+- Fix any bugs where reels stop instantly or desync
+- Ensure a 1–2 second animation before showing results
+- Reels should stop sequentially (slight delay between each)
+
+4. Reel Display
+- Replace numbers with emoji symbols (:cherries: :lemon: :bell: :star: :seven:)
+- Use getSymbolName() to map values correctly
+
+5. Result Display
+- Replace “last win” with “net gain”
+- Net gain = payout - betAmount
+- Display clearly (+/-) and update after each spin
+
+Constraints:
+- Keep using the existing GameState class
+- Do not duplicate logic already in GameState
+- Keep UI simple and mobile-friendly
+- Only modify what’s necessary
+
+Return updated components and explain key fixes briefly."
+
+Result: Net gain is not working as intended. It is only counting with relative gain of the last turn rather than the total. Final slot spinner animation is not working. Betting functionality works as we asked. Sound is not working as intended. 
+
+What We Learned: Results showed on the screen should stay longer. We didn't see that many comments in the code produced, so we should include in the prompt that we want comments so that humans when looking back through it can understand what each prompt does.
+
+---
+Entry #7
+
+Prompt: "Update the existing slot machine UI (do not rewrite).
+
+Add/fix:
+- Reset button when balance = 0 → calls resetGame()
+- Info section/modal explaining symbols (emojis) + payouts
+- Result popup: stays ~2–3s, green for win, red for loss
+- “Net gain” should only show winnings (never negative, show 0 if loss)
+- Add clear comments for readability
+
+Constraints:
+- Use GameState as source of truth
+- Keep UI simple and mobile-friendly
+
+Return updated code."
+
+Result: There is a logic issue with how our payouts are calculated and monitored, since no matter the result our wins are not given. There are still no comments being made in the files.
+
+What We Learned: We should expand the test cases so that we are not just looking at the base functionality, but also the UI and edge cases. Because the auto-spin is difficult to turn off, we should hace a separate button. The info section was not clear, so we should specify what we want. We will likely be focusing out next prompt to debug our code with the specific issues and how we would want them to be fixed. 
+
+---
+Entry #8
+
+Prompt: "Update the existing slot machine UI (do not rewrite).
+
+Add/fix:
+- Stop Auto-Spin button (toggles auto-spin off immediately)
+- Fix last reel animation so all reels are synced and stop correctly
+- Fix win logic bug (user should win when all symbols match)
+- Improve info section: clearly show emoji + payout (e.g. :star::star: → +$100)
+- Result popup: stays ~2–3s, green (win) / red (loss)
+- Net gain: show winnings only (never negative, 0 if loss)
+- Reset button when balance = 0 → calls resetGame()
+- Add more unit tests for spin, payout, and edge cases
+- Add clear comments for readability
+
+Constraints:
+- Use GameState as source of truth
+- Keep UI simple and mobile-friendly
+
+Return updated code + tests."
+
+Result: The animation for the last spinner is fixed. Auto-spin has a button to stop it. Last win still applies to the last roll rather than the full game lifetime.
+
+What We Learned: The odds of winning are very low so we should improve those. We need to improve the information section because it has repition. We need more clarity on the results message. In future sessions, fix/adjust the UI since visually it is bland. There are two win displays, so we should get rid of the second underneath the slots because it serves little functionality and is repetitive. 

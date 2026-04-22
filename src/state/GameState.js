@@ -28,12 +28,16 @@ class GameState {
    * @param {number} betAmount - Bet amount to use for this spin.
    * @returns {{reels: number[], balance: number, betAmount: number, result: Object}} Spin result details.
    * @throws {Error} If a spin is already in progress.
+   * @throws {Error} If the bet amount is not a finite number.
    * @throws {Error} If the bet amount is less than 1.
    * @throws {Error} If the bet amount exceeds available balance.
    */
   spin(betAmount) {
     if (this.isSpinning === true) {
       throw new Error('Spin already in progress');
+    }
+    if (!Number.isFinite(betAmount)) {
+      throw new Error('Bet amount must be a valid number');
     }
     if (betAmount < 1) {
       throw new Error('Bet amount must be at least 1');
@@ -59,7 +63,7 @@ class GameState {
     };
     this.gameHistory.push(spinRecord);
 
-    const evalResult = this.evaluateSpin(reels);
+    const evalResult = this.evaluateSpin(reels, betAmount);
     spinRecord.result = evalResult;
 
     this.isSpinning = false;
@@ -67,7 +71,7 @@ class GameState {
     return {
       reels,
       balance: this.balance,
-      betAmount: this.betAmount,
+      betAmount,
       result: evalResult,
     };
   }
@@ -172,10 +176,15 @@ class GameState {
    * Evaluates whether a spin result is a win and computes payout details.
    *
    * @param {number[]} reels - Array of 3 reel positions [0-9, 0-9, 0-9].
+   * @param {number} [betAmount=this.betAmount] - Bet used to compute payout for this result.
    * @returns {Object} { isWin: boolean, symbolName: string, multiplier: number, payout: number }.
    */
-  evaluateSpin(reels) {
-    if (!(reels[0] === reels[1] && reels[1] === reels[2])) {
+  evaluateSpin(reels, betAmount = this.betAmount) {
+    const symbols = reels.map((reelValue) => this.getSymbolName(reelValue));
+    const allSymbolsMatch = symbols[0] === symbols[1] && symbols[1] === symbols[2];
+
+    // Win when all three symbols match, even if reel numbers differ inside a symbol bucket.
+    if (!allSymbolsMatch) {
       return {
         isWin: false,
         symbolName: 'none',
@@ -184,9 +193,9 @@ class GameState {
       };
     }
 
-    const symbolName = this.getSymbolName(reels[0]);
+    const symbolName = symbols[0];
     const multiplier = this.getSymbolMultiplier(symbolName);
-    const payout = multiplier * this.betAmount;
+    const payout = multiplier * betAmount;
 
     return {
       isWin: true,
