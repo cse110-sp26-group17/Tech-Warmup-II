@@ -476,6 +476,6 @@ Constraints:
 
 Return updated code."
 
-Result:
+Result: There is a logic issue with how our payouts are calculated and monitored, since no matter the result our wins are not given. There are still no comments being made in the files.
 
-What We Learned:
+What We Learned: We should expand the test cases so that we are not just looking at the base functionality, but also the UI and edge cases. Because the auto-spin is difficult to turn off, we should hace a separate button. The info section was not clear, so we should specify what we want. We will likely be focusing out next prompt to debug our code with the specific issues and how we would want them to be fixed. 
