@@ -74,7 +74,16 @@ describe('GameState', () => {
     const gameState = new GameState(25);
 
     expect(() => gameState.spinWithPayout(0)).toThrow('Bet amount must be at least 1');
+    expect(() => gameState.spinWithPayout(-5)).toThrow('Bet amount must be at least 1');
+    expect(() => gameState.spinWithPayout(Number.NaN)).toThrow('Bet amount must be a valid number');
+    expect(() => gameState.spinWithPayout(101)).toThrow('Bet amount must be at most 100');
     expect(() => gameState.spinWithPayout(50)).toThrow('Insufficient balance for bet');
+  });
+
+  it('prevents spin attempts with zero balance and no free rolls', () => {
+    const gameState = new GameState(0);
+
+    expect(() => gameState.spinWithPayout(10)).toThrow('Insufficient balance for bet');
   });
 
   it('throws if spin is called while a spin is already in progress', () => {
@@ -123,6 +132,21 @@ describe('GameState', () => {
     expect(result.result.symbolName).toBe('seven');
     expect(result.result.jackpotBonus).toBe(650);
     expect(result.result.totalPayout).toBe(745);
+    expect(gameState.progressiveJackpotPool).toBe(500);
+  });
+
+  it('treats all-five matching sevens as jackpot and highest match tier', () => {
+    const gameState = new GameState(1000);
+    gameState.progressiveJackpotPool = 800;
+    vi.spyOn(gameState, 'generateSpinReels').mockReturnValue([6, 7, 6, 7, 6]);
+
+    const outcome = gameState.spinWithPayout(10);
+
+    expect(outcome.result.isWin).toBe(true);
+    expect(outcome.result.matchCount).toBe(5);
+    expect(outcome.result.multiplier).toBe(28.5);
+    expect(outcome.result.jackpotBonus).toBe(800);
+    expect(outcome.result.totalPayout).toBe(1085);
     expect(gameState.progressiveJackpotPool).toBe(500);
   });
 
@@ -218,6 +242,16 @@ describe('GameState', () => {
   it('returns 0 multiplier for unknown symbols', () => {
     const gameState = new GameState(100);
     expect(gameState.getSymbolMultiplier('unknown')).toBe(0);
+  });
+
+  it('detects a full no-match loss outcome', () => {
+    const gameState = new GameState(100);
+    const result = gameState.evaluateSpin([0, 2, 4, 6, 8], 25);
+
+    expect(result.isWin).toBe(false);
+    expect(result.symbolName).toBe('none');
+    expect(result.matchCount).toBe(1);
+    expect(result.payout).toBe(0);
   });
 
   it('consumes a free roll and skips bet deduction', () => {

@@ -1,8 +1,24 @@
+import {
+  reelValueToSymbolName,
+  REEL_SYMBOL_ORDER,
+  SYMBOL_DISPLAY,
+} from '../constants/symbols';
+
+export { SYMBOL_DISPLAY };
+
 export const MACHINE_STATES = Object.freeze({
   IDLE: 'idle',
   SPINNING: 'spinning',
   RESULT: 'result',
   PAYOUT: 'payout',
+});
+
+export const MACHINE_EVENTS = Object.freeze({
+  START_SPIN: 'start_spin',
+  SHOW_RESULT: 'show_result',
+  START_PAYOUT: 'start_payout',
+  END_SPIN: 'end_spin',
+  RESET: 'reset',
 });
 
 export const WIN_TIERS = Object.freeze({
@@ -13,36 +29,13 @@ export const WIN_TIERS = Object.freeze({
   JACKPOT: 'jackpot',
 });
 
-export const SYMBOL_DISPLAY = Object.freeze({
-  cherry: { code: '🍒', label: 'Cherry' },
-  bar: { code: '🍋', label: 'Lemon' },
-  bell: { code: '🔔', label: 'Bell' },
-  seven: { code: '7️⃣', label: 'Seven' },
-  none: { code: '⭐', label: 'Star' },
-  bonus: { code: '🎁', label: 'Bonus' },
-});
-
-const SYMBOL_ORDER = ['cherry', 'bar', 'bell', 'seven', 'none'];
-
 /**
  * Converts a raw reel integer to its symbol name.
- * @param {number} reelValue - Raw reel value (0–9).
+ * @param {number} reelValue - Raw reel value (0-9).
  * @returns {'cherry' | 'bar' | 'bell' | 'seven' | 'none'}
  */
 export function reelToSymbolName(reelValue) {
-  if (reelValue >= 0 && reelValue <= 1) {
-    return 'cherry';
-  }
-  if (reelValue >= 2 && reelValue <= 3) {
-    return 'bar';
-  }
-  if (reelValue >= 4 && reelValue <= 5) {
-    return 'bell';
-  }
-  if (reelValue >= 6 && reelValue <= 7) {
-    return 'seven';
-  }
-  return 'none';
+  return reelValueToSymbolName(reelValue);
 }
 
 /**
@@ -50,8 +43,39 @@ export function reelToSymbolName(reelValue) {
  * @returns {string}
  */
 export function getRandomSymbol() {
-  const randomIndex = Math.floor(Math.random() * SYMBOL_ORDER.length);
-  return SYMBOL_ORDER[randomIndex];
+  const randomIndex = Math.floor(Math.random() * REEL_SYMBOL_ORDER.length);
+  return REEL_SYMBOL_ORDER[randomIndex];
+}
+
+/**
+ * Applies a guarded machine-state transition.
+ * Invalid transitions return the current state unchanged.
+ * @param {string} currentState
+ * @param {string} eventName
+ * @returns {string}
+ */
+export function transitionMachineState(currentState, eventName) {
+  if (eventName === MACHINE_EVENTS.RESET) {
+    return MACHINE_STATES.IDLE;
+  }
+
+  if (eventName === MACHINE_EVENTS.START_SPIN) {
+    return currentState === MACHINE_STATES.IDLE ? MACHINE_STATES.SPINNING : currentState;
+  }
+
+  if (eventName === MACHINE_EVENTS.SHOW_RESULT) {
+    return currentState === MACHINE_STATES.SPINNING ? MACHINE_STATES.RESULT : currentState;
+  }
+
+  if (eventName === MACHINE_EVENTS.START_PAYOUT) {
+    return currentState === MACHINE_STATES.RESULT ? MACHINE_STATES.PAYOUT : currentState;
+  }
+
+  if (eventName === MACHINE_EVENTS.END_SPIN) {
+    return MACHINE_STATES.IDLE;
+  }
+
+  return currentState;
 }
 
 /**
@@ -181,17 +205,17 @@ export function getMachineTemperatureBadge(recentResults) {
 }
 
 /**
- * Returns the next symbol in SYMBOL_ORDER after the given one, skipping 'none'.
+ * Returns the next symbol in REEL_SYMBOL_ORDER after the given one, skipping 'none'.
  * @param {string} symbolName - Current symbol key.
  * @returns {string} Adjacent symbol name.
  */
 function getAdjacentSymbol(symbolName) {
-  const currentIndex = SYMBOL_ORDER.indexOf(symbolName);
+  const currentIndex = REEL_SYMBOL_ORDER.indexOf(symbolName);
   if (currentIndex < 0) {
     return 'bar';
   }
-  const nextIndex = (currentIndex + 1) % SYMBOL_ORDER.length;
-  const nextSymbol = SYMBOL_ORDER[nextIndex];
+  const nextIndex = (currentIndex + 1) % REEL_SYMBOL_ORDER.length;
+  const nextSymbol = REEL_SYMBOL_ORDER[nextIndex];
   if (nextSymbol === 'none') {
     return 'bell';
   }
@@ -200,7 +224,7 @@ function getAdjacentSymbol(symbolName) {
 
 /**
  * Creates a near-miss animation hint when the first two reels match but the third does not.
- * Returns null if the spin was a win, the pattern doesn't qualify, or a random threshold is not met.
+ * Returns null if the spin was a win, the pattern does not qualify, or a random threshold is not met.
  * @param {{isWin: boolean, finalSymbols: string[]}} options
  * @returns {{reelIndex: number, previewSymbol: string, finalMissSymbol: string, previewDurationMs: number, slowDownFactor: number, bannerText: string, message: string} | null}
  */

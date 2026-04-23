@@ -8,6 +8,7 @@ import SettingsOverlay from './components/overlays/SettingsOverlay';
 import SymbolInfoModal from './components/overlays/SymbolInfoModal';
 import StreakCounter from './components/indicators/StreakCounter';
 import LuckMeter from './components/indicators/LuckMeter';
+import RecentSpins from './components/indicators/RecentSpins';
 import WinsTicker from './components/feed/WinsTicker';
 import { useSlotMachineController } from './hooks/useSlotMachineController';
 import { formatCredits } from './utils/formatCredits';
@@ -176,7 +177,7 @@ export default function SlotMachine() {
                   {topWins.map((entry, index) => (
                     <p key={`${entry.timestamp}-${index}`} className="hall-of-fame-item">
                       #{index + 1} +{formatCredits(entry.payout)} VC{' '}
-                      {typeof entry.symbolName === 'string' ? entry.symbolName.toUpperCase() : 'WIN'} ·{' '}
+                      {typeof entry.symbolName === 'string' ? entry.symbolName.toUpperCase() : 'WIN'} |{' '}
                       {formatRelativeTime(entry.timestamp)}
                     </p>
                   ))}
@@ -207,6 +208,8 @@ export default function SlotMachine() {
               </div>
             </article>
           </div>
+
+          <RecentSpins recentResults={recentResults} />
         </section>
       </details>
 

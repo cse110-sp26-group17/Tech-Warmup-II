@@ -1055,3 +1055,63 @@ Strict constraints like "no logic edits" help keep the output safe and reviewabl
 
 ---
 
+## Prompt 21:
+
+### Prompt:
+Refactor and clean up this slot machine app's codebase. You must follow
+  ALL of these requirements:
+
+  ## Clean Code Standards
+  - Use meaningful, descriptive names for all variables, functions, and
+  - Eliminate all duplicate code (DRY principle — Don't Repeat Yourself)
+  - Handle all errors gracefully with proper error handling
+  - Apply appropriate abstraction and modularity
+  - Structure code so it is easy to update and extend
+  - Prioritize clear, readable code over clever code — the codebase should
+  ## Linting & Validation (run as code is generated)
+  - HTML: Valid, semantic markup — pass W3C HTML validation standards
+  - CSS: Clean, consistent styling — no unused rules, proper cascade usage
+  - JavaScript: Follow a consistent JS style guide (ESLint-compatible) — no
+  unused variables, no implicit globals, consistent formatting
+
+  ## Test Cases & Edge Cases
+  Add thorough test cases for all major features of the slot machine app,
+  including but not limited to:
+  - Spinning the reels (normal flow)
+  - Win condition detection (matching symbols)
+  - Loss condition detection
+  - Balance/credits updating correctly after wins and losses
+  - Betting logic — minimum bet, maximum bet, invalid bet amounts (0,
+  negative, non-numeric)
+  - Edge case: spinning with zero or insufficient balance
+  - Edge case: spinning repeatedly without stopping
+  - Edge case: all symbols matching (jackpot)
+  - Edge case: no symbols matching
+  - Edge case: UI state consistency after rapid/multiple spins
+  - Return the fully refactored HTML, CSS, and JavaScript
+  - All three must be syntactically valid and linted
+  - Include all test cases clearly labeled and runnable
+  - Add inline comments only where logic is non-obvious
+
+
+
+### Result:
+
+Refactor + cleanup pass completed across game logic, controller flow, UI wiring, styles, and tests. Core behavior stayed consistent while code became more modular and easier to extend. Validation checks (lint/tests/build + HTML/CSS validators) all passed.
+
+### Changes made:
+
+- Hand-edited: yes
+- Updated:
+  - Refactored `src/state/GameState.js`:
+  - Refactored `src/animations/reelAnimation.js`:
+  - Refactored `src/controller/useSlotMachineController.js`:
+  - Cleaned `src/styles.css` by removing unused/dead animation blocks and stale ticker styles
+  - Expanded tests in `src/tests/GameState.test.js` for invalid bets, zero-balance spin prevention, jackpot/all-match, and no-match loss
+
+### What we learned:
+
+Breaking refactors into shared constants + small helper functions + targeted tests made it possible to improve readability and maintainability without changing gameplay behavior.
+
+---
+

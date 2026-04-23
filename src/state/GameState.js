@@ -1,3 +1,46 @@
+import {
+  createPayoutTable,
+  getRandomReelValue,
+  getReelValuesForSymbol,
+  reelValueToSymbolName,
+  REEL_COUNT,
+  WINNABLE_SYMBOL_NAMES,
+} from '../constants/symbols';
+
+const DEFAULT_INITIAL_BALANCE = 1000;
+const DEFAULT_BET_AMOUNT = 10;
+const MIN_BET_AMOUNT = 1;
+const MAX_BET_AMOUNT = 100;
+const DAILY_GRANT_AMOUNT = 250;
+
+const TARGET_WIN_RATE = 0.35;
+const LOSS_STREAK_FOR_PITY = 8;
+const MILESTONE_FREE_ROLL_INTERVAL = 20;
+const RANDOM_FREE_ROLL_CHANCE = 0.03;
+
+const JACKPOT_SEED_AMOUNT = 500;
+const JACKPOT_CONTRIBUTION_RATE = 0.02;
+
+const MAX_TOP_WINS = 3;
+const MAX_RECENT_RESULTS = 10;
+const MAX_PERSISTED_HISTORY = 150;
+const MAX_PERSISTED_WIN_LOG = 40;
+
+function isFiniteNumber(value) {
+  return Number.isFinite(value);
+}
+
+function toSortedTopWins(entries) {
+  return [...entries]
+    .filter((entry) => isFiniteNumber(entry?.payout))
+    .sort((first, second) => second.payout - first.payout)
+    .slice(0, MAX_TOP_WINS);
+}
+
+function createRandomReels() {
+  return Array.from({ length: REEL_COUNT }, () => getRandomReelValue());
+}
+
 /**
  * Manages slot machine game state and core state transitions.
  */
@@ -5,16 +48,21 @@ class GameState {
   /**
    * @param {number} [initialBalance=1000] - Starting credit balance.
    */
-  constructor(initialBalance = 1000) {
+  constructor(initialBalance = DEFAULT_INITIAL_BALANCE) {
     this.balance = initialBalance;
-    this.betAmount = 10;
+    this.betAmount = DEFAULT_BET_AMOUNT;
+    this.minBetAmount = MIN_BET_AMOUNT;
+    this.maxBetAmount = MAX_BET_AMOUNT;
+
     this.gameHistory = [];
     this.winLog = [];
     this.topWins = [];
     this.lifetimeWinnings = 0;
     this.biggestWin = null;
+
     this.lastDailyGrantDate = null;
-    this.dailyGrantAmount = 250;
+    this.dailyGrantAmount = DAILY_GRANT_AMOUNT;
+
     this.freeRollsAvailable = 0;
     this.freeRollReason = null;
 
@@ -22,23 +70,17 @@ class GameState {
     this.currentWinStreak = 0;
     this.currentLossStreak = 0;
     this.recentResults = [];
+
     this.forceWinNextSpin = false;
     this.forceWinReason = null;
 
-    this.progressiveJackpotPool = 500;
-    this.jackpotSeedAmount = 500;
-    this.jackpotContributionRate = 0.02;
+    this.progressiveJackpotPool = JACKPOT_SEED_AMOUNT;
+    this.jackpotSeedAmount = JACKPOT_SEED_AMOUNT;
+    this.jackpotContributionRate = JACKPOT_CONTRIBUTION_RATE;
 
-    // Five-reel left-to-right matching needs a slightly higher target hit rate.
-    this.targetWinRate = 0.35;
+    this.targetWinRate = TARGET_WIN_RATE;
     this.isSpinning = false;
-    this.payoutTable = {
-      cherry: { multiplier: 1.4, probability: 0.45 },
-      bar: { multiplier: 2.3, probability: 0.3 },
-      bell: { multiplier: 4.3, probability: 0.17 },
-      seven: { multiplier: 9.5, probability: 0.08 },
-      none: { multiplier: 0, probability: 0 },
-    };
+    this.payoutTable = createPayoutTable();
   }
 
   /**
@@ -49,59 +91,58 @@ class GameState {
    * @throws {Error} If a spin is already in progress, bet is invalid, balance is insufficient, or no free rolls remain.
    */
   spin(betAmount, { useFreeRoll = false } = {}) {
-    if (this.isSpinning === true) {
+    if (this.isSpinning) {
       throw new Error('Spin already in progress');
     }
-    if (!Number.isFinite(betAmount)) {
-      throw new Error('Bet amount must be a valid number');
-    }
-    if (betAmount < 1) {
-      throw new Error('Bet amount must be at least 1');
-    }
+
+    this.validateBetAmount(betAmount);
+
     if (!useFreeRoll && betAmount > this.balance) {
       throw new Error('Insufficient balance for bet');
     }
+
     if (useFreeRoll && this.freeRollsAvailable <= 0) {
       throw new Error('No free rolls available');
     }
 
     this.isSpinning = true;
 
-    const wasForcedWin = this.forceWinNextSpin;
-    const reels = this.generateSpinReels({ forceWin: wasForcedWin });
+    try {
+      const wasForcedWin = this.forceWinNextSpin;
+      const reels = this.generateSpinReels({ forceWin: wasForcedWin });
 
-    if (wasForcedWin) {
-      this.forceWinNextSpin = false;
-      this.forceWinReason = null;
+      if (wasForcedWin) {
+        this.clearForcedWin();
+      }
+
+      const usedFreeRoll = useFreeRoll && this.consumeFreeRoll();
+      if (!usedFreeRoll) {
+        this.balance -= betAmount;
+      }
+
+      const spinRecord = {
+        betAmount,
+        reels,
+        timestamp: Date.now(),
+        wasForcedWin,
+        usedFreeRoll,
+      };
+      this.gameHistory.push(spinRecord);
+
+      const result = this.evaluateSpin(reels, betAmount);
+      spinRecord.result = result;
+
+      return {
+        reels,
+        balance: this.balance,
+        betAmount,
+        wasForcedWin,
+        usedFreeRoll,
+        result,
+      };
+    } finally {
+      this.isSpinning = false;
     }
-
-    const usedFreeRoll = useFreeRoll && this.consumeFreeRoll();
-    if (!usedFreeRoll) {
-      this.balance -= betAmount;
-    }
-
-    const spinRecord = {
-      betAmount,
-      reels,
-      timestamp: Date.now(),
-      wasForcedWin,
-      usedFreeRoll,
-    };
-    this.gameHistory.push(spinRecord);
-
-    const evalResult = this.evaluateSpin(reels, betAmount);
-    spinRecord.result = evalResult;
-
-    this.isSpinning = false;
-
-    return {
-      reels,
-      balance: this.balance,
-      betAmount,
-      wasForcedWin,
-      usedFreeRoll,
-      result: evalResult,
-    };
   }
 
   /**
@@ -123,10 +164,13 @@ class GameState {
     if (this.freeRollsAvailable <= 0) {
       return false;
     }
+
     this.freeRollsAvailable -= 1;
+
     if (this.freeRollsAvailable === 0) {
       this.freeRollReason = null;
     }
+
     return true;
   }
 
@@ -140,14 +184,13 @@ class GameState {
 
   /**
    * Updates the active bet amount.
-   * @param {number} newBetAmount - New bet value; must be >= 1 and <= current balance.
+   * @param {number} newBetAmount - New bet value; must be within limits and <= current balance.
    * @returns {number} The updated bet amount.
-   * @throws {Error} If the bet is below 1 or exceeds the current balance.
+   * @throws {Error} If the bet is invalid or exceeds the current balance.
    */
   updateBet(newBetAmount) {
-    if (newBetAmount < 1) {
-      throw new Error('Bet amount must be at least 1');
-    }
+    this.validateBetAmount(newBetAmount);
+
     if (newBetAmount > this.balance) {
       throw new Error('Insufficient balance for bet');
     }
@@ -232,24 +275,12 @@ class GameState {
   }
 
   /**
-   * Maps a raw reel integer (0–9) to a symbol name string.
+   * Maps a raw reel integer (0-9) to a symbol name string.
    * @param {number} reelNumber - Raw reel value.
    * @returns {'cherry' | 'bar' | 'bell' | 'seven' | 'none'}
    */
   getSymbolName(reelNumber) {
-    if (reelNumber >= 0 && reelNumber <= 1) {
-      return 'cherry';
-    }
-    if (reelNumber >= 2 && reelNumber <= 3) {
-      return 'bar';
-    }
-    if (reelNumber >= 4 && reelNumber <= 5) {
-      return 'bell';
-    }
-    if (reelNumber >= 6 && reelNumber <= 7) {
-      return 'seven';
-    }
-    return 'none';
+    return reelValueToSymbolName(reelNumber);
   }
 
   /**
@@ -287,12 +318,12 @@ class GameState {
    * @returns {{isWin: boolean, symbolName: string, multiplier: number, payout: number, matchCount: number}}
    */
   evaluateSpin(reels, betAmount = this.betAmount) {
-    const symbols = reels.map((reelValue) => this.getSymbolName(reelValue));
-    const firstSymbol = symbols[0];
-    let matchCount = 1;
+    const symbolNames = Array.isArray(reels) ? reels.map((value) => this.getSymbolName(value)) : [];
+    const firstSymbol = symbolNames[0] ?? 'none';
+    let matchCount = symbolNames.length > 0 ? 1 : 0;
 
-    for (let index = 1; index < symbols.length; index += 1) {
-      if (symbols[index] === firstSymbol) {
+    for (let index = 1; index < symbolNames.length; index += 1) {
+      if (symbolNames[index] === firstSymbol) {
         matchCount += 1;
       } else {
         break;
@@ -325,12 +356,13 @@ class GameState {
     const jackpotContribution = shouldUseFreeRoll
       ? 0
       : Number((betAmount * this.jackpotContributionRate).toFixed(2));
+
     this.progressiveJackpotPool += jackpotContribution;
 
     const spinResult = this.spin(betAmount, { useFreeRoll: shouldUseFreeRoll });
     this.totalSpins += 1;
 
-    const result = {
+    const outcome = {
       ...spinResult.result,
       comboMultiplier: 1,
       comboBonus: 0,
@@ -343,116 +375,26 @@ class GameState {
       freeRollAwarded: null,
     };
 
-    if (spinResult.result.isWin === true) {
-      const winTimestamp = Date.now();
-      this.currentWinStreak += 1;
-      this.currentLossStreak = 0;
-
-      const comboMultiplier = this.getComboMultiplier(this.currentWinStreak);
-      const comboBonus = Math.round(spinResult.result.payout * (comboMultiplier - 1));
-
-      result.comboMultiplier = comboMultiplier;
-      result.comboBonus = comboBonus;
-      result.totalPayout += comboBonus;
-
-      if (spinResult.result.symbolName === 'seven') {
-        const jackpotWin = Math.floor(this.progressiveJackpotPool);
-        result.jackpotBonus = jackpotWin;
-        result.totalPayout += jackpotWin;
-        this.progressiveJackpotPool = this.jackpotSeedAmount;
-      }
-
-      this.balance += result.totalPayout;
-      this.lifetimeWinnings += result.totalPayout;
-
-      this.winLog.unshift({
-        payout: result.totalPayout,
-        multiplier: spinResult.result.multiplier,
-        symbolName: spinResult.result.symbolName,
-        comboMultiplier: result.comboMultiplier,
-        timestamp: winTimestamp,
-      });
-
-      if (!this.biggestWin || result.totalPayout > this.biggestWin.payout) {
-        this.biggestWin = {
-          payout: result.totalPayout,
-          multiplier: spinResult.result.multiplier,
-          symbolName: spinResult.result.symbolName,
-          betAmount,
-          timestamp: winTimestamp,
-        };
-      }
-
-      this.recordTopWin({
-        payout: result.totalPayout,
-        multiplier: spinResult.result.multiplier,
-        symbolName: spinResult.result.symbolName,
-        comboMultiplier: result.comboMultiplier,
-        betAmount,
-        timestamp: winTimestamp,
-      });
-
-      this.pushRecentResult(true);
+    if (spinResult.result.isWin) {
+      this.applyWinningOutcome(spinResult, outcome, betAmount);
     } else {
-      this.currentLossStreak += 1;
-      this.currentWinStreak = 0;
-      this.pushRecentResult(false);
-
-      if (this.currentLossStreak >= 8) {
-        this.forceWinNextSpin = true;
-        this.forceWinReason = 'pity';
-      }
+      this.applyLosingOutcome();
     }
 
-    const milestone = this.getMilestoneReward(this.totalSpins);
-    if (milestone.amount > 0) {
-      result.milestoneBonus = milestone.amount;
-      result.milestoneType = milestone.type;
-      this.balance += milestone.amount;
-      this.lifetimeWinnings += milestone.amount;
+    this.applyMilestoneBonus(outcome);
+    this.applyFreeRollTriggers(outcome);
 
-      this.winLog.unshift({
-        payout: milestone.amount,
-        multiplier: 0,
-        symbolName: 'bonus',
-        comboMultiplier: 1,
-        timestamp: Date.now(),
-      });
-
-      if (milestone.type === 'major') {
-        this.forceWinNextSpin = true;
-        this.forceWinReason = 'milestone';
-      }
-    }
-
-    const freeRollTriggers = [];
-    if (this.totalSpins > 0 && this.totalSpins % 20 === 0) {
-      freeRollTriggers.push('milestone');
-    }
-    if (this.currentLossStreak >= 8 && this.forceWinNextSpin) {
-      freeRollTriggers.push('consolation');
-    }
-    if (Math.random() < 0.03) {
-      freeRollTriggers.push('random');
-    }
-
-    if (freeRollTriggers.length > 0) {
-      const primaryTrigger = freeRollTriggers[0];
-      this.awardFreeRoll(primaryTrigger);
-      result.freeRollAwarded = primaryTrigger;
-    }
-
-    spinResult.result = result;
+    spinResult.result = outcome;
 
     if (this.gameHistory.length > 0) {
-      this.gameHistory[this.gameHistory.length - 1].result = result;
+      this.gameHistory[this.gameHistory.length - 1].result = outcome;
     }
 
     return {
       reels: spinResult.reels,
       balance: this.balance,
       betAmount: spinResult.betAmount,
-      result,
+      result: outcome,
       totalSpins: this.totalSpins,
       streaks: {
         wins: this.currentWinStreak,
@@ -464,8 +406,8 @@ class GameState {
       shouldShowDueForWin: this.currentLossStreak >= 3,
       luckBuilding: this.currentLossStreak >= 5,
       freeRollsAvailable: this.freeRollsAvailable,
-      freeRollAwarded: result.freeRollAwarded,
-      usedFreeRoll: result.usedFreeRoll,
+      freeRollAwarded: outcome.freeRollAwarded,
+      usedFreeRoll: outcome.usedFreeRoll,
     };
   }
 
@@ -517,7 +459,7 @@ class GameState {
   /**
    * Returns the payout multiplier for the current consecutive win streak.
    * @param {number} winStreak - Number of consecutive wins.
-   * @returns {number} 2 for 5+, 1.5 for 3–4, 1.2 for 2, 1 otherwise.
+   * @returns {number} 2 for 5+, 1.5 for 3-4, 1.2 for 2, 1 otherwise.
    */
   getComboMultiplier(winStreak) {
     if (winStreak >= 5) {
@@ -555,14 +497,17 @@ class GameState {
    * @returns {number}
    */
   getNextMilestoneIn() {
-    const withinCycle = this.totalSpins % 50;
-    if (withinCycle < 10) {
-      return 10 - withinCycle;
+    const spinsWithinCycle = this.totalSpins % 50;
+
+    if (spinsWithinCycle < 10) {
+      return 10 - spinsWithinCycle;
     }
-    if (withinCycle < 25) {
-      return 25 - withinCycle;
+
+    if (spinsWithinCycle < 25) {
+      return 25 - spinsWithinCycle;
     }
-    return 50 - withinCycle;
+
+    return 50 - spinsWithinCycle;
   }
 
   /**
@@ -571,7 +516,7 @@ class GameState {
    */
   pushRecentResult(isWin) {
     this.recentResults.push(isWin);
-    if (this.recentResults.length > 10) {
+    if (this.recentResults.length > MAX_RECENT_RESULTS) {
       this.recentResults.shift();
     }
   }
@@ -581,10 +526,7 @@ class GameState {
    * @param {{payout: number, multiplier: number, symbolName: string, comboMultiplier: number, betAmount: number, timestamp: number}} entry
    */
   recordTopWin(entry) {
-    this.topWins = [...this.topWins, entry]
-      .filter((winEntry) => Number.isFinite(winEntry?.payout))
-      .sort((first, second) => second.payout - first.payout)
-      .slice(0, 3);
+    this.topWins = toSortedTopWins([...this.topWins, entry]);
   }
 
   /**
@@ -593,6 +535,7 @@ class GameState {
    */
   getMachineTemperature() {
     const winsInLastTen = this.recentResults.filter(Boolean).length;
+
     if (winsInLastTen >= 4) {
       return { label: 'ON FIRE', tone: 'fire' };
     }
@@ -626,16 +569,16 @@ class GameState {
   }
 
   /**
-   * Returns a serialisable state object suitable for localStorage persistence.
+   * Returns a serializable state object suitable for localStorage persistence.
    * @returns {object}
    */
   getPersistenceState() {
     return {
       balance: this.balance,
       betAmount: this.betAmount,
-      gameHistory: this.gameHistory.slice(-150),
-      winLog: this.winLog.slice(0, 40),
-      topWins: this.topWins.slice(0, 3),
+      gameHistory: this.gameHistory.slice(-MAX_PERSISTED_HISTORY),
+      winLog: this.winLog.slice(0, MAX_PERSISTED_WIN_LOG),
+      topWins: this.topWins.slice(0, MAX_TOP_WINS),
       lifetimeWinnings: this.lifetimeWinnings,
       biggestWin: this.biggestWin,
       lastDailyGrantDate: this.lastDailyGrantDate,
@@ -660,29 +603,32 @@ class GameState {
       return;
     }
 
-    this.balance = Number.isFinite(state.balance) ? state.balance : this.balance;
-    this.betAmount = Number.isFinite(state.betAmount) ? state.betAmount : this.betAmount;
+    this.balance = isFiniteNumber(state.balance) ? state.balance : this.balance;
+    this.betAmount = isFiniteNumber(state.betAmount) ? state.betAmount : this.betAmount;
     this.gameHistory = Array.isArray(state.gameHistory) ? [...state.gameHistory] : [];
     this.winLog = Array.isArray(state.winLog) ? [...state.winLog] : [];
-    this.topWins = Array.isArray(state.topWins)
-      ? state.topWins
-          .filter((entry) => Number.isFinite(entry?.payout))
-          .sort((first, second) => second.payout - first.payout)
-          .slice(0, 3)
-      : [];
-    this.lifetimeWinnings = Number.isFinite(state.lifetimeWinnings) ? state.lifetimeWinnings : 0;
+    this.topWins = Array.isArray(state.topWins) ? toSortedTopWins(state.topWins) : [];
+
+    this.lifetimeWinnings = isFiniteNumber(state.lifetimeWinnings) ? state.lifetimeWinnings : 0;
     this.biggestWin = this.topWins[0] ?? state.biggestWin ?? null;
+
     this.lastDailyGrantDate = typeof state.lastDailyGrantDate === 'string' ? state.lastDailyGrantDate : null;
-    this.totalSpins = Number.isFinite(state.totalSpins) ? state.totalSpins : 0;
-    this.currentWinStreak = Number.isFinite(state.currentWinStreak) ? state.currentWinStreak : 0;
-    this.currentLossStreak = Number.isFinite(state.currentLossStreak) ? state.currentLossStreak : 0;
-    this.recentResults = Array.isArray(state.recentResults) ? state.recentResults.slice(-10) : [];
-    this.progressiveJackpotPool = Number.isFinite(state.progressiveJackpotPool)
+    this.totalSpins = isFiniteNumber(state.totalSpins) ? state.totalSpins : 0;
+    this.currentWinStreak = isFiniteNumber(state.currentWinStreak) ? state.currentWinStreak : 0;
+    this.currentLossStreak = isFiniteNumber(state.currentLossStreak) ? state.currentLossStreak : 0;
+
+    this.recentResults = Array.isArray(state.recentResults) ? state.recentResults.slice(-MAX_RECENT_RESULTS) : [];
+
+    this.progressiveJackpotPool = isFiniteNumber(state.progressiveJackpotPool)
       ? state.progressiveJackpotPool
       : this.jackpotSeedAmount;
+
     this.forceWinNextSpin = state.forceWinNextSpin === true;
     this.forceWinReason = typeof state.forceWinReason === 'string' ? state.forceWinReason : null;
-    this.freeRollsAvailable = Number.isFinite(state.freeRollsAvailable) ? Math.max(0, state.freeRollsAvailable) : 0;
+
+    this.freeRollsAvailable = isFiniteNumber(state.freeRollsAvailable)
+      ? Math.max(0, state.freeRollsAvailable)
+      : 0;
     this.freeRollReason = typeof state.freeRollReason === 'string' ? state.freeRollReason : null;
   }
 
@@ -690,23 +636,30 @@ class GameState {
    * Resets all game state to initial values.
    * @param {number} [newInitialBalance=1000] - Balance to start fresh with.
    */
-  resetGame(newInitialBalance = 1000) {
+  resetGame(newInitialBalance = DEFAULT_INITIAL_BALANCE) {
     this.balance = newInitialBalance;
-    this.betAmount = 10;
+    this.betAmount = DEFAULT_BET_AMOUNT;
+
     this.gameHistory = [];
     this.winLog = [];
     this.topWins = [];
+
     this.lifetimeWinnings = 0;
     this.biggestWin = null;
+
     this.lastDailyGrantDate = null;
+
     this.totalSpins = 0;
     this.currentWinStreak = 0;
     this.currentLossStreak = 0;
     this.recentResults = [];
+
     this.forceWinNextSpin = false;
     this.forceWinReason = null;
+
     this.freeRollsAvailable = 0;
     this.freeRollReason = null;
+
     this.progressiveJackpotPool = this.jackpotSeedAmount;
     this.isSpinning = false;
   }
@@ -720,32 +673,35 @@ class GameState {
     if (forceWin || Math.random() < this.targetWinRate) {
       return this.generateWinningReels();
     }
+
     return this.generateLosingReels();
   }
 
   /**
    * Generates a winning 5-reel combination for a randomly chosen symbol.
-   * @returns {number[]} Array of 5 reel integers with 3–5 leading matches.
+   * @returns {number[]} Array of 5 reel integers with 3-5 leading matches.
    */
   generateWinningReels() {
     const winningSymbol = this.pickWinningSymbol();
-    const reelValues = this.getReelValuesForSymbol(winningSymbol);
-    const pickValue = () => reelValues[Math.floor(Math.random() * reelValues.length)];
+    const reelValuesForSymbol = this.getReelValuesForSymbol(winningSymbol);
+    const pickWinningValue = () =>
+      reelValuesForSymbol[Math.floor(Math.random() * reelValuesForSymbol.length)];
+
     const matchLengthRoll = Math.random();
     const matchLength = matchLengthRoll < 0.08 ? 5 : matchLengthRoll < 0.25 ? 4 : 3;
     const reels = [];
 
     for (let index = 0; index < matchLength; index += 1) {
-      reels.push(pickValue());
+      reels.push(pickWinningValue());
     }
 
-    while (reels.length < 5) {
-      reels.push(Math.floor(Math.random() * 10));
+    while (reels.length < REEL_COUNT) {
+      reels.push(getRandomReelValue());
     }
 
-    for (let index = matchLength; index < 5; index += 1) {
+    for (let index = matchLength; index < REEL_COUNT; index += 1) {
       while (this.getSymbolName(reels[index]) === winningSymbol) {
-        reels[index] = Math.floor(Math.random() * 10);
+        reels[index] = getRandomReelValue();
       }
     }
 
@@ -757,22 +713,10 @@ class GameState {
    * @returns {number[]} Array of 5 reel integers that evaluate to no win.
    */
   generateLosingReels() {
-    let reels = [
-      Math.floor(Math.random() * 10),
-      Math.floor(Math.random() * 10),
-      Math.floor(Math.random() * 10),
-      Math.floor(Math.random() * 10),
-      Math.floor(Math.random() * 10),
-    ];
+    let reels = createRandomReels();
 
     while (this.evaluateSpin(reels, this.betAmount).isWin) {
-      reels = [
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-      ];
+      reels = createRandomReels();
     }
 
     return reels;
@@ -783,13 +727,12 @@ class GameState {
    * @returns {'cherry' | 'bar' | 'bell' | 'seven'}
    */
   pickWinningSymbol() {
-    const random = Math.random();
-    let cumulative = 0;
+    const randomRoll = Math.random();
+    let cumulativeProbability = 0;
 
-    const symbols = ['cherry', 'bar', 'bell', 'seven'];
-    for (const symbolName of symbols) {
-      cumulative += this.payoutTable[symbolName].probability;
-      if (random <= cumulative) {
+    for (const symbolName of WINNABLE_SYMBOL_NAMES) {
+      cumulativeProbability += this.payoutTable[symbolName].probability;
+      if (randomRoll <= cumulativeProbability) {
         return symbolName;
       }
     }
@@ -803,19 +746,7 @@ class GameState {
    * @returns {number[]} Array of one or two reel integers.
    */
   getReelValuesForSymbol(symbolName) {
-    if (symbolName === 'cherry') {
-      return [0, 1];
-    }
-    if (symbolName === 'bar') {
-      return [2, 3];
-    }
-    if (symbolName === 'bell') {
-      return [4, 5];
-    }
-    if (symbolName === 'seven') {
-      return [6, 7];
-    }
-    return [8, 9];
+    return [...getReelValuesForSymbol(symbolName)];
   }
 
   /**
@@ -828,6 +759,155 @@ class GameState {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * @param {number} betAmount
+   * @throws {Error}
+   */
+  validateBetAmount(betAmount) {
+    if (!isFiniteNumber(betAmount)) {
+      throw new Error('Bet amount must be a valid number');
+    }
+
+    if (betAmount < this.minBetAmount) {
+      throw new Error(`Bet amount must be at least ${this.minBetAmount}`);
+    }
+
+    if (betAmount > this.maxBetAmount) {
+      throw new Error(`Bet amount must be at most ${this.maxBetAmount}`);
+    }
+  }
+
+  clearForcedWin() {
+    this.forceWinNextSpin = false;
+    this.forceWinReason = null;
+  }
+
+  /**
+   * @param {{result: {payout: number, multiplier: number, symbolName: string}, wasForcedWin: boolean}} spinResult
+   * @param {{comboMultiplier: number, comboBonus: number, jackpotBonus: number, totalPayout: number}} outcome
+   * @param {number} betAmount
+   */
+  applyWinningOutcome(spinResult, outcome, betAmount) {
+    const winTimestamp = Date.now();
+
+    this.currentWinStreak += 1;
+    this.currentLossStreak = 0;
+
+    const comboMultiplier = this.getComboMultiplier(this.currentWinStreak);
+    const comboBonus = Math.round(spinResult.result.payout * (comboMultiplier - 1));
+
+    outcome.comboMultiplier = comboMultiplier;
+    outcome.comboBonus = comboBonus;
+    outcome.totalPayout += comboBonus;
+
+    if (spinResult.result.symbolName === 'seven') {
+      const jackpotWin = Math.floor(this.progressiveJackpotPool);
+      outcome.jackpotBonus = jackpotWin;
+      outcome.totalPayout += jackpotWin;
+      this.progressiveJackpotPool = this.jackpotSeedAmount;
+    }
+
+    this.balance += outcome.totalPayout;
+    this.lifetimeWinnings += outcome.totalPayout;
+
+    const winEntry = {
+      payout: outcome.totalPayout,
+      multiplier: spinResult.result.multiplier,
+      symbolName: spinResult.result.symbolName,
+      comboMultiplier: outcome.comboMultiplier,
+      betAmount,
+      timestamp: winTimestamp,
+    };
+
+    this.winLog.unshift({
+      payout: winEntry.payout,
+      multiplier: winEntry.multiplier,
+      symbolName: winEntry.symbolName,
+      comboMultiplier: winEntry.comboMultiplier,
+      timestamp: winEntry.timestamp,
+    });
+
+    if (!this.biggestWin || outcome.totalPayout > this.biggestWin.payout) {
+      this.biggestWin = {
+        payout: winEntry.payout,
+        multiplier: winEntry.multiplier,
+        symbolName: winEntry.symbolName,
+        betAmount,
+        timestamp: winEntry.timestamp,
+      };
+    }
+
+    this.recordTopWin(winEntry);
+    this.pushRecentResult(true);
+  }
+
+  applyLosingOutcome() {
+    this.currentLossStreak += 1;
+    this.currentWinStreak = 0;
+    this.pushRecentResult(false);
+
+    if (this.currentLossStreak >= LOSS_STREAK_FOR_PITY) {
+      this.forceWinNextSpin = true;
+      this.forceWinReason = 'pity';
+    }
+  }
+
+  /**
+   * @param {{milestoneBonus: number, milestoneType: 'major' | 'medium' | 'minor' | null}} outcome
+   */
+  applyMilestoneBonus(outcome) {
+    const milestone = this.getMilestoneReward(this.totalSpins);
+    if (milestone.amount <= 0) {
+      return;
+    }
+
+    outcome.milestoneBonus = milestone.amount;
+    outcome.milestoneType = milestone.type;
+
+    this.balance += milestone.amount;
+    this.lifetimeWinnings += milestone.amount;
+
+    this.winLog.unshift({
+      payout: milestone.amount,
+      multiplier: 0,
+      symbolName: 'bonus',
+      comboMultiplier: 1,
+      timestamp: Date.now(),
+    });
+
+    if (milestone.type === 'major') {
+      this.forceWinNextSpin = true;
+      this.forceWinReason = 'milestone';
+    }
+  }
+
+  /**
+   * @param {{freeRollAwarded: string | null}} outcome
+   */
+  applyFreeRollTriggers(outcome) {
+    const freeRollTriggers = [];
+
+    if (this.totalSpins > 0 && this.totalSpins % MILESTONE_FREE_ROLL_INTERVAL === 0) {
+      freeRollTriggers.push('milestone');
+    }
+
+    if (this.currentLossStreak >= LOSS_STREAK_FOR_PITY && this.forceWinNextSpin) {
+      freeRollTriggers.push('consolation');
+    }
+
+    if (Math.random() < RANDOM_FREE_ROLL_CHANCE) {
+      freeRollTriggers.push('random');
+    }
+
+    if (freeRollTriggers.length === 0) {
+      return;
+    }
+
+    const primaryTrigger = freeRollTriggers[0];
+    this.awardFreeRoll(primaryTrigger);
+    outcome.freeRollAwarded = primaryTrigger;
   }
 }
 
