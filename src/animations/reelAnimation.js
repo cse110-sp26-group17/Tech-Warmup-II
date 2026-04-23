@@ -19,6 +19,7 @@ export const SYMBOL_DISPLAY = Object.freeze({
   bell: { code: '🔔', label: 'Bell' },
   seven: { code: '7️⃣', label: 'Seven' },
   none: { code: '⭐', label: 'Star' },
+  bonus: { code: '🎁', label: 'Bonus' },
 });
 
 const SYMBOL_ORDER = ['cherry', 'bar', 'bell', 'seven', 'none'];
@@ -47,24 +48,24 @@ export function getRandomSymbol() {
 export function getSpinProfile({ turboMode, reducedMotion }) {
   if (reducedMotion) {
     return {
-      reelDurations: [560, 640, 720],
-      totalSpinDuration: 760,
+      reelDurations: [560, 640, 760],
+      totalSpinDuration: 800,
       resultHoldDuration: 120,
     };
   }
 
   if (turboMode) {
     return {
-      reelDurations: [560, 700, 820],
-      totalSpinDuration: 860,
-      resultHoldDuration: 100,
+      reelDurations: [520, 640, 780],
+      totalSpinDuration: 820,
+      resultHoldDuration: 110,
     };
   }
 
   return {
-    reelDurations: [980, 1230, 1480],
-    totalSpinDuration: 1540,
-    resultHoldDuration: 220,
+    reelDurations: [960, 1220, 1500],
+    totalSpinDuration: 1560,
+    resultHoldDuration: 240,
   };
 }
 
@@ -72,13 +73,13 @@ export function getWinTier(result) {
   if (!result || result.isWin !== true || result.multiplier <= 0) {
     return WIN_TIERS.LOSS;
   }
-  if (result.multiplier >= 100) {
+  if (result.jackpotBonus > 0 || result.multiplier >= 9) {
     return WIN_TIERS.JACKPOT;
   }
-  if (result.multiplier >= 50) {
+  if (result.multiplier >= 4) {
     return WIN_TIERS.BIG;
   }
-  if (result.multiplier >= 25) {
+  if (result.multiplier >= 2) {
     return WIN_TIERS.MEDIUM;
   }
   return WIN_TIERS.SMALL;
@@ -86,28 +87,28 @@ export function getWinTier(result) {
 
 export function getPayoutDuration({ tier, turboMode, reducedMotion }) {
   if (reducedMotion) {
-    return tier === WIN_TIERS.LOSS ? 100 : 180;
+    return tier === WIN_TIERS.LOSS ? 120 : 200;
   }
   if (turboMode) {
     if (tier === WIN_TIERS.JACKPOT) {
-      return 300;
+      return 360;
     }
     if (tier === WIN_TIERS.BIG || tier === WIN_TIERS.MEDIUM) {
-      return 220;
+      return 260;
     }
     if (tier === WIN_TIERS.SMALL) {
-      return 150;
+      return 170;
     }
-    return 120;
+    return 130;
   }
   if (tier === WIN_TIERS.JACKPOT) {
-    return 980;
+    return 1200;
   }
   if (tier === WIN_TIERS.BIG) {
-    return 760;
+    return 850;
   }
   if (tier === WIN_TIERS.MEDIUM) {
-    return 560;
+    return 640;
   }
   if (tier === WIN_TIERS.SMALL) {
     return 420;
@@ -117,18 +118,32 @@ export function getPayoutDuration({ tier, turboMode, reducedMotion }) {
 
 export function getFeedbackLabel(tier) {
   if (tier === WIN_TIERS.JACKPOT) {
-    return 'Jackpot';
+    return 'JACKPOT';
   }
   if (tier === WIN_TIERS.BIG) {
-    return 'Big Win';
+    return 'BIG WIN';
   }
   if (tier === WIN_TIERS.MEDIUM) {
-    return 'Mega Win';
+    return 'MEGA WIN';
   }
   if (tier === WIN_TIERS.SMALL) {
-    return 'Win';
+    return 'WIN';
   }
-  return 'No Win';
+  return 'NO WIN';
+}
+
+export function getMachineTemperatureBadge(recentResults) {
+  const winsInLastTen = recentResults.filter(Boolean).length;
+  if (winsInLastTen >= 4) {
+    return { label: 'MACHINE ON FIRE', tone: 'fire' };
+  }
+  if (winsInLastTen >= 3) {
+    return { label: 'Machine Hot', tone: 'hot' };
+  }
+  if (winsInLastTen >= 2) {
+    return { label: 'Machine Warm', tone: 'warm' };
+  }
+  return { label: 'Machine Cold', tone: 'cold' };
 }
 
 function getAdjacentSymbol(symbolName) {
@@ -145,17 +160,27 @@ function getAdjacentSymbol(symbolName) {
 }
 
 export function createNearMissHint({ isWin, finalSymbols }) {
-  if (isWin === true || Math.random() > 0.26) {
+  if (isWin === true) {
     return null;
   }
 
-  const targetBase = finalSymbols[0] === finalSymbols[1] ? finalSymbols[0] : finalSymbols[0];
-  const nearMissSymbol = getAdjacentSymbol(targetBase);
+  const firstTwoMatch =
+    finalSymbols[0] === finalSymbols[1] && finalSymbols[0] !== 'none' && finalSymbols[1] !== 'none';
+
+  if (!firstTwoMatch || Math.random() > 0.35) {
+    return null;
+  }
+
+  const targetBase = finalSymbols[0];
+  const safeMissSymbol = getAdjacentSymbol(targetBase);
 
   return {
     reelIndex: 2,
-    previewSymbol: nearMissSymbol,
-    previewDurationMs: 120,
-    message: `Near miss: ${SYMBOL_DISPLAY[targetBase].label}`,
+    previewSymbol: targetBase,
+    finalMissSymbol: safeMissSymbol,
+    previewDurationMs: 320,
+    slowDownFactor: 1.35,
+    bannerText: 'SO CLOSE!',
+    message: `So close! ${SYMBOL_DISPLAY[targetBase].label} almost hit`,
   };
 }

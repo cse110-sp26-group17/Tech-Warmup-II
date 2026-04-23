@@ -1,24 +1,10 @@
-import { MACHINE_STATES } from '../animations/reelAnimation';
+import { formatCredits } from '../utils/formatCredits';
 
-function formatCredits(value) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
-
-function getStateLabel(machineState) {
-  if (machineState === MACHINE_STATES.SPINNING) {
-    return 'Spinning';
-  }
-  if (machineState === MACHINE_STATES.RESULT) {
-    return 'Result';
-  }
-  if (machineState === MACHINE_STATES.PAYOUT) {
-    return 'Payout';
-  }
-  return 'Idle';
-}
-
-export default function HUD({ balance, betAmount, netGain, machineState }) {
+export default function HUD({ balance, betAmount, netGain, meta }) {
   const safeWinnings = Math.max(0, netGain);
+  const streakLabel = meta.currentWinStreak > 0 ? `W ${meta.currentWinStreak}` : `L ${meta.currentLossStreak}`;
+  const isHotStreak = meta.currentWinStreak >= 3;
+  const comboActive = meta.comboMultiplier > 1;
 
   return (
     <section className="hud" aria-label="Game stats">
@@ -27,9 +13,11 @@ export default function HUD({ balance, betAmount, netGain, machineState }) {
         <p className="hud-value">{formatCredits(balance)} VC</p>
       </article>
 
-      <article className="hud-card">
-        <p className="hud-label">Bet</p>
-        <p className="hud-value">{formatCredits(betAmount)} VC</p>
+      <article className={`hud-card ${comboActive ? 'combo-active' : ''}`}>
+        <p className="hud-label">Bet / Combo</p>
+        <p className="hud-value">
+          {formatCredits(betAmount)} VC {comboActive ? `| x${meta.comboMultiplier}` : ''}
+        </p>
       </article>
 
       <article className="hud-card">
@@ -37,9 +25,13 @@ export default function HUD({ balance, betAmount, netGain, machineState }) {
         <p className="hud-value net-gain positive">+{formatCredits(safeWinnings)} VC</p>
       </article>
 
-      <p className="hud-state" role="status" aria-live="polite">
-        State: {getStateLabel(machineState)}
-      </p>
+      <div className="quick-stats" role="status" aria-live="polite">
+        <p className="quick-stat">Spins: {formatCredits(meta.totalSpins)}</p>
+        <p className={`quick-stat ${isHotStreak ? 'hot-streak' : ''}`}>Streak: {streakLabel}</p>
+        <p className="quick-stat">Next Bonus: {meta.nextMilestoneIn}</p>
+        <p className="quick-stat jackpot">Jackpot: {formatCredits(meta.progressiveJackpotPool, { maximumFractionDigits: 2 })} VC</p>
+        <p className={`temp-pill tone-${meta.machineTemperature.tone}`}>{meta.machineTemperature.label}</p>
+      </div>
     </section>
   );
 }

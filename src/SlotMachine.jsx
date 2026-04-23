@@ -7,10 +7,7 @@ import WinOverlay from './components/WinOverlay';
 import SettingsOverlay from './components/SettingsOverlay';
 import SymbolInfoModal from './components/SymbolInfoModal';
 import { useSlotMachineController } from './controller/useSlotMachineController';
-
-function formatCredits(value) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
+import { formatCredits } from './utils/formatCredits';
 
 export default function SlotMachine() {
   const [infoOpen, setInfoOpen] = useState(false);
@@ -21,6 +18,8 @@ export default function SlotMachine() {
     netGain,
     winLog,
     biggestWin,
+    meta,
+    milestonePopup,
     isNewBiggestWin,
     resultMessage,
     displayedWin,
@@ -54,13 +53,14 @@ export default function SlotMachine() {
     setReducedMotion,
   } = useSlotMachineController();
 
-  const showWinImpact = machineState === 'result' && result?.isWin;
+  const showWinImpact =
+    (machineState === 'result' || machineState === 'payout') && result?.isWin;
 
   return (
     <div
-      className={`slot-machine state-${machineState} ${showWinImpact ? 'win-impact' : ''} ${reducedMotion ? 'reduced-motion' : ''}`}
+      className={`slot-machine state-${machineState} impact-${winTier} ${meta.comboMultiplier > 1 ? 'combo-active' : ''} ${showWinImpact ? 'win-impact' : ''} ${reducedMotion ? 'reduced-motion' : ''}`}
     >
-      <HUD balance={balance} betAmount={betAmount} netGain={netGain} machineState={machineState} />
+      <HUD balance={balance} betAmount={betAmount} netGain={netGain} meta={meta} />
 
       <section className="reel-stage">
         <ReelSet
@@ -81,6 +81,9 @@ export default function SlotMachine() {
           isNewBiggestWin={isNewBiggestWin}
           displayedWin={displayedWin}
           reducedMotion={reducedMotion}
+          milestonePopup={milestonePopup}
+          winStreak={meta.currentWinStreak}
+          comboMultiplier={meta.comboMultiplier}
         />
       </section>
 
@@ -140,6 +143,7 @@ export default function SlotMachine() {
         autoSpin={autoSpin}
         onToggleAutoSpin={setAutoSpin}
         onStopAutoSpin={stopAutoSpin}
+        lossStreak={meta.currentLossStreak}
       />
 
       <BetControls

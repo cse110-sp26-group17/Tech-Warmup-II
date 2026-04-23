@@ -31,6 +31,7 @@ export default function Reel({
     let rollIntervalId;
     let stopTimerId;
     let nearMissTimerId;
+    let finalizeTimerId;
 
     const stopWithFinalSymbol = () => {
       setDisplaySymbol(finalSymbol);
@@ -54,7 +55,7 @@ export default function Reel({
       setGhostTop(getRandomSymbol());
       setDisplaySymbol(getRandomSymbol());
       setGhostBottom(getRandomSymbol());
-    }, 90);
+    }, 85);
 
     stopTimerId = setTimeout(() => {
       clearInterval(rollIntervalId);
@@ -64,7 +65,10 @@ export default function Reel({
         setDisplaySymbol(nearMissHint.previewSymbol);
 
         nearMissTimerId = setTimeout(() => {
-          stopWithFinalSymbol();
+          setDisplaySymbol(nearMissHint.finalMissSymbol ?? finalSymbol);
+          finalizeTimerId = setTimeout(() => {
+            stopWithFinalSymbol();
+          }, 60);
         }, nearMissHint.previewDurationMs);
       } else {
         stopWithFinalSymbol();
@@ -75,6 +79,7 @@ export default function Reel({
       clearInterval(rollIntervalId);
       clearTimeout(stopTimerId);
       clearTimeout(nearMissTimerId);
+      clearTimeout(finalizeTimerId);
     };
   }, [machineState, spinToken, spinDuration, finalSymbol, nearMissHint, reducedMotion, onStop, reelIndex]);
 
@@ -84,7 +89,7 @@ export default function Reel({
 
   return (
     <article
-      className={`reel ${isSpinningVisual ? 'is-spinning' : ''} ${showNearMiss ? 'near-miss' : ''}`}
+      className={`reel ${isSpinningVisual ? 'is-spinning' : ''} ${showNearMiss ? 'near-miss slow-stop' : ''}`}
       aria-label={`Reel ${reelIndex + 1}: ${visibleSymbol.label}`}
     >
       <div className={`reel-strip ${isSpinningVisual ? 'rolling' : ''}`}>
@@ -101,6 +106,8 @@ export default function Reel({
           <span className="symbol-label">{bottomSymbol.label}</span>
         </div>
       </div>
+
+      {showNearMiss ? <p className="near-miss-banner">SO CLOSE!</p> : null}
     </article>
   );
 }

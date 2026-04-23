@@ -9,14 +9,16 @@ export default function SpinButton({
   autoSpin,
   onToggleAutoSpin,
   onStopAutoSpin,
+  lossStreak,
 }) {
   const isSpinning = machineState === MACHINE_STATES.SPINNING;
+  const urgencyClass = lossStreak >= 5 ? 'urgency-high' : lossStreak >= 3 ? 'urgency-mid' : '';
 
   return (
     <section className="spin-controls" aria-label="Spin controls">
       <button
         type="button"
-        className={`spin-button ${isSpinning ? 'is-busy' : ''}`}
+        className={`spin-button ${isSpinning ? 'is-busy' : ''} ${urgencyClass}`}
         disabled={disabled}
         onClick={onSpin}
         aria-label={isSpinning ? 'Reels are spinning' : 'Spin'}

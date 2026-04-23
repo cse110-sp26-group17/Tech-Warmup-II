@@ -1,6 +1,4 @@
-function formatCredits(value) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
+import { formatCredits } from '../utils/formatCredits';
 
 export default function SymbolInfoModal({ open, betAmount, symbolPayouts, onClose }) {
   if (!open) {

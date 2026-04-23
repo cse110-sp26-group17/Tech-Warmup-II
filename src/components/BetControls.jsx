@@ -1,6 +1,4 @@
-function formatValue(value) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
+import { formatCredits } from '../utils/formatCredits';
 
 export default function BetControls({
   betOptions,
@@ -12,7 +10,7 @@ export default function BetControls({
   return (
     <section className="bet-controls" aria-label="Bet controls">
       <div className="bet-display" aria-live="polite">
-        Bet: {formatValue(betAmount)} VC
+        Bet: {formatCredits(betAmount)} VC
       </div>
       <div className="bet-options" role="group" aria-label="Select bet amount">
         {betOptions.map((option) => {
@@ -27,7 +25,7 @@ export default function BetControls({
               disabled={disabled || option > balance}
               aria-pressed={isSelected}
             >
-              {formatValue(option)}
+              {formatCredits(option)}
             </button>
           );
         })}

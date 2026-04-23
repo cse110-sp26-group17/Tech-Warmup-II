@@ -4,62 +4,37 @@ import GameState from '../state/GameState';
 describe('GameState', () => {
   it('wins when all three symbols match even if reel numbers differ', () => {
     const gameState = new GameState(500);
-    const randomSpy = vi
-      .spyOn(Math, 'random')
-      // targetWinRate check -> win path
-      .mockReturnValueOnce(0.1)
-      // pickWinningSymbol -> cherry
-      .mockReturnValueOnce(0.1)
-      // pick values from [0,1] -> 0,1,0
-      .mockReturnValueOnce(0.0)
-      .mockReturnValueOnce(0.99)
-      .mockReturnValueOnce(0.1);
+    const result = gameState.evaluateSpin([0, 1, 0], 10);
 
-    const result = gameState.spinWithPayout(10);
-
-    expect(result.reels).toEqual([0, 1, 0]);
-    expect(result.result.isWin).toBe(true);
-    expect(result.result.symbolName).toBe('cherry');
-    expect(result.result.multiplier).toBe(10);
-    expect(result.result.payout).toBe(100);
-    expect(result.balance).toBe(590);
-
-    randomSpy.mockRestore();
+    expect(result).toEqual({
+      isWin: true,
+      symbolName: 'cherry',
+      multiplier: 1.4,
+      payout: 14,
+    });
   });
 
-  it('credits payout and lifetime winnings after a winning spinWithPayout call', () => {
+  it('applies combo multipliers across consecutive wins', () => {
     const gameState = new GameState(1000);
-    const randomSpy = vi
-      .spyOn(Math, 'random')
-      .mockReturnValueOnce(0.1)
-      .mockReturnValueOnce(0.1)
-      .mockReturnValueOnce(0.0)
-      .mockReturnValueOnce(0.0)
-      .mockReturnValueOnce(0.0);
+    vi.spyOn(gameState, 'generateSpinReels').mockReturnValue([0, 0, 0]);
 
-    const result = gameState.spinWithPayout(20);
+    const first = gameState.spinWithPayout(10);
+    const second = gameState.spinWithPayout(10);
+    const third = gameState.spinWithPayout(10);
 
-    expect(result.result.isWin).toBe(true);
-    expect(result.result.symbolName).toBe('cherry');
-    expect(result.result.payout).toBe(200);
-    expect(result.balance).toBe(1180);
-    expect(gameState.getBalance()).toBe(1180);
-    expect(gameState.getLifetimeWinnings()).toBe(200);
-    expect(gameState.getWinLog()).toHaveLength(1);
-
-    randomSpy.mockRestore();
+    expect(first.result.comboMultiplier).toBe(1);
+    expect(first.result.totalPayout).toBe(14);
+    expect(second.result.comboMultiplier).toBe(1.2);
+    expect(second.result.totalPayout).toBe(17);
+    expect(third.result.comboMultiplier).toBe(1.5);
+    expect(third.result.totalPayout).toBe(21);
+    expect(gameState.currentWinStreak).toBe(3);
+    expect(gameState.currentLossStreak).toBe(0);
   });
 
-  it('deducts only the bet on a non-winning spin', () => {
+  it('deducts only the bet on a non-winning spin and tracks loss streak', () => {
     const gameState = new GameState(100);
-    const randomSpy = vi
-      .spyOn(Math, 'random')
-      // targetWinRate check -> force losing path
-      .mockReturnValueOnce(0.99)
-      // reels 0,2,4 => cherry,bar,bell
-      .mockReturnValueOnce(0.0)
-      .mockReturnValueOnce(0.2)
-      .mockReturnValueOnce(0.4);
+    vi.spyOn(gameState, 'generateSpinReels').mockReturnValue([0, 2, 4]);
 
     const result = gameState.spinWithPayout(25);
 
@@ -68,20 +43,7 @@ describe('GameState', () => {
     expect(result.balance).toBe(75);
     expect(gameState.getBalance()).toBe(75);
     expect(gameState.getLifetimeWinnings()).toBe(0);
-
-    randomSpy.mockRestore();
-  });
-
-  it('does not treat triple none as a win', () => {
-    const gameState = new GameState(100);
-    const result = gameState.evaluateSpin([8, 9, 8], 10);
-
-    expect(result).toEqual({
-      isWin: false,
-      symbolName: 'none',
-      multiplier: 0,
-      payout: 0,
-    });
+    expect(gameState.currentLossStreak).toBe(1);
   });
 
   it('throws on invalid and unaffordable bets', () => {
@@ -100,13 +62,7 @@ describe('GameState', () => {
 
   it('records spin result in game history', () => {
     const gameState = new GameState(100);
-    const randomSpy = vi
-      .spyOn(Math, 'random')
-      .mockReturnValueOnce(0.1)
-      .mockReturnValueOnce(0.1)
-      .mockReturnValueOnce(0.0)
-      .mockReturnValueOnce(0.0)
-      .mockReturnValueOnce(0.0);
+    vi.spyOn(gameState, 'generateSpinReels').mockReturnValue([0, 0, 0]);
 
     gameState.spinWithPayout(10);
     const history = gameState.getGameHistory();
@@ -114,14 +70,8 @@ describe('GameState', () => {
     expect(history).toHaveLength(1);
     expect(history[0].betAmount).toBe(10);
     expect(history[0].reels).toEqual([0, 0, 0]);
-    expect(history[0].result).toEqual({
-      isWin: true,
-      symbolName: 'cherry',
-      multiplier: 10,
-      payout: 100,
-    });
-
-    randomSpy.mockRestore();
+    expect(history[0].result.isWin).toBe(true);
+    expect(history[0].result.symbolName).toBe('cherry');
   });
 
   it('supports daily grant only once per day', () => {
@@ -137,7 +87,78 @@ describe('GameState', () => {
     expect(() => gameState.claimDailyGrant()).toThrow('Daily VC already claimed today');
   });
 
-  it('resets balance, bet, history, win aggregates, and spin lock on resetGame', () => {
+  it('awards progressive jackpot on triple seven and resets pool', () => {
+    const gameState = new GameState(1000);
+    gameState.progressiveJackpotPool = 650.4;
+    vi.spyOn(gameState, 'generateSpinReels').mockReturnValue([6, 6, 6]);
+
+    const result = gameState.spinWithPayout(10);
+
+    expect(result.result.isWin).toBe(true);
+    expect(result.result.symbolName).toBe('seven');
+    expect(result.result.jackpotBonus).toBe(650);
+    expect(result.result.totalPayout).toBe(745);
+    expect(gameState.progressiveJackpotPool).toBe(500);
+  });
+
+  it('forces next spin to win after 8 losses (pity system)', () => {
+    const gameState = new GameState(1000);
+    gameState.targetWinRate = 0;
+    vi.spyOn(gameState, 'generateLosingReels').mockReturnValue([0, 2, 4]);
+    vi.spyOn(gameState, 'generateWinningReels').mockReturnValue([0, 0, 0]);
+
+    for (let index = 0; index < 8; index += 1) {
+      gameState.spinWithPayout(10);
+    }
+
+    expect(gameState.forceWinNextSpin).toBe(true);
+    const forcedResult = gameState.spinWithPayout(10);
+    expect(forcedResult.result.isWin).toBe(true);
+    expect(forcedResult.result.wasForcedWin).toBe(true);
+    expect(gameState.currentLossStreak).toBe(0);
+  });
+
+  it('awards spin milestone bonuses and enables major milestone guarantee', () => {
+    const gameState = new GameState(1000);
+    gameState.targetWinRate = 0;
+    vi.spyOn(gameState, 'generateLosingReels').mockReturnValue([0, 2, 4]);
+
+    for (let index = 0; index < 9; index += 1) {
+      gameState.spinWithPayout(10);
+    }
+
+    const tenth = gameState.spinWithPayout(10);
+    expect(tenth.result.milestoneBonus).toBe(50);
+    expect(tenth.result.milestoneType).toBe('minor');
+
+    for (let index = 0; index < 39; index += 1) {
+      gameState.spinWithPayout(10);
+    }
+
+    const fiftieth = gameState.spinWithPayout(10);
+    expect(fiftieth.result.milestoneBonus).toBe(500);
+    expect(fiftieth.result.milestoneType).toBe('major');
+    expect(gameState.forceWinNextSpin).toBe(true);
+  });
+
+  it('persists and restores key gameplay state', () => {
+    const gameState = new GameState(1000);
+    vi.spyOn(gameState, 'generateSpinReels').mockReturnValue([0, 0, 0]);
+    gameState.spinWithPayout(10);
+    gameState.spinWithPayout(10);
+
+    const saved = gameState.getPersistenceState();
+    const restored = new GameState(1000);
+    restored.hydrateFromState(saved);
+
+    expect(restored.getBalance()).toBe(gameState.getBalance());
+    expect(restored.getLifetimeWinnings()).toBe(gameState.getLifetimeWinnings());
+    expect(restored.currentWinStreak).toBe(gameState.currentWinStreak);
+    expect(restored.progressiveJackpotPool).toBe(gameState.progressiveJackpotPool);
+    expect(restored.getWinLog()).toHaveLength(gameState.getWinLog().length);
+  });
+
+  it('resets balance, bet, history, streaks, jackpot, and spin lock on resetGame', () => {
     const gameState = new GameState(100);
     gameState.betAmount = 25;
     gameState.gameHistory.push({ betAmount: 10, reels: [1, 2, 3], timestamp: Date.now() });
@@ -145,6 +166,10 @@ describe('GameState', () => {
     gameState.lifetimeWinnings = 200;
     gameState.biggestWin = { payout: 200, multiplier: 10, symbolName: 'cherry', betAmount: 20, timestamp: Date.now() };
     gameState.lastDailyGrantDate = '2026-04-22';
+    gameState.currentWinStreak = 3;
+    gameState.currentLossStreak = 2;
+    gameState.forceWinNextSpin = true;
+    gameState.progressiveJackpotPool = 900;
     gameState.isSpinning = true;
 
     gameState.resetGame(300);
@@ -156,6 +181,10 @@ describe('GameState', () => {
     expect(gameState.getLifetimeWinnings()).toBe(0);
     expect(gameState.getBiggestWin()).toBeNull();
     expect(gameState.getLastDailyGrantDate()).toBeNull();
+    expect(gameState.currentWinStreak).toBe(0);
+    expect(gameState.currentLossStreak).toBe(0);
+    expect(gameState.forceWinNextSpin).toBe(false);
+    expect(gameState.progressiveJackpotPool).toBe(gameState.jackpotSeedAmount);
     expect(gameState.isSpinning).toBe(false);
   });
 

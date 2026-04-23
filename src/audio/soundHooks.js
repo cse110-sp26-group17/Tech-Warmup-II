@@ -2,6 +2,8 @@ const defaultHooks = {
   playSpinSound: () => {},
   playStopSound: () => {},
   playWinSound: () => {},
+  playLossSound: () => {},
+  playMilestoneSound: () => {},
 };
 
 const registeredHooks = { ...defaultHooks };
@@ -10,12 +12,16 @@ const activeMedia = {
   spin: null,
   stop: null,
   win: null,
+  loss: null,
+  milestone: null,
 };
 
 const activeSynth = {
   spin: { timers: [], nodes: [] },
   stop: { timers: [], nodes: [] },
   win: { timers: [], nodes: [] },
+  loss: { timers: [], nodes: [] },
+  milestone: { timers: [], nodes: [] },
 };
 
 let cachedAudioContext = null;
@@ -39,7 +45,7 @@ function stopSynthChannel(channel) {
   activeSynth[channel].nodes.forEach((node) => {
     try {
       node.stop();
-    } catch (error) {
+    } catch {
       // Node may already be stopped; ignore.
     }
     node.disconnect();
@@ -93,12 +99,12 @@ function scheduleTone(channel, { atMs, durationMs, frequency, volume = 0.05, typ
     oscillator.onended = () => {
       try {
         oscillator.disconnect();
-      } catch (error) {
+      } catch {
         // Ignore disconnect races.
       }
       try {
         gainNode.disconnect();
-      } catch (error) {
+      } catch {
         // Ignore disconnect races.
       }
       activeSynth[channel].nodes = activeSynth[channel].nodes.filter((node) => node !== oscillator);
@@ -141,6 +147,25 @@ function playFallbackWin(tier) {
       durationMs: 120,
       frequency,
       volume: 0.06,
+      type: 'triangle',
+    });
+  });
+}
+
+function playFallbackLoss() {
+  stopChannel('loss');
+  scheduleTone('loss', { atMs: 0, durationMs: 120, frequency: 190, volume: 0.06, type: 'sawtooth' });
+  scheduleTone('loss', { atMs: 90, durationMs: 140, frequency: 135, volume: 0.05, type: 'triangle' });
+}
+
+function playFallbackMilestone() {
+  stopChannel('milestone');
+  [523, 659, 784].forEach((frequency, index) => {
+    scheduleTone('milestone', {
+      atMs: index * 80,
+      durationMs: 140,
+      frequency,
+      volume: 0.065,
       type: 'triangle',
     });
   });
@@ -216,6 +241,12 @@ export function registerSoundHooks(hooks) {
   if (typeof hooks.playWinSound === 'function') {
     registeredHooks.playWinSound = hooks.playWinSound;
   }
+  if (typeof hooks.playLossSound === 'function') {
+    registeredHooks.playLossSound = hooks.playLossSound;
+  }
+  if (typeof hooks.playMilestoneSound === 'function') {
+    registeredHooks.playMilestoneSound = hooks.playMilestoneSound;
+  }
 }
 
 export function playSpinSound() {
@@ -230,4 +261,12 @@ export function playStopSound() {
 export function playWinSound(tier) {
   stopChannel('spin');
   runHook('win', 'playWinSound', [tier], () => playFallbackWin(tier));
+}
+
+export function playLossSound() {
+  runHook('loss', 'playLossSound', [], playFallbackLoss);
+}
+
+export function playMilestoneSound() {
+  runHook('milestone', 'playMilestoneSound', [], playFallbackMilestone);
 }

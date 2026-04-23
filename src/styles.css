@@ -57,6 +57,19 @@ body {
   animation: win-shake 210ms linear 2;
 }
 
+.slot-machine.win-impact.impact-small {
+  animation-duration: 220ms;
+}
+
+.slot-machine.win-impact.impact-medium {
+  animation-duration: 180ms;
+}
+
+.slot-machine.win-impact.impact-big,
+.slot-machine.win-impact.impact-jackpot {
+  animation-duration: 130ms;
+}
+
 .slot-machine.win-impact::before {
   content: '';
   position: fixed;
@@ -104,18 +117,69 @@ body {
   text-shadow: 0 0 12px rgba(112, 248, 173, 0.5);
 }
 
-.hud-state {
+.hud-card.combo-active {
+  border-color: var(--gold);
+  box-shadow:
+    inset 0 0 18px rgba(255, 193, 61, 0.45),
+    0 0 16px rgba(255, 193, 61, 0.4);
+}
+
+.quick-stats {
   grid-column: 1 / -1;
   margin: 0;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 8px 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  text-align: center;
-  font-weight: 700;
-  color: var(--neon);
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
   background: rgba(9, 22, 35, 0.8);
+}
+
+.quick-stat {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.quick-stat.hot-streak {
+  color: #ffd874;
+  text-shadow: 0 0 10px rgba(255, 200, 86, 0.6);
+}
+
+.quick-stat.jackpot {
+  color: #fff3b6;
+}
+
+.temp-pill {
+  margin: 0;
+  justify-self: end;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.temp-pill.tone-cold {
+  color: #d5f3ff;
+  background: rgba(46, 137, 193, 0.35);
+}
+
+.temp-pill.tone-warm {
+  color: #fce9b6;
+  background: rgba(196, 132, 38, 0.35);
+}
+
+.temp-pill.tone-hot {
+  color: #ffd7b0;
+  background: rgba(220, 89, 35, 0.42);
+}
+
+.temp-pill.tone-fire {
+  color: #ffe5c5;
+  background: rgba(231, 56, 56, 0.48);
 }
 
 .reel-stage {
@@ -169,6 +233,10 @@ body {
   box-shadow:
     inset 0 0 22px rgba(0, 0, 0, 0.6),
     0 0 16px rgba(255, 197, 84, 0.8);
+}
+
+.reel.near-miss.slow-stop {
+  animation: near-miss-shimmer 320ms ease-in-out 2;
 }
 
 .reel-strip {
@@ -365,6 +433,14 @@ body {
     0 12px 22px rgba(31, 244, 199, 0.45),
     inset 0 -8px 16px rgba(5, 81, 69, 0.45);
   animation: none;
+}
+
+.spin-button.urgency-mid {
+  animation: spin-urgency-mid 460ms ease-in-out infinite alternate;
+}
+
+.spin-button.urgency-high {
+  animation: spin-urgency-high 260ms ease-in-out infinite alternate;
 }
 
 .toggle-row {
@@ -621,6 +697,43 @@ body {
   font-weight: 900;
 }
 
+.combo-badge,
+.streak-badge {
+  margin: 8px auto 0;
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+}
+
+.combo-badge {
+  color: #2a1500;
+  background: linear-gradient(180deg, #ffe9a8, #ffbe42);
+}
+
+.streak-badge {
+  color: #fff3c5;
+  background: linear-gradient(180deg, #aa2e03, #cb580f);
+}
+
+.milestone-popup {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: linear-gradient(180deg, #fff2a7, #ffc44c);
+  color: #3b1800;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 18px rgba(255, 190, 70, 0.7);
+  animation: milestone-burst 900ms ease-out;
+}
+
 .win-overlay.result-win .win-card {
   border-color: #5bda96;
   background: rgba(8, 83, 36, 0.9);
@@ -690,6 +803,21 @@ body {
   animation: fireworks 540ms ease-out 1;
 }
 
+.near-miss-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  margin: 0;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: rgba(255, 185, 62, 0.88);
+  color: #2d1300;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
 .slot-machine.state-idle .reel-stage {
   border-color: #7046a7;
 }
@@ -708,6 +836,10 @@ body {
 
 .slot-machine.state-payout .reel-stage {
   border-color: #ff8a4f;
+}
+
+.slot-machine.combo-active .reel-stage {
+  animation: combo-border-pulse 580ms ease-in-out infinite alternate;
 }
 
 .slot-machine.reduced-motion *,
@@ -739,6 +871,16 @@ body {
 @keyframes spin-pulse {
   from { transform: scale(1); }
   to { transform: scale(1.02); }
+}
+
+@keyframes spin-urgency-mid {
+  from { transform: scale(1); }
+  to { transform: scale(1.04); }
+}
+
+@keyframes spin-urgency-high {
+  from { transform: scale(1.01); }
+  to { transform: scale(1.07); }
 }
 
 @keyframes max-bet-glow {
@@ -790,6 +932,35 @@ body {
 @keyframes fireworks {
   0% { opacity: 0.8; transform: scale(0.95); }
   100% { opacity: 0; transform: scale(1.25); }
+}
+
+@keyframes near-miss-shimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes milestone-burst {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.8); }
+  30% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.04); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(1.1); }
+}
+
+@keyframes combo-border-pulse {
+  from {
+    border-color: #ffbf48;
+    box-shadow:
+      0 14px 28px rgba(0, 0, 0, 0.38),
+      inset 0 0 32px rgba(255, 197, 84, 0.22),
+      0 0 14px rgba(255, 197, 84, 0.28);
+  }
+  to {
+    border-color: #ffe394;
+    box-shadow:
+      0 14px 28px rgba(0, 0, 0, 0.38),
+      inset 0 0 32px rgba(255, 230, 139, 0.28),
+      0 0 20px rgba(255, 230, 139, 0.42);
+  }
 }
 
 @media (max-width: 420px) {

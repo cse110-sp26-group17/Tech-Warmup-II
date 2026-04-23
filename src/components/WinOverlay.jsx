@@ -1,8 +1,5 @@
 import { MACHINE_STATES } from '../animations/reelAnimation';
-
-function formatCredits(value) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
+import { formatCredits } from '../utils/formatCredits';
 
 export default function WinOverlay({
   machineState,
@@ -12,8 +9,14 @@ export default function WinOverlay({
   reducedMotion,
   resultMessage,
   isNewBiggestWin,
+  milestonePopup,
+  winStreak,
+  comboMultiplier,
 }) {
-  if (!result || machineState !== MACHINE_STATES.RESULT) {
+  const showOverlay =
+    result && (machineState === MACHINE_STATES.RESULT || machineState === MACHINE_STATES.PAYOUT);
+
+  if (!showOverlay) {
     return null;
   }
 
@@ -37,10 +40,15 @@ export default function WinOverlay({
           <p className="win-detail">Keep the streak alive</p>
         )}
 
+        {comboMultiplier > 1 ? <p className="combo-badge">COMBO x{comboMultiplier}</p> : null}
+        {winStreak >= 3 ? <p className="streak-badge">HOT STREAK x{winStreak}!</p> : null}
+
         {showWin && isNewBiggestWin ? (
           <p className="biggest-win-badge">NEW BIGGEST WIN x{result.multiplier}</p>
         ) : null}
       </article>
+
+      {milestonePopup ? <div className="milestone-popup">{milestonePopup}</div> : null}
 
       {showWin ? (
         <div className="particle-layer" aria-hidden="true">
