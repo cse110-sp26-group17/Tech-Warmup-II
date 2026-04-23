@@ -979,3 +979,38 @@ You are Codex working in an existing slot-machine web app codebase.
   1. Brief summary of changes made.
   2. File-by-file list of edits.                                                                         
   3. Verification notes against each checklist item.
+
+---
+
+## Prompt 20:
+
+### Prompt
+
+This is more for documentation0only pass for JSDocs
+You are updating an existing JavaScript codebase. Do NOT change runtime behavior, logic, UI, CSS, imports, exports, function signatures, or tests. Only add missing JSDoc comments to JavaScript methods that currently do not have them.
+
+Scope:
+- All `.js` files under `src/`
+- Add JSDoc above methods/functions that are missing it
+- Skip files that already have complete JSDoc for every method within that file
+
+JSDoc requirements:
+- Include a short one-line description
+- Include `@param` for every parameter with accurate types
+- Include `@returns` with accurate type
+- Include `@throws` only if the method can throw
+- For object params/returns, use inline object type shapes when possible
+- Keep docs concise and accurate to current behavior (no invented behavior)
+
+Important constraints:
+- No refactors
+- No renaming
+- No formatting-only churn outside added JSDoc blocks
+- No code logic edits at all
+
+Output format:
+1) List files changed
+2) For each file, list methods that received new JSDoc
+3) Provide the exact patch/diff
+
+Prioritize these files first: `src/state/GameState.js`, then any other `src/**/*.js`.

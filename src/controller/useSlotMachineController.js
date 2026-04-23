@@ -25,6 +25,12 @@ const RESULT_POPUP_DURATION_MS = 1600 + 2000;
 const MILESTONE_POPUP_DURATION_MS = 1200;
 const SAVE_STORAGE_KEY = 'slot-machine-save-v2';
 
+/**
+ * Returns the highest affordable bet from BET_OPTIONS, preserving the current bet if still valid.
+ * @param {number} balance - Current credit balance.
+ * @param {number} currentBet - Currently selected bet amount.
+ * @returns {number} A valid bet amount from BET_OPTIONS.
+ */
 function pickValidBet(balance, currentBet) {
   const affordableOptions = BET_OPTIONS.filter((option) => option <= balance);
   if (affordableOptions.length === 0) {
@@ -36,6 +42,11 @@ function pickValidBet(balance, currentBet) {
   return affordableOptions[affordableOptions.length - 1];
 }
 
+/**
+ * Parses a JSON string, returning null instead of throwing on invalid input.
+ * @param {string} jsonText - JSON string to parse.
+ * @returns {*} Parsed value, or null if parsing fails.
+ */
 function safeParse(jsonText) {
   try {
     return JSON.parse(jsonText);

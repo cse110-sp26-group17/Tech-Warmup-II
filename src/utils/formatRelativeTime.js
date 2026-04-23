@@ -1,3 +1,8 @@
+/**
+ * Formats a Unix millisecond timestamp as a human-readable relative time string.
+ * @param {number} timestamp - Unix timestamp in milliseconds.
+ * @returns {string} Relative time string (e.g. "3 minutes ago", "just now").
+ */
 export function formatRelativeTime(timestamp) {
   if (!Number.isFinite(timestamp)) {
     return 'just now';

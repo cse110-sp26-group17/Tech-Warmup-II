@@ -2,6 +2,9 @@
  * Manages slot machine game state and core state transitions.
  */
 class GameState {
+  /**
+   * @param {number} [initialBalance=1000] - Starting credit balance.
+   */
   constructor(initialBalance = 1000) {
     this.balance = initialBalance;
     this.betAmount = 10;
@@ -38,6 +41,13 @@ class GameState {
     };
   }
 
+  /**
+   * Executes a single reel spin, deducting the bet or consuming a free roll.
+   * @param {number} betAmount - Credits to wager.
+   * @param {{useFreeRoll?: boolean}} [options={}]
+   * @returns {{reels: number[], balance: number, betAmount: number, wasForcedWin: boolean, usedFreeRoll: boolean, result: object}}
+   * @throws {Error} If a spin is already in progress, bet is invalid, balance is insufficient, or no free rolls remain.
+   */
   spin(betAmount, { useFreeRoll = false } = {}) {
     if (this.isSpinning === true) {
       throw new Error('Spin already in progress');
@@ -94,12 +104,21 @@ class GameState {
     };
   }
 
+  /**
+   * Awards one free roll and records the reason.
+   * @param {string} [reason='random'] - Why the free roll was awarded.
+   * @returns {number} Updated count of available free rolls.
+   */
   awardFreeRoll(reason = 'random') {
     this.freeRollsAvailable += 1;
     this.freeRollReason = reason;
     return this.freeRollsAvailable;
   }
 
+  /**
+   * Consumes one free roll if available.
+   * @returns {boolean} True if a free roll was consumed, false if none were available.
+   */
   consumeFreeRoll() {
     if (this.freeRollsAvailable <= 0) {
       return false;
@@ -111,10 +130,20 @@ class GameState {
     return true;
   }
 
+  /**
+   * Returns the number of free rolls currently available.
+   * @returns {number}
+   */
   getFreeRollCount() {
     return this.freeRollsAvailable;
   }
 
+  /**
+   * Updates the active bet amount.
+   * @param {number} newBetAmount - New bet value; must be >= 1 and <= current balance.
+   * @returns {number} The updated bet amount.
+   * @throws {Error} If the bet is below 1 or exceeds the current balance.
+   */
   updateBet(newBetAmount) {
     if (newBetAmount < 1) {
       throw new Error('Bet amount must be at least 1');
@@ -127,34 +156,66 @@ class GameState {
     return this.betAmount;
   }
 
+  /**
+   * Returns the current credit balance.
+   * @returns {number}
+   */
   getBalance() {
     return this.balance;
   }
 
+  /**
+   * Returns a shallow copy of the full game history array.
+   * @returns {object[]}
+   */
   getGameHistory() {
     return [...this.gameHistory];
   }
 
+  /**
+   * Returns a shallow copy of the win log array.
+   * @returns {object[]}
+   */
   getWinLog() {
     return [...this.winLog];
   }
 
+  /**
+   * Returns total credits won across all sessions.
+   * @returns {number}
+   */
   getLifetimeWinnings() {
     return this.lifetimeWinnings;
   }
 
+  /**
+   * Returns the single biggest win record, or null if none.
+   * @returns {{payout: number, multiplier: number, symbolName: string, betAmount: number, timestamp: number} | null}
+   */
   getBiggestWin() {
     return this.biggestWin;
   }
 
+  /**
+   * Returns a shallow copy of the top-3 wins array.
+   * @returns {object[]}
+   */
   getTopWins() {
     return [...this.topWins];
   }
 
+  /**
+   * Returns the full payout table configuration object.
+   * @returns {object}
+   */
   getPayoutTable() {
     return this.payoutTable;
   }
 
+  /**
+   * Estimates the theoretical return-to-player percentage.
+   * @returns {number} Estimated RTP as a decimal (e.g. 0.85 = 85%).
+   */
   calculateRTP() {
     const averageWinMultiplier =
       this.payoutTable.cherry.multiplier * this.payoutTable.cherry.probability +
@@ -170,6 +231,11 @@ class GameState {
     return baseRtp + estimatedComboBoost + estimatedPityBoost + estimatedMilestoneBoost;
   }
 
+  /**
+   * Maps a raw reel integer (0–9) to a symbol name string.
+   * @param {number} reelNumber - Raw reel value.
+   * @returns {'cherry' | 'bar' | 'bell' | 'seven' | 'none'}
+   */
   getSymbolName(reelNumber) {
     if (reelNumber >= 0 && reelNumber <= 1) {
       return 'cherry';
@@ -186,6 +252,11 @@ class GameState {
     return 'none';
   }
 
+  /**
+   * Returns the base payout multiplier for a symbol name.
+   * @param {string} symbolName - Key into the payout table.
+   * @returns {number} Multiplier, or 0 if the symbol is not in the table.
+   */
   getSymbolMultiplier(symbolName) {
     const symbol = this.payoutTable[symbolName];
     if (!symbol) {
@@ -194,6 +265,11 @@ class GameState {
     return symbol.multiplier;
   }
 
+  /**
+   * Returns the tier multiplier applied based on the number of matching reels.
+   * @param {number} matchCount - Number of consecutive left-to-right matching symbols.
+   * @returns {number} 3 for 5-match, 1.8 for 4-match, 1 otherwise.
+   */
   getMatchTierMultiplier(matchCount) {
     if (matchCount >= 5) {
       return 3;
@@ -204,6 +280,12 @@ class GameState {
     return 1;
   }
 
+  /**
+   * Evaluates a set of reel values and returns the spin outcome.
+   * @param {number[]} reels - Array of 5 raw reel values.
+   * @param {number} [betAmount=this.betAmount] - Bet used to compute the payout.
+   * @returns {{isWin: boolean, symbolName: string, multiplier: number, payout: number, matchCount: number}}
+   */
   evaluateSpin(reels, betAmount = this.betAmount) {
     const symbols = reels.map((reelValue) => this.getSymbolName(reelValue));
     const firstSymbol = symbols[0];
@@ -233,6 +315,11 @@ class GameState {
     };
   }
 
+  /**
+   * Runs a full spin cycle including combo bonuses, jackpot, milestones, streaks, and free rolls.
+   * @param {number} betAmount - Credits to wager.
+   * @returns {{reels: number[], balance: number, betAmount: number, result: object, totalSpins: number, streaks: {wins: number, losses: number}, jackpotPool: number, nextMilestoneIn: number, machineTemperature: object, shouldShowDueForWin: boolean, luckBuilding: boolean, freeRollsAvailable: number, freeRollAwarded: string | null, usedFreeRoll: boolean}}
+   */
   spinWithPayout(betAmount) {
     const shouldUseFreeRoll = this.freeRollsAvailable > 0;
     const jackpotContribution = shouldUseFreeRoll
@@ -382,10 +469,19 @@ class GameState {
     };
   }
 
+  /**
+   * Returns whether the daily credit grant is available to claim today.
+   * @returns {boolean}
+   */
   canClaimDailyGrant() {
     return this.lastDailyGrantDate !== this.getTodayKey();
   }
 
+  /**
+   * Claims the daily credit grant and adds it to the balance.
+   * @returns {{amount: number, balance: number, lastClaimDate: string}}
+   * @throws {Error} If the daily grant has already been claimed today.
+   */
   claimDailyGrant() {
     const todayKey = this.getTodayKey();
     if (this.lastDailyGrantDate === todayKey) {
@@ -402,14 +498,27 @@ class GameState {
     };
   }
 
+  /**
+   * Restores the last daily grant date from a persisted string key.
+   * @param {string | *} dateKey - ISO date string (YYYY-MM-DD) or any non-string value to reset.
+   */
   hydrateDailyGrantDate(dateKey) {
     this.lastDailyGrantDate = typeof dateKey === 'string' ? dateKey : null;
   }
 
+  /**
+   * Returns the date key of the last daily grant claim.
+   * @returns {string | null}
+   */
   getLastDailyGrantDate() {
     return this.lastDailyGrantDate;
   }
 
+  /**
+   * Returns the payout multiplier for the current consecutive win streak.
+   * @param {number} winStreak - Number of consecutive wins.
+   * @returns {number} 2 for 5+, 1.5 for 3–4, 1.2 for 2, 1 otherwise.
+   */
   getComboMultiplier(winStreak) {
     if (winStreak >= 5) {
       return 2;
@@ -423,6 +532,11 @@ class GameState {
     return 1;
   }
 
+  /**
+   * Returns the milestone bonus for a given spin count.
+   * @param {number} totalSpins - Lifetime spin count to evaluate.
+   * @returns {{amount: number, type: 'major' | 'medium' | 'minor' | null}}
+   */
   getMilestoneReward(totalSpins) {
     if (totalSpins > 0 && totalSpins % 50 === 0) {
       return { amount: 500, type: 'major' };
@@ -436,6 +550,10 @@ class GameState {
     return { amount: 0, type: null };
   }
 
+  /**
+   * Returns the number of spins until the next milestone reward.
+   * @returns {number}
+   */
   getNextMilestoneIn() {
     const withinCycle = this.totalSpins % 50;
     if (withinCycle < 10) {
@@ -447,6 +565,10 @@ class GameState {
     return 50 - withinCycle;
   }
 
+  /**
+   * Appends a win/loss boolean to the recent results window (max 10 entries).
+   * @param {boolean} isWin - True for a winning spin, false for a loss.
+   */
   pushRecentResult(isWin) {
     this.recentResults.push(isWin);
     if (this.recentResults.length > 10) {
@@ -454,6 +576,10 @@ class GameState {
     }
   }
 
+  /**
+   * Inserts a win entry into the sorted top-3 wins list.
+   * @param {{payout: number, multiplier: number, symbolName: string, comboMultiplier: number, betAmount: number, timestamp: number}} entry
+   */
   recordTopWin(entry) {
     this.topWins = [...this.topWins, entry]
       .filter((winEntry) => Number.isFinite(winEntry?.payout))
@@ -461,6 +587,10 @@ class GameState {
       .slice(0, 3);
   }
 
+  /**
+   * Computes a temperature label based on win frequency over the last 10 spins.
+   * @returns {{label: string, tone: 'fire' | 'hot' | 'warm' | 'cold'}}
+   */
   getMachineTemperature() {
     const winsInLastTen = this.recentResults.filter(Boolean).length;
     if (winsInLastTen >= 4) {
@@ -475,6 +605,10 @@ class GameState {
     return { label: 'COLD', tone: 'cold' };
   }
 
+  /**
+   * Returns a snapshot of transient game meta fields (streaks, jackpot, temperature, etc.).
+   * @returns {{totalSpins: number, currentWinStreak: number, currentLossStreak: number, progressiveJackpotPool: number, nextMilestoneIn: number, machineTemperature: object, comboMultiplier: number, forceWinNextSpin: boolean, forceWinReason: string | null, freeRollsAvailable: number, freeRollReason: string | null}}
+   */
   getMetaState() {
     return {
       totalSpins: this.totalSpins,
@@ -491,6 +625,10 @@ class GameState {
     };
   }
 
+  /**
+   * Returns a serialisable state object suitable for localStorage persistence.
+   * @returns {object}
+   */
   getPersistenceState() {
     return {
       balance: this.balance,
@@ -513,6 +651,10 @@ class GameState {
     };
   }
 
+  /**
+   * Restores game state from a previously persisted plain object.
+   * @param {object} state - Saved state; invalid or missing fields fall back to defaults.
+   */
   hydrateFromState(state) {
     if (!state || typeof state !== 'object') {
       return;
@@ -544,6 +686,10 @@ class GameState {
     this.freeRollReason = typeof state.freeRollReason === 'string' ? state.freeRollReason : null;
   }
 
+  /**
+   * Resets all game state to initial values.
+   * @param {number} [newInitialBalance=1000] - Balance to start fresh with.
+   */
   resetGame(newInitialBalance = 1000) {
     this.balance = newInitialBalance;
     this.betAmount = 10;
@@ -565,6 +711,11 @@ class GameState {
     this.isSpinning = false;
   }
 
+  /**
+   * Generates five raw reel values, forcing a win when requested or by probability.
+   * @param {{forceWin?: boolean}} [options={}]
+   * @returns {number[]} Array of 5 reel integers.
+   */
   generateSpinReels({ forceWin = false } = {}) {
     if (forceWin || Math.random() < this.targetWinRate) {
       return this.generateWinningReels();
@@ -572,6 +723,10 @@ class GameState {
     return this.generateLosingReels();
   }
 
+  /**
+   * Generates a winning 5-reel combination for a randomly chosen symbol.
+   * @returns {number[]} Array of 5 reel integers with 3–5 leading matches.
+   */
   generateWinningReels() {
     const winningSymbol = this.pickWinningSymbol();
     const reelValues = this.getReelValuesForSymbol(winningSymbol);
@@ -597,6 +752,10 @@ class GameState {
     return reels;
   }
 
+  /**
+   * Generates a guaranteed non-winning 5-reel combination.
+   * @returns {number[]} Array of 5 reel integers that evaluate to no win.
+   */
   generateLosingReels() {
     let reels = [
       Math.floor(Math.random() * 10),
@@ -619,6 +778,10 @@ class GameState {
     return reels;
   }
 
+  /**
+   * Picks a winning symbol by weighted random selection from the payout table.
+   * @returns {'cherry' | 'bar' | 'bell' | 'seven'}
+   */
   pickWinningSymbol() {
     const random = Math.random();
     let cumulative = 0;
@@ -634,6 +797,11 @@ class GameState {
     return 'cherry';
   }
 
+  /**
+   * Returns the valid raw reel integer values that map to the given symbol.
+   * @param {string} symbolName - Symbol key (e.g. 'cherry', 'bar', 'bell', 'seven').
+   * @returns {number[]} Array of one or two reel integers.
+   */
   getReelValuesForSymbol(symbolName) {
     if (symbolName === 'cherry') {
       return [0, 1];
@@ -650,6 +818,10 @@ class GameState {
     return [8, 9];
   }
 
+  /**
+   * Returns today's date as a YYYY-MM-DD string in local time.
+   * @returns {string}
+   */
   getTodayKey() {
     const now = new Date();
     const year = now.getFullYear();
