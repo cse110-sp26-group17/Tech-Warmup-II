@@ -1,4 +1,4 @@
-import { formatCredits } from '../utils/formatCredits';
+import { formatCredits } from '../../utils/formatCredits';
 
 export default function BetControls({
   betOptions,
@@ -9,9 +9,6 @@ export default function BetControls({
 }) {
   return (
     <section className="bet-controls" aria-label="Bet controls">
-      <div className="bet-display" aria-live="polite">
-        Bet: {formatCredits(betAmount)} VC
-      </div>
       <div className="bet-options" role="group" aria-label="Select bet amount">
         {betOptions.map((option) => {
           const isSelected = option === betAmount;

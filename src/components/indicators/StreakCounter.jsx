@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import './indicators.css';
 
 function getStreakMultiplier(winStreak) {
   if (winStreak <= 0) {
@@ -23,7 +24,7 @@ function getStreakTone(winStreak) {
   return 'idle';
 }
 
-export default function StreakCounter({ winStreak, comboMultiplier }) {
+export default function StreakCounter({ winStreak, comboMultiplier, variant = 'default' }) {
   const previousWinStreakRef = useRef(winStreak);
   const [resetPulse, setResetPulse] = useState(false);
 
@@ -44,10 +45,15 @@ export default function StreakCounter({ winStreak, comboMultiplier }) {
 
   const streakMultiplier = getStreakMultiplier(winStreak);
   const tone = getStreakTone(winStreak);
+  const isIdle = winStreak === 0 && comboMultiplier <= 1;
+
+  if (variant === 'in-stage' && isIdle) {
+    return null;
+  }
 
   return (
     <section
-      className={`streak-counter tone-${tone} ${resetPulse ? 'reset-pulse' : ''}`}
+      className={`streak-counter ${variant === 'in-stage' ? 'in-stage' : ''} tone-${tone} ${resetPulse ? 'reset-pulse' : ''}`}
       aria-live="polite"
       aria-label="Win streak multiplier"
     >

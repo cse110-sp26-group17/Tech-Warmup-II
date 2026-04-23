@@ -1,5 +1,6 @@
-import { MACHINE_STATES } from '../animations/reelAnimation';
-import { formatCredits } from '../utils/formatCredits';
+import { MACHINE_STATES } from '../../animations/reelAnimation';
+import { formatCredits } from '../../utils/formatCredits';
+import './overlays.css';
 
 export default function WinOverlay({
   machineState,
@@ -21,7 +22,6 @@ export default function WinOverlay({
   }
 
   const showWin = result.isWin === true;
-  const layerClass = showWin ? `tier-${winTier} result-win` : 'tier-loss result-loss';
   const particlesByTier = {
     small: 5,
     medium: 15,
@@ -30,48 +30,51 @@ export default function WinOverlay({
   };
   const particleCount = particlesByTier[winTier] ?? 10;
 
+  if (!showWin) {
+    return (
+      <section className="loss-toast" aria-live="assertive" role="status">
+        <article className="loss-toast-card">
+          <p className="win-heading">{resultMessage}</p>
+          <p className="win-detail">Keep the streak alive</p>
+        </article>
+      </section>
+    );
+  }
+
   return (
     <section
-      className={`win-overlay ${layerClass} ${reducedMotion ? 'reduced' : ''}`}
+      className={`win-overlay tier-${winTier} result-win ${reducedMotion ? 'reduced' : ''}`}
       aria-live="assertive"
       role="status"
     >
       <article className="win-card">
         <p className="win-heading">{resultMessage}</p>
-        {showWin ? (
-          <>
-            <p className="win-value">+{formatCredits(displayedWin)} VC</p>
-            <p className="win-detail">Multiplier x{result.multiplier}</p>
-          </>
-        ) : (
-          <p className="win-detail">Keep the streak alive</p>
-        )}
+        <p className="win-value">+{formatCredits(displayedWin)} VC</p>
+        <p className="win-detail">Multiplier x{result.multiplier}</p>
 
         {comboMultiplier > 1 ? <p className="combo-badge">COMBO x{comboMultiplier}</p> : null}
         {winStreak >= 3 ? <p className="streak-badge">HOT STREAK x{winStreak}!</p> : null}
 
-        {showWin && isNewBiggestWin ? (
+        {isNewBiggestWin ? (
           <p className="biggest-win-badge">NEW BIGGEST WIN x{result.multiplier}</p>
         ) : null}
       </article>
 
       {milestonePopup ? <div className="milestone-popup">{milestonePopup}</div> : null}
 
-      {showWin ? (
-        <div className="particle-layer" aria-hidden="true">
-          {Array.from({ length: particleCount }, (_, index) => (
-            <span
-              key={`particle-${index}`}
-              style={{
-                left: `${4 + ((index * 13) % 92)}%`,
-                animationDelay: `${(index * 0.07) % 0.8}s`,
-              }}
-            />
-          ))}
-        </div>
-      ) : null}
+      <div className="particle-layer" aria-hidden="true">
+        {Array.from({ length: particleCount }, (_, index) => (
+          <span
+            key={`particle-${index}`}
+            style={{
+              left: `${4 + ((index * 13) % 92)}%`,
+              animationDelay: `${(index * 0.07) % 0.8}s`,
+            }}
+          />
+        ))}
+      </div>
 
-      {showWin && (isNewBiggestWin || winTier === 'jackpot') ? (
+      {(isNewBiggestWin || winTier === 'jackpot') ? (
         <div className="firework-layer" aria-hidden="true" />
       ) : null}
     </section>

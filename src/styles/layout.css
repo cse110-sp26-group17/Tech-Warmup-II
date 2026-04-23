@@ -1,0 +1,32 @@
+@import '../styles.css';
+
+.stats-drawer > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats-drawer > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #dbc79a;
+  border-bottom: 2px solid #dbc79a;
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+  margin-left: 8px;
+}
+
+.stats-drawer[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.insight-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.insight-row.free-roll-ready {
+  animation: free-roll-ready-glow 540ms ease-in-out infinite alternate;
+}

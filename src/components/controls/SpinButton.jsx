@@ -1,4 +1,4 @@
-import { MACHINE_STATES } from '../animations/reelAnimation';
+import { MACHINE_STATES } from '../../animations/reelAnimation';
 
 export default function SpinButton({
   machineState,

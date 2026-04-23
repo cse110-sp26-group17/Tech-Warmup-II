@@ -1,0 +1,29 @@
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 223, 147, 0.08), transparent 42%),
+    radial-gradient(circle at 84% 26%, rgba(75, 195, 220, 0.08), transparent 44%),
+    radial-gradient(circle at 64% 78%, rgba(148, 84, 224, 0.1), transparent 46%),
+    radial-gradient(circle at 32% 72%, rgba(255, 169, 94, 0.08), transparent 38%);
+  animation: ambient-glow-shift 20s ease-in-out infinite;
+}
+
+body::after {
+  z-index: -1;
+  opacity: 0.24;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.12) 0 1.1px, transparent 1.1px),
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0 1px, transparent 1px),
+    radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.1) 0 1.2px, transparent 1.2px),
+    radial-gradient(circle at 88% 72%, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px);
+  background-size: 220px 220px;
+  animation: wallpaper-drift 28s linear infinite alternate;
+}

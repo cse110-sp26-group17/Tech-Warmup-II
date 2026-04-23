@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getRandomSymbol, MACHINE_STATES, SYMBOL_DISPLAY } from '../animations/reelAnimation';
+import { getRandomSymbol, MACHINE_STATES, SYMBOL_DISPLAY } from '../../animations/reelAnimation';
 
 export default function Reel({
   reelIndex,

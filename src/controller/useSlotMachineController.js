@@ -70,7 +70,7 @@ export function useSlotMachineController() {
   const [winTier, setWinTier] = useState(WIN_TIERS.LOSS);
   const [statusMessage, setStatusMessage] = useState('Set your bet, then spin');
   const [controlsLocked, setControlsLocked] = useState(false);
-  const [reelSymbols, setReelSymbols] = useState(['none', 'none', 'none']);
+  const [reelSymbols, setReelSymbols] = useState(['none', 'none', 'none', 'none', 'none']);
   const [spinToken, setSpinToken] = useState(0);
   const [nearMissHint, setNearMissHint] = useState(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -79,6 +79,7 @@ export function useSlotMachineController() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [dailyGrantReady, setDailyGrantReady] = useState(true);
   const [dailyGrantAmount] = useState(gameStateRef.current.dailyGrantAmount);
+  const [freeRolls, setFreeRolls] = useState(gameStateRef.current.getFreeRollCount());
   const [milestonePopup, setMilestonePopup] = useState(null);
   const [recentResults, setRecentResults] = useState([]);
   const [reducedMotion, setReducedMotion] = useState(() => {
@@ -130,6 +131,7 @@ export function useSlotMachineController() {
     setTopWins(gameState.getTopWins());
     setMeta(gameState.getMetaState());
     setRecentResults([...gameState.recentResults]);
+    setFreeRolls(gameState.getFreeRollCount());
     setDailyGrantReady(gameState.canClaimDailyGrant());
   }, []);
 
@@ -281,7 +283,13 @@ export function useSlotMachineController() {
       return;
     }
 
-    if (balance < 1 || betAmount > balance) {
+    if (balance < 1 && freeRolls < 1) {
+      setStatusMessage('Balance too low for that bet');
+      setAutoSpin(false);
+      return;
+    }
+
+    if (betAmount > balance && freeRolls < 1) {
       setStatusMessage('Balance too low for that bet');
       setAutoSpin(false);
       return;
@@ -379,11 +387,22 @@ export function useSlotMachineController() {
         }
       }
 
+      if (spinResult.freeRollAwarded) {
+        const labelMap = {
+          milestone: 'Milestone Free Roll',
+          consolation: 'Consolation Free Roll',
+          random: 'Lucky Free Roll',
+        };
+        setMilestonePopup(`${labelMap[spinResult.freeRollAwarded] ?? 'Free Roll'} Unlocked`);
+      }
+
       if (!isWin && soundEnabled) {
         playLossSound();
       }
 
-      if (spinResult.shouldShowDueForWin && !isWin) {
+      if (spinResult.result.usedFreeRoll) {
+        setStatusMessage('FREE ROLL USED');
+      } else if (spinResult.shouldShowDueForWin && !isWin) {
         setStatusMessage('DUE FOR A WIN');
       } else {
         setStatusMessage('Ready for your next spin');
@@ -418,6 +437,7 @@ export function useSlotMachineController() {
     machineState,
     controlsLocked,
     balance,
+    freeRolls,
     betAmount,
     clearAllTimers,
     turboMode,
@@ -456,7 +476,7 @@ export function useSlotMachineController() {
     setWinTier(WIN_TIERS.LOSS);
     setStatusMessage('Game reset. Place your bet.');
     setControlsLocked(false);
-    setReelSymbols(['none', 'none', 'none']);
+    setReelSymbols(['none', 'none', 'none', 'none', 'none']);
     setNearMissHint(null);
     setAutoSpin(false);
     setMilestonePopup(null);
@@ -472,7 +492,7 @@ export function useSlotMachineController() {
       return;
     }
 
-    if (balance < 1 || betAmount > balance) {
+    if (freeRolls < 1 && (balance < 1 || betAmount > balance)) {
       setAutoSpin(false);
       setStatusMessage('Auto-spin stopped: insufficient balance');
       return;
@@ -486,7 +506,7 @@ export function useSlotMachineController() {
     );
 
     return () => clearTimeout(autoSpinTimer);
-  }, [autoSpin, controlsLocked, machineState, balance, betAmount, spin, turboMode]);
+  }, [autoSpin, controlsLocked, machineState, balance, betAmount, spin, turboMode, freeRolls]);
 
   const onReelStop = useCallback(() => {
     if (soundEnabled) {
@@ -510,6 +530,7 @@ export function useSlotMachineController() {
     milestonePopup,
     dailyGrantAmount,
     dailyGrantReady,
+    freeRolls,
     resultMessage,
     displayedWin,
     machineState,

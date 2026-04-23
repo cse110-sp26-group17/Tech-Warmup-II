@@ -48,23 +48,23 @@ export function getRandomSymbol() {
 export function getSpinProfile({ turboMode, reducedMotion }) {
   if (reducedMotion) {
     return {
-      reelDurations: [560, 640, 760],
-      totalSpinDuration: 800,
+      reelDurations: [500, 590, 680, 770, 860],
+      totalSpinDuration: 900,
       resultHoldDuration: 120,
     };
   }
 
   if (turboMode) {
     return {
-      reelDurations: [520, 640, 780],
-      totalSpinDuration: 820,
+      reelDurations: [520, 640, 780, 900, 1020],
+      totalSpinDuration: 1060,
       resultHoldDuration: 110,
     };
   }
 
   return {
-    reelDurations: [960, 1220, 1500],
-    totalSpinDuration: 1560,
+    reelDurations: [900, 1100, 1300, 1500, 1720],
+    totalSpinDuration: 1780,
     resultHoldDuration: 240,
   };
 }
@@ -166,8 +166,9 @@ export function createNearMissHint({ isWin, finalSymbols }) {
 
   const firstTwoMatch =
     finalSymbols[0] === finalSymbols[1] && finalSymbols[0] !== 'none' && finalSymbols[1] !== 'none';
+  const thirdMisses = finalSymbols[2] !== finalSymbols[0];
 
-  if (!firstTwoMatch || Math.random() > 0.35) {
+  if (!firstTwoMatch || !thirdMisses || Math.random() > 0.35) {
     return null;
   }
 

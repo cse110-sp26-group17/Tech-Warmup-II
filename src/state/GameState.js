@@ -12,6 +12,8 @@ class GameState {
     this.biggestWin = null;
     this.lastDailyGrantDate = null;
     this.dailyGrantAmount = 250;
+    this.freeRollsAvailable = 0;
+    this.freeRollReason = null;
 
     this.totalSpins = 0;
     this.currentWinStreak = 0;
@@ -24,8 +26,8 @@ class GameState {
     this.jackpotSeedAmount = 500;
     this.jackpotContributionRate = 0.02;
 
-    // Tune baseline economy lower so combo/pity/milestones land near ~92% effective RTP.
-    this.targetWinRate = 0.30;
+    // Five-reel left-to-right matching needs a slightly higher target hit rate.
+    this.targetWinRate = 0.35;
     this.isSpinning = false;
     this.payoutTable = {
       cherry: { multiplier: 1.4, probability: 0.45 },
@@ -36,7 +38,7 @@ class GameState {
     };
   }
 
-  spin(betAmount) {
+  spin(betAmount, { useFreeRoll = false } = {}) {
     if (this.isSpinning === true) {
       throw new Error('Spin already in progress');
     }
@@ -46,8 +48,11 @@ class GameState {
     if (betAmount < 1) {
       throw new Error('Bet amount must be at least 1');
     }
-    if (betAmount > this.balance) {
+    if (!useFreeRoll && betAmount > this.balance) {
       throw new Error('Insufficient balance for bet');
+    }
+    if (useFreeRoll && this.freeRollsAvailable <= 0) {
+      throw new Error('No free rolls available');
     }
 
     this.isSpinning = true;
@@ -60,13 +65,17 @@ class GameState {
       this.forceWinReason = null;
     }
 
-    this.balance -= betAmount;
+    const usedFreeRoll = useFreeRoll && this.consumeFreeRoll();
+    if (!usedFreeRoll) {
+      this.balance -= betAmount;
+    }
 
     const spinRecord = {
       betAmount,
       reels,
       timestamp: Date.now(),
       wasForcedWin,
+      usedFreeRoll,
     };
     this.gameHistory.push(spinRecord);
 
@@ -80,8 +89,30 @@ class GameState {
       balance: this.balance,
       betAmount,
       wasForcedWin,
+      usedFreeRoll,
       result: evalResult,
     };
+  }
+
+  awardFreeRoll(reason = 'random') {
+    this.freeRollsAvailable += 1;
+    this.freeRollReason = reason;
+    return this.freeRollsAvailable;
+  }
+
+  consumeFreeRoll() {
+    if (this.freeRollsAvailable <= 0) {
+      return false;
+    }
+    this.freeRollsAvailable -= 1;
+    if (this.freeRollsAvailable === 0) {
+      this.freeRollReason = null;
+    }
+    return true;
+  }
+
+  getFreeRollCount() {
+    return this.freeRollsAvailable;
   }
 
   updateBet(newBetAmount) {
@@ -163,12 +194,34 @@ class GameState {
     return symbol.multiplier;
   }
 
+  getMatchTierMultiplier(matchCount) {
+    if (matchCount >= 5) {
+      return 3;
+    }
+    if (matchCount === 4) {
+      return 1.8;
+    }
+    return 1;
+  }
+
   evaluateSpin(reels, betAmount = this.betAmount) {
     const symbols = reels.map((reelValue) => this.getSymbolName(reelValue));
-    const allSymbolsMatch = symbols[0] === symbols[1] && symbols[1] === symbols[2];
-    const symbolName = allSymbolsMatch ? symbols[0] : 'none';
-    const multiplier = this.getSymbolMultiplier(symbolName);
-    const isWin = allSymbolsMatch && multiplier > 0;
+    const firstSymbol = symbols[0];
+    let matchCount = 1;
+
+    for (let index = 1; index < symbols.length; index += 1) {
+      if (symbols[index] === firstSymbol) {
+        matchCount += 1;
+      } else {
+        break;
+      }
+    }
+
+    const baseMultiplier = this.getSymbolMultiplier(firstSymbol);
+    const tierMultiplier = this.getMatchTierMultiplier(matchCount);
+    const isWin = matchCount >= 3 && baseMultiplier > 0;
+    const symbolName = isWin ? firstSymbol : 'none';
+    const multiplier = isWin ? Number((baseMultiplier * tierMultiplier).toFixed(2)) : 0;
     const payout = isWin ? Math.round(multiplier * betAmount) : 0;
 
     return {
@@ -176,14 +229,18 @@ class GameState {
       symbolName,
       multiplier,
       payout,
+      matchCount,
     };
   }
 
   spinWithPayout(betAmount) {
-    const jackpotContribution = Number((betAmount * this.jackpotContributionRate).toFixed(2));
+    const shouldUseFreeRoll = this.freeRollsAvailable > 0;
+    const jackpotContribution = shouldUseFreeRoll
+      ? 0
+      : Number((betAmount * this.jackpotContributionRate).toFixed(2));
     this.progressiveJackpotPool += jackpotContribution;
 
-    const spinResult = this.spin(betAmount);
+    const spinResult = this.spin(betAmount, { useFreeRoll: shouldUseFreeRoll });
     this.totalSpins += 1;
 
     const result = {
@@ -195,6 +252,8 @@ class GameState {
       totalPayout: spinResult.result.payout,
       milestoneType: null,
       wasForcedWin: spinResult.wasForcedWin,
+      usedFreeRoll: spinResult.usedFreeRoll,
+      freeRollAwarded: null,
     };
 
     if (spinResult.result.isWin === true) {
@@ -279,6 +338,23 @@ class GameState {
       }
     }
 
+    const freeRollTriggers = [];
+    if (this.totalSpins > 0 && this.totalSpins % 20 === 0) {
+      freeRollTriggers.push('milestone');
+    }
+    if (this.currentLossStreak >= 8 && this.forceWinNextSpin) {
+      freeRollTriggers.push('consolation');
+    }
+    if (Math.random() < 0.03) {
+      freeRollTriggers.push('random');
+    }
+
+    if (freeRollTriggers.length > 0) {
+      const primaryTrigger = freeRollTriggers[0];
+      this.awardFreeRoll(primaryTrigger);
+      result.freeRollAwarded = primaryTrigger;
+    }
+
     spinResult.result = result;
 
     if (this.gameHistory.length > 0) {
@@ -300,6 +376,9 @@ class GameState {
       machineTemperature: this.getMachineTemperature(),
       shouldShowDueForWin: this.currentLossStreak >= 3,
       luckBuilding: this.currentLossStreak >= 5,
+      freeRollsAvailable: this.freeRollsAvailable,
+      freeRollAwarded: result.freeRollAwarded,
+      usedFreeRoll: result.usedFreeRoll,
     };
   }
 
@@ -407,6 +486,8 @@ class GameState {
       comboMultiplier: this.getComboMultiplier(this.currentWinStreak),
       forceWinNextSpin: this.forceWinNextSpin,
       forceWinReason: this.forceWinReason,
+      freeRollsAvailable: this.freeRollsAvailable,
+      freeRollReason: this.freeRollReason,
     };
   }
 
@@ -427,6 +508,8 @@ class GameState {
       progressiveJackpotPool: this.progressiveJackpotPool,
       forceWinNextSpin: this.forceWinNextSpin,
       forceWinReason: this.forceWinReason,
+      freeRollsAvailable: this.freeRollsAvailable,
+      freeRollReason: this.freeRollReason,
     };
   }
 
@@ -457,6 +540,8 @@ class GameState {
       : this.jackpotSeedAmount;
     this.forceWinNextSpin = state.forceWinNextSpin === true;
     this.forceWinReason = typeof state.forceWinReason === 'string' ? state.forceWinReason : null;
+    this.freeRollsAvailable = Number.isFinite(state.freeRollsAvailable) ? Math.max(0, state.freeRollsAvailable) : 0;
+    this.freeRollReason = typeof state.freeRollReason === 'string' ? state.freeRollReason : null;
   }
 
   resetGame(newInitialBalance = 1000) {
@@ -474,6 +559,8 @@ class GameState {
     this.recentResults = [];
     this.forceWinNextSpin = false;
     this.forceWinReason = null;
+    this.freeRollsAvailable = 0;
+    this.freeRollReason = null;
     this.progressiveJackpotPool = this.jackpotSeedAmount;
     this.isSpinning = false;
   }
@@ -489,8 +576,25 @@ class GameState {
     const winningSymbol = this.pickWinningSymbol();
     const reelValues = this.getReelValuesForSymbol(winningSymbol);
     const pickValue = () => reelValues[Math.floor(Math.random() * reelValues.length)];
+    const matchLengthRoll = Math.random();
+    const matchLength = matchLengthRoll < 0.08 ? 5 : matchLengthRoll < 0.25 ? 4 : 3;
+    const reels = [];
 
-    return [pickValue(), pickValue(), pickValue()];
+    for (let index = 0; index < matchLength; index += 1) {
+      reels.push(pickValue());
+    }
+
+    while (reels.length < 5) {
+      reels.push(Math.floor(Math.random() * 10));
+    }
+
+    for (let index = matchLength; index < 5; index += 1) {
+      while (this.getSymbolName(reels[index]) === winningSymbol) {
+        reels[index] = Math.floor(Math.random() * 10);
+      }
+    }
+
+    return reels;
   }
 
   generateLosingReels() {
@@ -498,10 +602,14 @@ class GameState {
       Math.floor(Math.random() * 10),
       Math.floor(Math.random() * 10),
       Math.floor(Math.random() * 10),
+      Math.floor(Math.random() * 10),
+      Math.floor(Math.random() * 10),
     ];
 
     while (this.evaluateSpin(reels, this.betAmount).isWin) {
       reels = [
+        Math.floor(Math.random() * 10),
+        Math.floor(Math.random() * 10),
         Math.floor(Math.random() * 10),
         Math.floor(Math.random() * 10),
         Math.floor(Math.random() * 10),
