@@ -34,3 +34,5 @@ Synthesizes visual language (color, typography, symbols), the fast spin cycle an
 2. Cathlyn Goldberg - User Stories 2, 5 + Persona 1, 2
 3. Aayan Lakhani - Reviewed User/Domain/UI/UX Research
 4. Raymond Chen - Domain Research (Functions)
+5. Sohum Mehta - Domain Research
+6. Mohamed Ali - Domain Research
