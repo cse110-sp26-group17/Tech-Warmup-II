@@ -1,7 +1,9 @@
 MIN 20 ENTRIES
 
-Entry #1
-Prompt: Create a JavaScript GameState class for a slot machine game with the following exact specifications:
+## Prompt 1
+
+### Prompt
+Create a JavaScript GameState class for a slot machine game with the following exact specifications:
 
 INITIAL STATE:
 - balance: number, initialized to 1000
@@ -60,14 +62,22 @@ CODE REQUIREMENTS:
 
 Deliverable: A working GameState.js file that manages game state and executes spins without any UI dependencies.
 
-Result: It gave me a javascript file that runs in a browser console. Very barebones but it works properly. Since we specified only the core features I'm assuming that's why it didn't give me html and css.
+### Result
+Produced a barebones JavaScript file that runs in the browser console and works properly. No HTML or CSS was included, consistent with the prompt's scope restriction to core logic.
 
-What we learned: Codex strongly optimized for instruction fidelity. Because the prompt constrained scope to a pure `GameState` logic module and explicitly excluded UI, it returned only JavaScript logic without adding HTML/CSS scaffolding. This was notable because the prompt was long and detailed, yet the model still did not drift into unrelated output. The practical takeaway is that tightly bounded prompts can reduce hallucinated extras and produce implementation-ready artifacts for one layer of the stack at a time.
+### What We Learned
+Codex strongly optimized for instruction fidelity—tightly bounded prompts with explicit exclusions reduce hallucinated extras and yield implementation-ready artifacts for one layer of the stack at a time.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #2
 
-Prompt: Extend the existing GameState class with payout table and RTP (Return to Player) calculations. Do NOT rewrite the class—only add new properties and methods.
+## Prompt 2
+
+### Prompt
+Extend the existing GameState class with payout table and RTP (Return to Player) calculations. Do NOT rewrite the class—only add new properties and methods.
 
 ADD NEW PROPERTY:
 - payoutTable: object (static, defined in constructor or as class property)
@@ -121,14 +131,22 @@ CODE REQUIREMENTS:
 - No UI code, no animations, pure logic only
 - All return values must match the types specified above
 
-Result: It added new functions in the GameState.js which calculates the RTP. It did not take a long time to generate since there's no formatting or styling
+### Result
+Added new functions to GameState.js that calculate RTP and handle symbol lookups. Generation was fast since no formatting or styling was involved.
 
-What we learned: Incremental extension prompts worked well for controlled evolution of the codebase. By saying "do NOT rewrite the class" and listing exact additions, the model preserved prior behavior while appending RTP and payout utilities with correct data-shape consistency. We also observed that response speed was high when prompts targeted backend logic only (no design or formatting requirements). The limitation remains visibility into final product quality until integration with UI and deployment, so future prompts should include lightweight verification checks after each extension.
+### What We Learned
+Incremental extension prompts worked well for controlled codebase evolution—explicit "do NOT rewrite" instructions with listed additions preserved prior behavior while appending new utilities with consistent data shapes.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #3 
 
-Prompt: Extend the existing GameState class with win detection logic that evaluates spin results. Do NOT rewrite the class—only add new methods and modify the spin() method as specified.
+## Prompt 3
+
+### Prompt
+Extend the existing GameState class with win detection logic that evaluates spin results. Do NOT rewrite the class—only add new methods and modify the spin() method as specified.
 
 NEW METHOD: evaluateSpin(reels)
 - INPUT: reels array [num, num, num] (from a spin result)
@@ -176,20 +194,30 @@ CODE REQUIREMENTS:
 - Keep all existing error handling and validation intact
 - All return values must match the types specified above
 
-Result: It expanded the GameState.js file and added the win detection algorithm. It also edited the spin method with the specific instructions.
+### Result
+Expanded GameState.js with the win detection algorithm and edited the spin method per instructions, preserving existing validation order.
 
-What we learned: The model handled feature growth reliably when tasks were decomposed into explicit, testable deltas (new methods + one targeted method modification). It inserted win detection and payout credit flow in the expected location without disrupting validation order, which suggests strong compliance with step-by-step constraints. However, this phase reinforced that correctness in isolated logic does not equal user-facing completeness; without an interface, it is hard to assess usability, feedback clarity, and end-to-end flow. The next phase should pair UI generation prompts with strict acceptance criteria so we can validate both functional behavior and presentation quality.
+### What We Learned
+Decomposing feature growth into explicit, testable deltas (new methods + one targeted modification) produced reliable compliance, but correctness in isolated logic doesn't equal user-facing completeness—future phases should pair UI prompts with strict acceptance criteria.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #4
 
-Prompt: "You are building a mobile-first slot machine UI that connects to an existing GameState class.
+## Prompt 4
+
+### Prompt
+You are building a mobile-first slot machine UI that connects to an existing GameState class.
 Your goal is to create a polished, responsive frontend with clear state transitions, fast interaction, and strong visual feedback.
+
 ### CORE STRUCTURE
 - Use a clear state machine:
 - idle → spinning → result → payout → idle
 - Prevent input during spinning
 - Each state must have distinct visual feedback
+
 ### LAYOUT (MOBILE-FIRST)
 1. Portrait layout with 3 sections:
  - Top HUD:
@@ -201,16 +229,19 @@ Your goal is to create a polished, responsive frontend with clear state transiti
 3. Bottom:
  - Large SPIN button (primary action)
  - Bet controls (+ / - / Max)
+
 ### VISUAL DESIGN
 - Dark casino theme (black/purple background)
 - Gold/red for wins and high-value symbols
 - Neon glow accents
 - Large, prominent win text
 - Spin button must be most visually dominant
+
 ### INTERACTION LOOP
 Set Bet → Spin → Animate Reels → Show Result → Feedback → Idle
 - Total loop: ~2–4 seconds
 - Support turbo mode (<1s animation)
+
 ### FEEDBACK SYSTEM
 Differentiate win tiers visually:
 - Loss → minimal feedback
@@ -220,11 +251,13 @@ Differentiate win tiers visually:
 - Jackpot → full-screen celebration
 Include sound hooks:
 playSpinSound(), playStopSound(), playWinSound(tier)
+
 ### GAME FEEL REQUIREMENTS
 - Reels spin vertically with staggered stops
 - Occasionally show near-miss visuals (no RNG impact)
 - Treat small payouts as wins (even if < bet)
 - Keep loop fast and frictionless
+
 ### CONTROLS & SETTINGS
 - Spin button (primary)
 - Bet +/- and Max Bet
@@ -234,11 +267,13 @@ playSpinSound(), playStopSound(), playWinSound(tier)
 - Simple settings overlay:
   i. Sound toggle
   ii. Reduced motion toggle
+
 ### ACCESSIBILITY
 - High contrast for all numbers
 - Do not rely on color alone for feedback
 - Large tap targets
 - Support reduced motion
+
 ### ARCHITECTURE
 - Do NOT use a single monolithic component
 - Separate:
@@ -247,6 +282,7 @@ playSpinSound(), playStopSound(), playWinSound(tier)
   iii. Animation logic
 Suggested components:
 Reel, SlotMachine, HUD, SpinButton, WinOverlay
+
 ### GAMESTATE INTEGRATION
 Use:
 gameState.spinWithPayout(betAmount)
@@ -254,11 +290,13 @@ Display:
 - Updated balance
 - Win/loss result
 - Last win
+
 ### OUTPUT
 - Use React (preferred) or vanilla JS
 - Functional components
 - Include basic animations
 - Use placeholder symbols (text/emojis OK)
+
 ### CONSTRAINTS
 DO:
 - Make spin button dominant
@@ -268,39 +306,30 @@ DO NOT:
 - Hide state changes
 - Use static reels
 - Block gameplay with menus
-Goal: A smooth, engaging slot machine UI with fast gameplay, clear feedback, and strong visual hierarchy."
 
-Result: We got a several jsx files and a css file, but no runnable html. 
-i. Slot Machine.jsx
-ii. Animations
- - reelAnimation.js
-iii. Audio
- - soundHooks.js
-iv. Components
- - BetControls.jsx
- - HUD.jsx
- - Reel.jsx
- - ReelSet.jsx
- - SettingsOverlay.jsx
- - SpinButton.jsx
- - WinOverlay.jsx
-v. Controller
- - useSlotMachineController.js
+Goal: A smooth, engaging slot machine UI with fast gameplay, clear feedback, and strong visual hierarchy.
 
-What We Learned: We have to be more specific in what files we need/want created. We should specify what technologies we want to deploy. This came as a result of us not being given an html file. 
+### Result
+Received several JSX files (SlotMachine, BetControls, HUD, Reel, ReelSet, SettingsOverlay, SpinButton, WinOverlay), animation and audio modules, and a controller hook—but no runnable HTML entry point.
+
+### What We Learned
+We need to be more specific about what files to create and which technologies to deploy. Missing the HTML entry point meant the output wasn't runnable out of the box.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #5
 
-Prompt: "You are building a COMPLETE, RUNNABLE slot machine web app using an existing GameState class.
+## Prompt 5
+
+### Prompt
+You are building a COMPLETE, RUNNABLE slot machine web app using an existing GameState class.
 
 Your priority is NOT just UI components — your priority is a working app that can be opened and run locally.
 
-
 ### PRIMARY GOAL
-
 Generate a fully runnable project with:
-
 * index.html (entry point)
 * All JS/React files wired correctly
 * Styles (CSS or Tailwind)
@@ -308,11 +337,8 @@ Generate a fully runnable project with:
 
 The app must work when opened or started (no missing wiring).
 
-
 ### PROJECT STRUCTURE
-
 Provide a clean structure like:
-
 /src
 /components
 /state
@@ -324,103 +350,82 @@ package.json (if using React + Vite or similar)
 * Ensure all imports resolve correctly
 * No missing files
 
-
 ### CORE FUNCTIONALITY
-
 * Use GameState.spinWithPayout(betAmount)
-
 * Display:
-
-* Balance
-* Bet
-* Last Win
-
+  * Balance
+  * Bet
+  * Last Win
 * Allow:
-
-* Spin
-* Adjust bet
-
+  * Spin
+  * Adjust bet
 * Implement state flow:
-idle → spinning → result → payout → idle
-
+  idle → spinning → result → payout → idle
 
 ### UI/UX REQUIREMENTS (SIMPLIFIED)
-
 * Mobile-first layout (portrait style)
-
 * Large, dominant SPIN button (bottom)
-
 * Center reel display (animated)
-
 * Top HUD (balance, bet, last win)
-
 * Animate reels vertically
-
 * Show clear feedback for:
-
-* Loss
-* Win (small vs big visually different)
-
+  * Loss
+  * Win (small vs big visually different)
 
 ### IMPORTANT: RUNNABILITY
-
 You MUST:
-
 * Include index.html
 * Include script mounting (ReactDOM or equivalent)
 * Include package.json if needed
 * Include exact steps to run:
-(example: npm install → npm run dev)
+  (example: npm install → npm run dev)
 
 DO NOT:
-
 * Output only components without entry point
 * Leave the app in a non-runnable state
 
-
 ### CODE QUALITY REQUIREMENTS
-
 * Use small, modular components (no giant files)
 * Use clear naming
 * Avoid duplicate code
 * Include JSDoc comments for major functions
 * Handle errors (invalid bet, insufficient balance)
 
-
 ### TESTING (BASIC)
-
 * Include at least 1–2 simple unit tests (e.g., GameState behavior)
 * Use a simple framework (Vitest or Jest)
 
-
 ### CONSTRAINTS FROM ASSIGNMENT
-
 * Code must be:
-
-* Clean (modular, readable)
-* Documented (JSDoc)
-* Testable
+  * Clean (modular, readable)
+  * Documented (JSDoc)
+  * Testable
 * Everything must exist in the repo structure
 * Do NOT simulate commits — just generate files
 
 ### OUTPUT FORMAT
-
 * Show ALL files with filenames clearly labeled
 * Ensure nothing is missing
 * Include run instructions at the end
 
+Goal: A clean, minimal but COMPLETE slot machine app that actually runs, not just a collection of components.
 
+### Result
+Received a runnable app with an HTML entry point. The last reel occasionally glitches and takes longer to settle, auto-spin can't be stopped, and there's no reset button. Sound toggle and reduced-motion options work.
 
-Goal: A clean, minimal but COMPLETE slot machine app that actually runs, not just a collection of components."
+### What We Learned
+Longer prompts take longer to process—keeping them tighter yields faster file generation. UI/UX quality affects engagement directly, and missing controls (reset, stop auto-spin) break the play loop.
 
-Result: There is now an html file. When running the program, the last slot in the spinner may glitch and take longer before settling into place (animation). There is an option for enabling sound and reducing motion. Fix auto-spin not being able to stop
-
-What We Learned: Longer prompts take a lot longer. By making it shorter and reasonable, the AI will take less time to make the necessary files. We would also have to be more specific with what we want labelled. We learned also that we want changes to how the UI/UX turned out, since that affects how engaging. Because there was no reset button, the ease of starting over and playing was compromised, so we want to change what is displayed in the slot, change what is being tracked, and how we can change the bets.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #6
 
-Prompt: "Update the existing slot machine UI code (do not rewrite from scratch). Fix and improve the following:
+## Prompt 6
+
+### Prompt
+Update the existing slot machine UI code (do not rewrite from scratch). Fix and improve the following:
 
 1. Sound
 - Ensure sounds trigger reliably on spin and win
@@ -438,11 +443,11 @@ Prompt: "Update the existing slot machine UI code (do not rewrite from scratch).
 - Reels should stop sequentially (slight delay between each)
 
 4. Reel Display
-- Replace numbers with emoji symbols (:cherries: :lemon: :bell: :star: :seven:)
+- Replace numbers with emoji symbols (🍒 🍋 🔔 ⭐ 7️⃣)
 - Use getSymbolName() to map values correctly
 
 5. Result Display
-- Replace “last win” with “net gain”
+- Replace "last win" with "net gain"
 - Net gain = payout - betAmount
 - Display clearly (+/-) and update after each spin
 
@@ -450,46 +455,62 @@ Constraints:
 - Keep using the existing GameState class
 - Do not duplicate logic already in GameState
 - Keep UI simple and mobile-friendly
-- Only modify what’s necessary
+- Only modify what's necessary
 
-Return updated components and explain key fixes briefly."
+Return updated components and explain key fixes briefly.
 
-Result: Net gain is not working as intended. It is only counting with relative gain of the last turn rather than the total. Final slot spinner animation is not working. Betting functionality works as we asked. Sound is not working as intended. 
+### Result
+Betting buttons work as asked. Net gain only reflects the last turn instead of cumulative total, the final reel animation still breaks, and sound doesn't trigger as intended.
 
-What We Learned: Results showed on the screen should stay longer. We didn't see that many comments in the code produced, so we should include in the prompt that we want comments so that humans when looking back through it can understand what each prompt does.
+### What We Learned
+Result popups should stay on screen longer, and we should explicitly require inline comments in the prompt so human reviewers can follow what each change does.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #7
 
-Prompt: "Update the existing slot machine UI (do not rewrite).
+## Prompt 7
+
+### Prompt
+Update the existing slot machine UI (do not rewrite).
 
 Add/fix:
 - Reset button when balance = 0 → calls resetGame()
 - Info section/modal explaining symbols (emojis) + payouts
 - Result popup: stays ~2–3s, green for win, red for loss
-- “Net gain” should only show winnings (never negative, show 0 if loss)
+- "Net gain" should only show winnings (never negative, show 0 if loss)
 - Add clear comments for readability
 
 Constraints:
 - Use GameState as source of truth
 - Keep UI simple and mobile-friendly
 
-Return updated code."
+Return updated code.
 
-Result: There is a logic issue with how our payouts are calculated and monitored, since no matter the result our wins are not given. There are still no comments being made in the files.
+### Result
+Payout logic is broken—wins aren't being credited regardless of result. Code comments were still not added.
 
-What We Learned: We should expand the test cases so that we are not just looking at the base functionality, but also the UI and edge cases. Because the auto-spin is difficult to turn off, we should hace a separate button. The info section was not clear, so we should specify what we want. We will likely be focusing out next prompt to debug our code with the specific issues and how we would want them to be fixed. 
+### What We Learned
+Test cases need to expand beyond base functionality to cover UI and edge cases. Auto-spin needs a dedicated stop button, and the info section needs explicit format requirements. Next prompt should focus on targeted debugging.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
 ---
-Entry #8
 
-Prompt: "Update the existing slot machine UI (do not rewrite).
+## Prompt 8
+
+### Prompt
+Update the existing slot machine UI (do not rewrite).
 
 Add/fix:
 - Stop Auto-Spin button (toggles auto-spin off immediately)
 - Fix last reel animation so all reels are synced and stop correctly
 - Fix win logic bug (user should win when all symbols match)
-- Improve info section: clearly show emoji + payout (e.g. :star::star: → +$100)
+- Improve info section: clearly show emoji + payout (e.g. ⭐⭐⭐ → +$100)
 - Result popup: stays ~2–3s, green (win) / red (loss)
 - Net gain: show winnings only (never negative, 0 if loss)
 - Reset button when balance = 0 → calls resetGame()
@@ -500,15 +521,24 @@ Constraints:
 - Use GameState as source of truth
 - Keep UI simple and mobile-friendly
 
-Return updated code + tests."
+Return updated code + tests.
 
-Result: The animation for the last spinner is fixed. Auto-spin has a button to stop it. Last win still applies to the last roll rather than the full game lifetime.
+### Result
+Last reel animation is fixed and auto-spin now has a stop button. "Last win" still only reflects the last roll rather than lifetime winnings.
 
-What We Learned: The odds of winning are very low so we should improve those. We need to improve the information section because it has repition. We need more clarity on the results message. In future sessions, fix/adjust the UI since visually it is bland. There are two win displays, so we should get rid of the second underneath the slots because it serves little functionality and is repetitive. 
+### What We Learned
+Win odds are too low and need tuning. The info section has repetition that needs cleanup, the results message needs clearer wording, and there are two redundant win displays—the one under the reels should go. UI visually bland and needs polish.
 
-Entry #9
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
-prompt: Update the existing slot machine web app (do NOT rewrite from scratch). Improve and fix the current code to make it a hyper-addictive, sensory-rich Roblox-style gacha slot machine that triggers constant "just one more spin" dopamine.
+---
+
+## Prompt 9
+
+### Prompt
+Update the existing slot machine web app (do NOT rewrite from scratch). Improve and fix the current code to make it a hyper-addictive, sensory-rich Roblox-style gacha slot machine that triggers constant "just one more spin" dopamine.
 
 ### CRITICAL FIXES
 1. Net Gain → Change "Net Gain" to show lifetime total winnings only (never losses or spent amount). It must accumulate across all spins, not reset to the last spin.
@@ -536,30 +566,38 @@ prompt: Update the existing slot machine web app (do NOT rewrite from scratch). 
 
 Keep using the existing GameState class as source of truth. Keep the app fully runnable (index.html + all files). Add helpful comments. Return all updated files clearly labeled.
 
-Result:
-Upgraded the existing app (not rewritten) with fixed payout/win logic, lifetime-winnings-only tracking, cleaner result popup messaging, ~30% win rate, and new addictive features (auto-spin, turbo, payout info, biggest win, win-only log, daily VC grant) plus stronger casino-style visuals/effects.
+### Result
+Upgraded the existing app with fixed payout/win logic, lifetime-winnings-only tracking, cleaner popup messaging, ~30% win rate, and new addictive features (auto-spin, turbo, payout info, biggest win, win-only log, daily VC grant) plus stronger casino-style visuals.
 
-Learned:
-Single-source state in GameState made updates reliable; separating lifetime winnings from balance avoided logic bugs; stronger feedback loops and validated odds improved fun while keeping behavior correct.
+### What We Learned
+Single-source state in GameState made updates reliable, and separating lifetime winnings from balance avoided logic bugs. Stronger feedback loops with validated odds improved fun while keeping behavior correct.
 
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
+---
 
-# Run 10
+## Prompt 10
 
-Prompt:
-fix the winning amount display. its not accurately reflecting the win amount. 
+### Prompt
+fix the winning amount display. its not accurately reflecting the win amount.
 
-Result:
-Fixed the win amount display so the popup now always shows the exact payout for the current spin immediately, instead of a delayed or stale value.
+### Result
+Fixed the win amount display so the popup now shows the exact payout for the current spin immediately, instead of a delayed or stale value.
 
-Learned:
-The displayed win value was tied to a later animation phase; setting it at result reveal keeps UI feedback accurate and in sync with game logic.
+### What We Learned
+The displayed win value was tied to a later animation phase—setting it at result reveal keeps UI feedback accurate and in sync with game logic.
 
+### Changes Made
+- Hand-edited: No
+- Tests/build run: No
 
-# Run 11
+---
 
-Prompt: 
+## Prompt 11
 
+### Prompt
 ---
 name: Slot Machine Gamification
 overview: Fix identified bugs in the slot machine, tune game economics for addictive variable-ratio reinforcement, and add streak/combo/milestone/progressive-jackpot systems to maximize engagement.
@@ -589,12 +627,14 @@ todos:
     content: "Add tests for new GameState features: streaks, combo, jackpot, milestones, pity, persistence"
     status: pending
 isProject: false
-
 ---
+
 ### Result
 All features implemented: bugs fixed, streaks/combo/jackpot/milestones/pity wired up, persistence added, audio and visual enhancements in place.
+
 ### What We Learned
 Mismatched contracts between upgraded state/controller logic and UI props were the biggest stability risk. Reconciling those interfaces first prevented cascading bugs.
+
 ### Changes Made
 - Hand-edited: No
 - Tests/build run: Yes (passing)
@@ -602,6 +642,7 @@ Mismatched contracts between upgraded state/controller logic and UI props were t
 ---
 
 ## Prompt 12
+
 ### Prompt
 ---
 name: Slot Machine Visual Overhaul
@@ -627,16 +668,21 @@ todos:
     status: pending
 isProject: false
 ---
+
 ### Result
 Flash removed, tiered celebrations working, ticker and streak display added, balance animates smoothly, Hall of Fame shows top-3 wins.
+
 ### What We Learned
 Building polish features works best when game state, animation, and audio are coordinated through a single controller. Persistence should be extended alongside UI so new features feel cohesive across sessions.
+
 ### Changes Made
 - Hand-edited: No
 - Tests/build run: Yes (passing)
 
 ---
+
 ## Prompt 13
+
 ### Prompt
 ---
 name: layout hero refocus
@@ -674,10 +720,13 @@ todos:
     status: pending
 isProject: false
 ---
+
 ### Result
 Layout now uses 3 clear zones. Reels and Spin button are visible in viewport on small phones. Win value scales by tier and dominates during wins. Layout uses screen space better on tablet/laptop with breakpoints at 768px and 1024px.
+
 ### What We Learned
 Strong hierarchy (hero reel stage plus thumb-zone actions) makes the app feel faster and more focused without changing game logic. Compact always-on HUD info works better than showing every metric at once. Rebalancing component prominence matters more than raw pixel scaling for perceived quality.
+
 ### Changes Made
 - Hand-edited: No
 - Tests/build run: Yes (passing)
@@ -685,6 +734,7 @@ Strong hierarchy (hero reel stage plus thumb-zone actions) makes the app feel fa
 ---
 
 ## Prompt 14
+
 ### Prompt
 ---
 name: Slot Machine Overhaul
@@ -716,17 +766,22 @@ todos:
     status: pending
 isProject: false
 ---
+
 ### Result
 Game runs with 5 reels and left-to-right win tiers. Warm casino theme applied. Reels are the focal element. Laptop layout renders in two columns.
+
 ### What We Learned
 Moving from 3 to 5 reels required coordinated updates across logic, animation timing, UI messaging, and tests. Exposing matchCount in spin results made payout tiers and player feedback easier to implement. Test updates were essential to keep payout assumptions correct after changing core win conditions.
+
 ### Changes Made
 - Hand-edited: No
 - Tests/build run: Yes (passing)
 
 ---
 
-# Prompt 15:
+## Prompt 15
+
+### Prompt
 ---
 name: Slot Machine Polish & Refactor
 overview: Fix the oversized "due for win" overlay, add visual cues for the history toggle, enhance the background and live feed aesthetics, implement free roll triggers, and refactor the src/ folder for cleaner organization.
@@ -767,251 +822,210 @@ todos:
 isProject: false
 ---
 
-result: Implemented all plan to-dos: due-for-win box resized into a compact loss toast, history toggle got a chevron indicator, background/live feed were upgraded, free-roll triggers were added, and src/ was refactored into a cleaner shared-codebase structure with updated imports.
-
-learned: Combining UX polish and architecture refactor works best when you wire features incrementally and validate continuously; tests/build checks kept this safe and prevented regressions.
-
-# Prompt 16:
-
-make the leaderboard not rounded. its ugly. make the feed viewable.
-
-Result: The leaderboard/feed is now not rounded and uses square edges, and the live feed is viewable with a fixed-height scrollable list.
-
-Learned: A global .wins-ticker style was forcing pill corners and overriding the feed’s local styles. Making the feed readable required both shape fixes and explicit viewport/overflow rules, not just border-radius changes. Build verification confirmed no CSS regressions after the patch.
-
-## Prompt 17:
-
-### Prompt:
-  
-  Requirements:
-  - Fix UI readability and spacing across all breakpoints
-  - Eliminate horizontal scroll on mobile devices        
-  - Ensure all tap targets ≥ 44px                        
-  - Collapse/hide secondary panels (stats, history, feed)
-   by default on small screens with visible toggles      
-  - Prevent overlays/toasts from blocking core game      
-  controls on phones                               
-  - Maintain smooth animations and stable desktop
-  behavior
-                                                         
-  Constraints:
-  - Do not modify game logic or payout systems           
-  - Do not remove or disable existing features
-  - Do not rewrite major components—edit within current
-  architecture
-  - Do not introduce new CSS files; update existing
-  responsive rules only
-  - Do not change component structure
-  - Do not rewrite major components—edit within current architecture
-  - Do not introduce new CSS files; update existing responsive rules only
-  - Do not change component structure
-
-  Validation:
-  - npm --prefix ./src test (passes)
-  - Do not remove or disable existing features
-  - Do not rewrite major components—edit within current architecture
-  - Do not introduce new CSS files; update existing responsive rules only
-  - Do not change component structure
-
-  Validation:
-  - npm --prefix ./src test (passes)
-  - Do not rewrite major components—edit within current architecture
-  - Do not introduce new CSS files; update existing responsive rules only
-  - Do not change component structure
-
-  Validation:
-  - npm --prefix ./src test (passes)
-  - Do not rewrite major components—edit within current architecture
-  - Do not introduce new CSS files; update existing responsive rules only
-  - Do not change component structure
-
-  Validation:
-  - npm --prefix ./src test (passes)
-  - npm --prefix ./src run build (succeeds)
-  - Manual viewport check: 320px, 768px, desktop (no horizontal
-  - Do not remove or disable existing features
-  - Do not rewrite major components—edit within current
-  architecture
-  - Do not introduce new CSS files; update existing responsive
-  rules only
-  - Do not change component structure
-
-  Validation:
-   rules only
-  - Do not change component structure
-  - Do not rewrite major components—edit within current architecture
-  - Do not introduce new CSS files; update existing responsive rules only
-  - Do not change component structure
-
-  Validation:
-  - npm --prefix ./src test (passes)
-  - npm --prefix ./src run build (succeeds)
-  - Manual viewport check: 320px, 768px, desktop (no horizontal scroll, 44px+ tap targets, panels toggle
-  correctly)
-  - No new console errors or warnings
-  - Desktop behavior unchanged
-
-  Return updated files with a summary of changes made. 
-
 ### Result
+Implemented all plan to-dos: due-for-win box resized into a compact loss toast, history toggle got a chevron indicator, background/live feed were upgraded, free-roll triggers were added, and src/ was refactored into a cleaner shared-codebase structure with updated imports.
 
-It worked and the UI was dynamic for desktop, mobile, and tablets. The button sizes become more prominent with
-a smaller screen size, as intended. However, the setting button covers the "Hide Feed" button. 
+### What We Learned
+Combining UX polish and architecture refactor works best when you wire features incrementally and validate continuously; tests/build checks kept this safe and prevented regressions.
 
 ### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
-- Hand-edited: No, the AI output works fine for the most part and the next prompt will already cover the changes we wanted
-- Tests/builds: Code passes npm run build and tests. looks good overall with npm run dev
-
-### What we learned
-
-- AI handled layout changes well when breakpoints were explicit with 320, 768, and 1024. There weren't many
-overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
 ---
 
-## Prompt 18:
+## Prompt 16
 
 ### Prompt
-You are Codex working in an existing slot-machine web app codebase.                                    
-  Implement only the requested UI/UX changes. Do not refactor unrelated code.                            
-                                                                                                         
-  Objectives                                                                                             
-  1. On mobile, the Settings button is covering the Live Feed area.                                      
-  2. The top win-streak popup stays visible too long.              
-  3. The tab bar below the main slot machine has text that is too small/awkward relative to tab size.
+make the leaderboard not rounded. its ugly. make the feed viewable.
 
-  Hard constraints                                                                                       
-  - Do NOT change any slot logic, RNG, payout, state machine, or API behavior.
-  - Do NOT change feature behavior except where explicitly requested (popup timing + layout updates).    
-  - Do NOT remove existing components/features.                                                      
-  - Keep edits minimal and localized.
-  - Reuse existing style system/tokens if present.                                                       
-  - Preserve accessibility (contrast, focus visibility, readable text on mobile).
-                                                                                                         
-  Implementation requirements
+### Result
+The leaderboard/feed is now not rounded and uses square edges, and the live feed is viewable with a fixed-height scrollable list.
 
-  A) Mobile overlap fix (Settings vs Live Feed)
-  - Find the Settings button and Live Feed container in mobile layout.
-  - Update layout/CSS so Settings never overlaps Live Feed in phone widths.                              
-  - Use responsive positioning/sizing/spacing (avoid one-off pixel hacks). 
-  - Ensure Settings remains visible, tappable, and not clipped.                                          
-  - Validate behavior for widths ~320px, 360px, 390px, 430px.  
+### What We Learned
+A global .wins-ticker style was forcing pill corners and overriding the feed's local styles. Making the feed readable required both shape fixes and explicit viewport/overflow rules, not just border-radius changes. Build verification confirmed no CSS regressions after the patch.
 
-  B Win-streak popup timing                                                                             
-  - Locate the top win-streak popup component/timer.
-  - Reduce on-screen duration to a clearly shorter value while preserving readability and animation      
-  smoothness.          
-  - Do not change popup trigger logic or message content rules unless required for timing.               
-  - Keep transition in/out polished.
-                                                                                                         
-  C Tab text readability
-  - Increase tab label readability below main slot machine:
-    - larger font size                                     
-    - improved line-height/weight/letter spacing as needed
-    - better padding and vertical alignment
-  - Ensure visual hierarchy is balanced with the larger tab container.                                   
-  - Keep responsive behavior intact.
-                                                                                                         
-  Execution plan       
-  1. Inspect existing tab, settings, live-feed, and win-streak popup files.
-  2. Apply targeted edits only in relevant component/style files.                                        
-  3. Run project checks/build if available.
-  4. Self-verify against acceptance criteria.                                                            
-  5. Return concise changelog.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
-  Acceptance criteria (must pass)
-  - Settings button does not overlap Live Feed on phone layouts.
-  - Settings remains easy to tap and visible on mobile.                                                  
-  - Win-streak popup display time is reduced from current behavior.
-  - Tab text is noticeably more readable and proportionate.                                              
-  - No regressions in gameplay logic or unrelated UI.      
+---
 
-  Output format                                                                                          
-  - Brief summary of what changed.
-  - File-by-file list of modifications.                                                                  
-  - Verification notes for each acceptance criterion.
-  - Mention any assumptions or follow-ups if something could not be fully validated.
+## Prompt 17
 
-### Result:
-The prompt mostly worked and the overlap issue was improved. However, the tab text readability stayed the same and there was still that popup timing issue. It shorted a different popup, not the one we wanted. However, the app stayed usable across screen sizes. 
+### Prompt
+Requirements:
+- Fix UI readability and spacing across all breakpoints
+- Eliminate horizontal scroll on mobile devices
+- Ensure all tap targets ≥ 44px
+- Collapse/hide secondary panels (stats, history, feed) by default on small screens with visible toggles
+- Prevent overlays/toasts from blocking core game controls on phones
+- Maintain smooth animations and stable desktop behavior
 
-### Changes made:
-- Hand-edited: no
-- Tests/builds: everything passed
-- Updated the result popup duration (the wrong one), and the mobile spacing
+Constraints:
+- Do not modify game logic or payout systems
+- Do not remove or disable existing features
+- Do not rewrite major components—edit within current architecture
+- Do not introduce new CSS files; update existing responsive rules only
+- Do not change component structure
 
-### What we learned:
+Validation:
+- npm --prefix ./src test (passes)
+- npm --prefix ./src run build (succeeds)
+- Manual viewport check: 320px, 768px, desktop (no horizontal scroll, 44px+ tap targets, panels toggle correctly)
+- No new console errors or warnings
+- Desktop behavior unchanged
 
+Return updated files with a summary of changes made.
+
+### Result
+It worked and the UI was dynamic for desktop, mobile, and tablets. The button sizes become more prominent with a smaller screen size, as intended. However, the setting button covers the "Hide Feed" button.
+
+### What We Learned
+AI handled layout changes well when breakpoints were explicit with 320, 768, and 1024. There weren't many overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
+
+### Changes Made
+- Hand-edited: No, the AI output works fine for the most part and the next prompt will already cover the changes we wanted
+- Tests/build run: Code passes npm run build and tests. looks good overall with npm run dev
+
+---
+
+## Prompt 18
+
+### Prompt
+You are Codex working in an existing slot-machine web app codebase.
+Implement only the requested UI/UX changes. Do not refactor unrelated code.
+
+Objectives
+1. On mobile, the Settings button is covering the Live Feed area.
+2. The top win-streak popup stays visible too long.
+3. The tab bar below the main slot machine has text that is too small/awkward relative to tab size.
+
+Hard constraints
+- Do NOT change any slot logic, RNG, payout, state machine, or API behavior.
+- Do NOT change feature behavior except where explicitly requested (popup timing + layout updates).
+- Do NOT remove existing components/features.
+- Keep edits minimal and localized.
+- Reuse existing style system/tokens if present.
+- Preserve accessibility (contrast, focus visibility, readable text on mobile).
+
+Implementation requirements
+
+A) Mobile overlap fix (Settings vs Live Feed)
+- Find the Settings button and Live Feed container in mobile layout.
+- Update layout/CSS so Settings never overlaps Live Feed in phone widths.
+- Use responsive positioning/sizing/spacing (avoid one-off pixel hacks).
+- Ensure Settings remains visible, tappable, and not clipped.
+- Validate behavior for widths ~320px, 360px, 390px, 430px.
+
+B Win-streak popup timing
+- Locate the top win-streak popup component/timer.
+- Reduce on-screen duration to a clearly shorter value while preserving readability and animation smoothness.
+- Do not change popup trigger logic or message content rules unless required for timing.
+- Keep transition in/out polished.
+
+C Tab text readability
+- Increase tab label readability below main slot machine:
+  - larger font size
+  - improved line-height/weight/letter spacing as needed
+  - better padding and vertical alignment
+- Ensure visual hierarchy is balanced with the larger tab container.
+- Keep responsive behavior intact.
+
+Execution plan
+1. Inspect existing tab, settings, live-feed, and win-streak popup files.
+2. Apply targeted edits only in relevant component/style files.
+3. Run project checks/build if available.
+4. Self-verify against acceptance criteria.
+5. Return concise changelog.
+
+Acceptance criteria (must pass)
+- Settings button does not overlap Live Feed on phone layouts.
+- Settings remains easy to tap and visible on mobile.
+- Win-streak popup display time is reduced from current behavior.
+- Tab text is noticeably more readable and proportionate.
+- No regressions in gameplay logic or unrelated UI.
+
+Output format
+- Brief summary of what changed.
+- File-by-file list of modifications.
+- Verification notes for each acceptance criterion.
+- Mention any assumptions or follow-ups if something could not be fully validated.
+
+### Result
+The prompt mostly worked and the overlap issue was improved. However, the tab text readability stayed the same and there was still that popup timing issue. It shorted a different popup, not the one we wanted. However, the app stayed usable across screen sizes.
+
+### What We Learned
 Being specific about exact UI problems gives better AI output. Small, local CSS and timer changes are safer than broad UI rewrites. However, we should probably be more specific on what exact stuff to change because it changed some popups we didn't want it to change, and that is something we have to add to our next prompt.
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Everything passed
+- Updated the result popup duration (the wrong one), and the mobile spacing
 
 ---
 
 ## Prompt 19
 
-### Prompt:
-  You are Codex. Implement only the requested changes. Do not refactor unrelated code.                   
-   
-  Changes required                                                                                       
-                                                                                                       
-  1. Top-left win-streak popup timing
-  - Locate the win-streak multiplier popup (upper-left of machine).
-  - Set display duration to exactly 3000ms. Popup auto-dismisses after 3s and reappears on next          
-  streak/multiplier update.                                                                    
-  - Keep trigger logic and message content unchanged.                                                    
-                                                                                                       
-  2. Tab text-box UI below slot machine ("Set Your Bet" / "Spin")
-  - Fix size/spacing proportionality:                                                                    
-    - Increase/adjust font size for balance with tab container
-    - Adjust padding, min-height, line-height, vertical alignment                                        
-    - Center text visually within each tab                                                             
-  - Critical: When stats/history dropdown opens/closes, text-box padding must remain stable (do not
-  compress/expand).
-  - Ensure responsive behavior on mobile + desktop.                                                      
-  
-  3. Center winning popup duration                                                                       
-  - Locate the winning popup at machine center.                                                        
-  - Increase current display time by exactly 2 seconds (current duration + 2000ms).
-  - Keep trigger logic and message content unchanged.
-                                                                                                         
-  Hard constraints
-  - Do NOT modify RNG, payout logic, spin/state-machine, or business rules.                              
-  - Do NOT remove existing features/components.                                                        
-  - Do NOT perform broad refactors.
-  - Maintain accessibility: readable text, visible focus, proper contrast.
+### Prompt
+You are Codex. Implement only the requested changes. Do not refactor unrelated code.
 
-  Validation checklist
-  - Top-left streak popup displays for exactly 3s, then auto-dismisses
-  - Tab text-box size/spacing is proportional and centered            
-  - Tab text-box padding stable when dropdown opens/closes
-  - Center winning popup duration increased by 2s (verify new duration)
-  - No gameplay logic changes or regressions                                                             
-  - Mobile + desktop layouts remain usable
-                                                                                                         
-  Output format                                                                                        
-  1. Brief summary of changes made.
-  2. File-by-file list of edits.                                                                         
-  3. Verification notes against each checklist item.
+Changes required
 
-### Result:
+1. Top-left win-streak popup timing
+- Locate the win-streak multiplier popup (upper-left of machine).
+- Set display duration to exactly 3000ms. Popup auto-dismisses after 3s and reappears on next streak/multiplier update.
+- Keep trigger logic and message content unchanged.
 
+2. Tab text-box UI below slot machine ("Set Your Bet" / "Spin")
+- Fix size/spacing proportionality:
+  - Increase/adjust font size for balance with tab container
+  - Adjust padding, min-height, line-height, vertical alignment
+  - Center text visually within each tab
+- Critical: When stats/history dropdown opens/closes, text-box padding must remain stable (do not compress/expand).
+- Ensure responsive behavior on mobile + desktop.
+
+3. Center winning popup duration
+- Locate the winning popup at machine center.
+- Increase current display time by exactly 2 seconds (current duration + 2000ms).
+- Keep trigger logic and message content unchanged.
+
+Hard constraints
+- Do NOT modify RNG, payout logic, spin/state-machine, or business rules.
+- Do NOT remove existing features/components.
+- Do NOT perform broad refactors.
+- Maintain accessibility: readable text, visible focus, proper contrast.
+
+Validation checklist
+- Top-left streak popup displays for exactly 3s, then auto-dismisses
+- Tab text-box size/spacing is proportional and centered
+- Tab text-box padding stable when dropdown opens/closes
+- Center winning popup duration increased by 2s (verify new duration)
+- No gameplay logic changes or regressions
+- Mobile + desktop layouts remain usable
+
+Output format
+1. Brief summary of changes made.
+2. File-by-file list of edits.
+3. Verification notes against each checklist item.
+
+### Result
 The required timing and tab UI updates were implemented. The top-left streak popup now auto-dismisses after 3000ms, and center result popup time was extended by 2 seconds.
 
-### Changes made:
-- Hand-edited: no
-- Tests/build: everything passed
-- Updated the streak popup duration and improved spacing and centering
-
-### What we learned:
-
+### What We Learned
 Exact numeric requirements like "3000ms" and "+2000ms" make AI changes easier to verify. Clear constraints help prevent game logic degradations and unecessary changes
+
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Everything passed
+- Updated the streak popup duration and improved spacing and centering
 
 ---
 
-## Prompt 20:
+## Prompt 20
 
 ### Prompt
-
-This is more for documentation0only pass for JSDocs
+This is more for documentation-only pass for JSDocs
 You are updating an existing JavaScript codebase. Do NOT change runtime behavior, logic, UI, CSS, imports, exports, function signatures, or tests. Only add missing JSDoc comments to JavaScript methods that currently do not have them.
 
 Scope:
@@ -1040,78 +1054,66 @@ Output format:
 
 Prioritize these files first: `src/state/GameState.js`, then any other `src/**/*.js`.
 
-### Result:
-
+### Result
 The documentation pass worked. Missing JSDoc comments were added across key JavaScript files without changing logic. We noticed some JSDocs were missing, so we made sure to add it to the files as this was a prompt fault on our side for earlier prompts as we forgot to make the AI add the docs.
 
-### Changes made:
-
-- Hand-edits: no
-- Test/build: everything passes with npm run build and npm test
-- Updated: some of the .js files within the /src folder --> added the JSDocs for some methods
-
-### What we learned:
+### What We Learned
 Strict constraints like "no logic edits" help keep the output safe and reviewable and adding this made the code "better" to read as we know what each function is doing overall.
 
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Everything passes with npm run build and npm test
+- Updated some of the .js files within the /src folder → added the JSDocs for some methods
+
 ---
 
-## Prompt 21:
+## Prompt 21
 
-### Prompt:
-Refactor and clean up this slot machine app's codebase. You must follow
-  ALL of these requirements:
+### Prompt
+Refactor and clean up this slot machine app's codebase. You must follow ALL of these requirements:
 
-  ## Clean Code Standards
-  - Use meaningful, descriptive names for all variables, functions, and
-  - Eliminate all duplicate code (DRY principle — Don't Repeat Yourself)
-  - Handle all errors gracefully with proper error handling
-  - Apply appropriate abstraction and modularity
-  - Structure code so it is easy to update and extend
-  - Prioritize clear, readable code over clever code — the codebase should
-  ## Linting & Validation (run as code is generated)
-  - HTML: Valid, semantic markup — pass W3C HTML validation standards
-  - CSS: Clean, consistent styling — no unused rules, proper cascade usage
-  - JavaScript: Follow a consistent JS style guide (ESLint-compatible) — no
-  unused variables, no implicit globals, consistent formatting
+## Clean Code Standards
+- Use meaningful, descriptive names for all variables, functions, and
+- Eliminate all duplicate code (DRY principle — Don't Repeat Yourself)
+- Handle all errors gracefully with proper error handling
+- Apply appropriate abstraction and modularity
+- Structure code so it is easy to update and extend
+- Prioritize clear, readable code over clever code — the codebase should
 
-  ## Test Cases & Edge Cases
-  Add thorough test cases for all major features of the slot machine app,
-  including but not limited to:
-  - Spinning the reels (normal flow)
-  - Win condition detection (matching symbols)
-  - Loss condition detection
-  - Balance/credits updating correctly after wins and losses
-  - Betting logic — minimum bet, maximum bet, invalid bet amounts (0,
-  negative, non-numeric)
-  - Edge case: spinning with zero or insufficient balance
-  - Edge case: spinning repeatedly without stopping
-  - Edge case: all symbols matching (jackpot)
-  - Edge case: no symbols matching
-  - Edge case: UI state consistency after rapid/multiple spins
-  - Return the fully refactored HTML, CSS, and JavaScript
-  - All three must be syntactically valid and linted
-  - Include all test cases clearly labeled and runnable
-  - Add inline comments only where logic is non-obvious
+## Linting & Validation (run as code is generated)
+- HTML: Valid, semantic markup — pass W3C HTML validation standards
+- CSS: Clean, consistent styling — no unused rules, proper cascade usage
+- JavaScript: Follow a consistent JS style guide (ESLint-compatible) — no unused variables, no implicit globals, consistent formatting
 
+## Test Cases & Edge Cases
+Add thorough test cases for all major features of the slot machine app, including but not limited to:
+- Spinning the reels (normal flow)
+- Win condition detection (matching symbols)
+- Loss condition detection
+- Balance/credits updating correctly after wins and losses
+- Betting logic — minimum bet, maximum bet, invalid bet amounts (0, negative, non-numeric)
+- Edge case: spinning with zero or insufficient balance
+- Edge case: spinning repeatedly without stopping
+- Edge case: all symbols matching (jackpot)
+- Edge case: no symbols matching
+- Edge case: UI state consistency after rapid/multiple spins
+- Return the fully refactored HTML, CSS, and JavaScript
+- All three must be syntactically valid and linted
+- Include all test cases clearly labeled and runnable
+- Add inline comments only where logic is non-obvious
 
-
-### Result:
-
+### Result
 Refactor + cleanup pass completed across game logic, controller flow, UI wiring, styles, and tests. Core behavior stayed consistent while code became more modular and easier to extend. Validation checks (lint/tests/build + HTML/CSS validators) all passed.
 
-### Changes made:
-
-- Hand-edited: yes
-- Updated:
-  - Refactored `src/state/GameState.js`:
-  - Refactored `src/animations/reelAnimation.js`:
-  - Refactored `src/controller/useSlotMachineController.js`:
-  - Cleaned `src/styles.css` by removing unused/dead animation blocks and stale ticker styles
-  - Expanded tests in `src/tests/GameState.test.js` for invalid bets, zero-balance spin prevention, jackpot/all-match, and no-match loss
-
-### What we learned:
-
+### What We Learned
 Breaking refactors into shared constants + small helper functions + targeted tests made it possible to improve readability and maintainability without changing gameplay behavior.
 
----
-
+### Changes Made
+- Hand-edited: Yes
+- Tests/build run: Yes (passing)
+- Updated:
+  - Refactored `src/state/GameState.js`
+  - Refactored `src/animations/reelAnimation.js`
+  - Refactored `src/controller/useSlotMachineController.js`
+  - Cleaned `src/styles.css` by removing unused/dead animation blocks and stale ticker styles
+  - Expanded tests in `src/tests/GameState.test.js` for invalid bets, zero-balance spin prevention, jackpot/all-match, and no-match loss
