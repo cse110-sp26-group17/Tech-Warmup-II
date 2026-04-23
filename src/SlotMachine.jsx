@@ -6,18 +6,45 @@ import BetControls from './components/BetControls';
 import WinOverlay from './components/WinOverlay';
 import SettingsOverlay from './components/SettingsOverlay';
 import SymbolInfoModal from './components/SymbolInfoModal';
+import StreakCounter from './components/StreakCounter';
+import WinsTicker from './components/WinsTicker';
 import { useSlotMachineController } from './controller/useSlotMachineController';
 import { formatCredits } from './utils/formatCredits';
+
+function formatRelativeTime(timestamp) {
+  if (!Number.isFinite(timestamp)) {
+    return 'just now';
+  }
+
+  const elapsedMs = timestamp - Date.now();
+  const elapsedMinutes = Math.round(elapsedMs / 60000);
+  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+  if (Math.abs(elapsedMinutes) < 60) {
+    return formatter.format(elapsedMinutes, 'minute');
+  }
+
+  const elapsedHours = Math.round(elapsedMinutes / 60);
+  if (Math.abs(elapsedHours) < 24) {
+    return formatter.format(elapsedHours, 'hour');
+  }
+
+  const elapsedDays = Math.round(elapsedHours / 24);
+  return formatter.format(elapsedDays, 'day');
+}
 
 export default function SlotMachine() {
   const [infoOpen, setInfoOpen] = useState(false);
   const {
     balance,
+    displayedBalance,
+    isBalanceCounting,
     betAmount,
     betOptions,
     netGain,
     winLog,
     biggestWin,
+    topWins,
     meta,
     milestonePopup,
     isNewBiggestWin,
@@ -60,7 +87,16 @@ export default function SlotMachine() {
     <div
       className={`slot-machine state-${machineState} impact-${winTier} ${meta.comboMultiplier > 1 ? 'combo-active' : ''} ${showWinImpact ? 'win-impact' : ''} ${reducedMotion ? 'reduced-motion' : ''}`}
     >
-      <HUD balance={balance} betAmount={betAmount} netGain={netGain} meta={meta} />
+      <WinsTicker />
+      <HUD
+        displayedBalance={displayedBalance}
+        isBalanceCounting={isBalanceCounting}
+        betAmount={betAmount}
+        netGain={netGain}
+        meta={meta}
+      />
+
+      <StreakCounter winStreak={meta.currentWinStreak} comboMultiplier={meta.comboMultiplier} />
 
       <section className="reel-stage">
         <ReelSet
@@ -92,11 +128,31 @@ export default function SlotMachine() {
       </p>
 
       <section className="showcase-row" aria-label="Win showcase">
-        <article className={`showcase-card ${isNewBiggestWin ? 'celebrate' : ''}`}>
-          <p className="showcase-label">Biggest Win</p>
+        <article className={`showcase-card hall-of-fame ${isNewBiggestWin ? 'celebrate' : ''}`}>
+          <p className="showcase-hall-title">Hall of Fame</p>
+          <p className="showcase-label">Biggest Win Ever</p>
           <p className="showcase-value">
             {biggestWin ? `+${formatCredits(biggestWin.payout)} VC` : 'No big wins yet'}
           </p>
+          {topWins.length > 0 ? (
+            <div className="hall-of-fame-list">
+              {topWins.map((entry, index) => (
+                <p key={`${entry.timestamp}-${index}`} className="hall-of-fame-item">
+                  #{index + 1} +{formatCredits(entry.payout)} VC{' '}
+                  {typeof entry.symbolName === 'string' ? entry.symbolName.toUpperCase() : 'WIN'} ·{' '}
+                  {formatRelativeTime(entry.timestamp)}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {isNewBiggestWin ? (
+            <div className="hall-fireworks" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+          ) : null}
         </article>
 
         <article className="showcase-card win-log">

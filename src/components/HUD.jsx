@@ -1,6 +1,6 @@
 import { formatCredits } from '../utils/formatCredits';
 
-export default function HUD({ balance, betAmount, netGain, meta }) {
+export default function HUD({ displayedBalance, isBalanceCounting, betAmount, netGain, meta }) {
   const safeWinnings = Math.max(0, netGain);
   const streakLabel = meta.currentWinStreak > 0 ? `W ${meta.currentWinStreak}` : `L ${meta.currentLossStreak}`;
   const isHotStreak = meta.currentWinStreak >= 3;
@@ -10,7 +10,9 @@ export default function HUD({ balance, betAmount, netGain, meta }) {
     <section className="hud" aria-label="Game stats">
       <article className="hud-card">
         <p className="hud-label">Balance</p>
-        <p className="hud-value">{formatCredits(balance)} VC</p>
+        <p className={`hud-value ${isBalanceCounting ? 'balance-counting' : ''}`}>
+          {formatCredits(displayedBalance)} VC
+        </p>
       </article>
 
       <article className={`hud-card ${comboActive ? 'combo-active' : ''}`}>

@@ -709,3 +709,116 @@ The current math: `0.3 win rate * (0.45*10 + 0.30*25 + 0.17*50 + 0.08*100) = 0.3
 Result: Implemented the full hyper-gamification plan with bug fixes, including near-miss correction, PAYOUT-phase overlay persistence, streak/combo systems, progressive jackpot, milestone bonuses, pity spins, persistence, audio/visual enhancements, and updated tests.
 
 Learned: The biggest stability risk was not missing features but mismatched contracts between upgraded state/controller logic and UI props, so reconciling those interfaces was crucial.
+
+Prompt 12: ---
+name: Slot Machine Visual Overhaul
+overview: Remove the full-screen white flash on wins and replace it with a suite of polished, tier-scaled visual features that make the slot machine feel like a real casino game.
+todos:
+  - id: remove-flash
+    content: Remove the win-flash keyframe and ::before pseudo-element from styles.css
+    status: pending
+  - id: scaled-celebrations
+    content: Rework win-impact CSS classes for tier-scaled glow/vignette/shake instead of flash; make WinOverlay particle count dynamic by tier
+    status: pending
+  - id: streak-counter
+    content: Create StreakCounter component with glowing multiplier display; expose winStreak from controller; mount above reels
+    status: pending
+  - id: wins-ticker
+    content: Create WinsTicker component with fake scrolling win messages every 8-12s; mount at top of app
+    status: pending
+  - id: smooth-balance
+    content: Enhance balance counter with rAF ease-out animation, counting CSS class on HUD, and tick sound
+    status: pending
+  - id: hall-of-fame
+    content: Add top-3 wins tracking to GameState persistence; enhance biggest win showcase with fireworks and gold styling
+    status: pending
+isProject: false
+---
+
+# Slot Machine Visual Overhaul
+
+## Features Selected
+
+From the suggestions, these five deliver the best bang-for-effort and work together as a cohesive experience. "Multiple Slot Machines" and "Perk Shop" are excluded — they're large scope and change game balance/architecture significantly.
+
+---
+
+## 1. Remove the blinding flash (mandatory)
+
+The flash lives in [`src/styles.css`](src/styles.css) as `.slot-machine.win-impact::before` with a `win-flash` keyframe (full-viewport white radial gradient at 0.6 opacity). Remove the `::before` pseudo-element and the `win-flash` keyframe entirely. Keep the `win-shake` animation on `.win-impact` but reduce intensity for small wins (see feature 5).
+
+---
+
+## 2. Win Streak Multiplier Display
+
+The combo system already exists in `GameState.getComboMultiplier()` (1x / 1.2x / 1.5x / 2x at streaks 1/2-2/3-4/5+). What's missing is a **prominent visual**.
+
+- Add a new `StreakCounter` component rendered above the reel stage in [`src/SlotMachine.jsx`](src/SlotMachine.jsx).
+- Shows the current streak count and multiplier (e.g., "x1.5 STREAK 3") with a pulsing glow that intensifies with streak level.
+- Animates in on win, shakes/fades on loss (reset). Uses CSS `text-shadow` glow + scale keyframes.
+- Data already available: `currentWinStreak` is in `GameState` and exposed via the controller's `syncFromGameState`.
+
+---
+
+## 3. Live Wins Ticker
+
+- Add a new `WinsTicker` component as a scrolling banner at the very top of the app in [`src/SlotMachine.jsx`](src/SlotMachine.jsx).
+- Every 8-12 seconds (random interval), generate a fake message like `"Player_7291 just won 1,250 VC!"` using random name/amount generation.
+- CSS `marquee`-style animation (use `@keyframes ticker-scroll` translateX from right to left).
+- Pauses on hover. Semi-transparent dark background strip. Gold text.
+
+---
+
+## 4. Smooth Balance Counter
+
+The controller already has a `startWinCounter` mechanism in [`src/controller/useSlotMachineController.js`](src/controller/useSlotMachineController.js). Enhance it:
+
+- Use `requestAnimationFrame` to animate `displayedBalance` counting up from old value to new value over ~1.2 seconds with an ease-out curve.
+- Add a CSS class `balance-counting` to the HUD balance element during the animation (glow pulse, slight scale-up).
+- Play a rapid ticking sound (short oscillator bursts at increasing pitch) during the count-up, ending with a satisfying "ding" from the existing Web Audio system in [`src/audio/soundHooks.js`](src/audio/soundHooks.js).
+
+---
+
+## 5. Scaled Celebration Intensity
+
+Replace the removed flash with tier-appropriate celebrations. Modify [`src/styles.css`](src/styles.css) and [`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx):
+
+| Tier | Visual |
+|------|--------|
+| **Small** | Subtle green glow on reel border, light confetti (5 particles), no shake |
+| **Medium** | Gold glow on reel border, moderate confetti (15 particles), gentle shake (1 cycle) |
+| **Big** | Bright gold border pulse, heavy confetti (25 particles), strong shake (2 cycles), screen edge vignette |
+| **Jackpot** | Full confetti storm (40+ particles), extended shake (3 cycles), radial gold vignette, firework bursts, special jackpot sound |
+
+The existing `impact-${winTier}` CSS classes already exist on `.slot-machine` — rework their animations from flash-based to glow/vignette/shake-based. Particle count in `WinOverlay.jsx` currently hardcoded at 10 — make it dynamic based on `winTier`.
+
+---
+
+## 6. Biggest Win Hall of Fame
+
+The "Biggest Win" showcase already exists in [`src/SlotMachine.jsx`](src/SlotMachine.jsx) with a `celebrate` class. Enhance it:
+
+- Add a persistent firework animation (CSS-only, 3-4 small bursts) when the showcase is in `celebrate` mode (new record).
+- Add a "HALL OF FAME" header with a gold gradient text effect.
+- Show the top 3 biggest wins (not just the single biggest). Store `topWins` array (max 3) in `GameState` persistence alongside existing `biggestWin`.
+- Each entry shows: amount, symbol, timestamp formatted as relative time.
+
+---
+
+## Key Files to Modify
+
+- [`src/styles.css`](src/styles.css) — Remove flash, add tier glows/vignettes, ticker styles, streak glow, balance counting animation, hall of fame styles
+- [`src/SlotMachine.jsx`](src/SlotMachine.jsx) — Add `StreakCounter`, `WinsTicker`, `HallOfFame` sections; adjust particle counts
+- [`src/controller/useSlotMachineController.js`](src/controller/useSlotMachineController.js) — Expose `winStreak`, enhance balance counter with rAF, expose `topWins`
+- [`src/state/GameState.js`](src/state/GameState.js) — Add `topWins` array tracking, persist it
+- [`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx) — Dynamic particle count by tier
+- [`src/components/HUD.jsx`](src/components/HUD.jsx) — Balance counting CSS class
+- [`src/audio/soundHooks.js`](src/audio/soundHooks.js) — Add balance tick sound + jackpot-specific sound
+- New: `src/components/StreakCounter.jsx`, `src/components/WinsTicker.jsx`
+
+Result: The win experience was fully overhauled by removing the blinding flash and replacing it with tiered celebration effects, plus a live wins ticker, streak multiplier display, smooth balance count-up with sound, and a persistent Hall of Fame top-3 wins system.
+
+Learned: Building polish features works best when game-state, animation, and audio are coordinated through a single controller, and persistence (localStorage) should be extended alongside UI so new features feel cohesive across sessions.
+
+Prompt 13:
+

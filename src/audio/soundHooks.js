@@ -4,6 +4,7 @@ const defaultHooks = {
   playWinSound: () => {},
   playLossSound: () => {},
   playMilestoneSound: () => {},
+  playBalanceCountSound: () => {},
 };
 
 const registeredHooks = { ...defaultHooks };
@@ -14,6 +15,7 @@ const activeMedia = {
   win: null,
   loss: null,
   milestone: null,
+  count: null,
 };
 
 const activeSynth = {
@@ -22,6 +24,7 @@ const activeSynth = {
   win: { timers: [], nodes: [] },
   loss: { timers: [], nodes: [] },
   milestone: { timers: [], nodes: [] },
+  count: { timers: [], nodes: [] },
 };
 
 let cachedAudioContext = null;
@@ -171,6 +174,39 @@ function playFallbackMilestone() {
   });
 }
 
+function playFallbackBalanceCount(durationMs) {
+  stopChannel('count');
+
+  const safeDuration = Number.isFinite(durationMs) ? durationMs : 900;
+  const burstCount = Math.max(6, Math.min(16, Math.floor(safeDuration / 80)));
+
+  for (let index = 0; index < burstCount; index += 1) {
+    scheduleTone('count', {
+      atMs: index * 70,
+      durationMs: 40,
+      frequency: 380 + index * 24,
+      volume: 0.032,
+      type: 'square',
+    });
+  }
+
+  const finishAt = burstCount * 70;
+  scheduleTone('count', {
+    atMs: finishAt,
+    durationMs: 110,
+    frequency: 1046,
+    volume: 0.06,
+    type: 'triangle',
+  });
+  scheduleTone('count', {
+    atMs: finishAt + 90,
+    durationMs: 140,
+    frequency: 1318,
+    volume: 0.045,
+    type: 'sine',
+  });
+}
+
 function callExternalHook(name, args) {
   if (
     typeof window !== 'undefined' &&
@@ -247,6 +283,9 @@ export function registerSoundHooks(hooks) {
   if (typeof hooks.playMilestoneSound === 'function') {
     registeredHooks.playMilestoneSound = hooks.playMilestoneSound;
   }
+  if (typeof hooks.playBalanceCountSound === 'function') {
+    registeredHooks.playBalanceCountSound = hooks.playBalanceCountSound;
+  }
 }
 
 export function playSpinSound() {
@@ -269,4 +308,10 @@ export function playLossSound() {
 
 export function playMilestoneSound() {
   runHook('milestone', 'playMilestoneSound', [], playFallbackMilestone);
+}
+
+export function playBalanceCountSound(durationMs = 900) {
+  runHook('count', 'playBalanceCountSound', [durationMs], () =>
+    playFallbackBalanceCount(durationMs)
+  );
 }

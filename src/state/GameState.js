@@ -7,6 +7,7 @@ class GameState {
     this.betAmount = 10;
     this.gameHistory = [];
     this.winLog = [];
+    this.topWins = [];
     this.lifetimeWinnings = 0;
     this.biggestWin = null;
     this.lastDailyGrantDate = null;
@@ -115,6 +116,10 @@ class GameState {
     return this.biggestWin;
   }
 
+  getTopWins() {
+    return [...this.topWins];
+  }
+
   getPayoutTable() {
     return this.payoutTable;
   }
@@ -193,6 +198,7 @@ class GameState {
     };
 
     if (spinResult.result.isWin === true) {
+      const winTimestamp = Date.now();
       this.currentWinStreak += 1;
       this.currentLossStreak = 0;
 
@@ -218,7 +224,7 @@ class GameState {
         multiplier: spinResult.result.multiplier,
         symbolName: spinResult.result.symbolName,
         comboMultiplier: result.comboMultiplier,
-        timestamp: Date.now(),
+        timestamp: winTimestamp,
       });
 
       if (!this.biggestWin || result.totalPayout > this.biggestWin.payout) {
@@ -227,9 +233,18 @@ class GameState {
           multiplier: spinResult.result.multiplier,
           symbolName: spinResult.result.symbolName,
           betAmount,
-          timestamp: Date.now(),
+          timestamp: winTimestamp,
         };
       }
+
+      this.recordTopWin({
+        payout: result.totalPayout,
+        multiplier: spinResult.result.multiplier,
+        symbolName: spinResult.result.symbolName,
+        comboMultiplier: result.comboMultiplier,
+        betAmount,
+        timestamp: winTimestamp,
+      });
 
       this.pushRecentResult(true);
     } else {
@@ -360,6 +375,13 @@ class GameState {
     }
   }
 
+  recordTopWin(entry) {
+    this.topWins = [...this.topWins, entry]
+      .filter((winEntry) => Number.isFinite(winEntry?.payout))
+      .sort((first, second) => second.payout - first.payout)
+      .slice(0, 3);
+  }
+
   getMachineTemperature() {
     const winsInLastTen = this.recentResults.filter(Boolean).length;
     if (winsInLastTen >= 4) {
@@ -394,6 +416,7 @@ class GameState {
       betAmount: this.betAmount,
       gameHistory: this.gameHistory.slice(-150),
       winLog: this.winLog.slice(0, 40),
+      topWins: this.topWins.slice(0, 3),
       lifetimeWinnings: this.lifetimeWinnings,
       biggestWin: this.biggestWin,
       lastDailyGrantDate: this.lastDailyGrantDate,
@@ -416,8 +439,14 @@ class GameState {
     this.betAmount = Number.isFinite(state.betAmount) ? state.betAmount : this.betAmount;
     this.gameHistory = Array.isArray(state.gameHistory) ? [...state.gameHistory] : [];
     this.winLog = Array.isArray(state.winLog) ? [...state.winLog] : [];
+    this.topWins = Array.isArray(state.topWins)
+      ? state.topWins
+          .filter((entry) => Number.isFinite(entry?.payout))
+          .sort((first, second) => second.payout - first.payout)
+          .slice(0, 3)
+      : [];
     this.lifetimeWinnings = Number.isFinite(state.lifetimeWinnings) ? state.lifetimeWinnings : 0;
-    this.biggestWin = state.biggestWin ?? null;
+    this.biggestWin = this.topWins[0] ?? state.biggestWin ?? null;
     this.lastDailyGrantDate = typeof state.lastDailyGrantDate === 'string' ? state.lastDailyGrantDate : null;
     this.totalSpins = Number.isFinite(state.totalSpins) ? state.totalSpins : 0;
     this.currentWinStreak = Number.isFinite(state.currentWinStreak) ? state.currentWinStreak : 0;
@@ -435,6 +464,7 @@ class GameState {
     this.betAmount = 10;
     this.gameHistory = [];
     this.winLog = [];
+    this.topWins = [];
     this.lifetimeWinnings = 0;
     this.biggestWin = null;
     this.lastDailyGrantDate = null;

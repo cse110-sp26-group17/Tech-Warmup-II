@@ -11,6 +11,7 @@ import {
   getWinTier,
 } from '../animations/reelAnimation';
 import {
+  playBalanceCountSound,
   playLossSound,
   playMilestoneSound,
   playSpinSound,
@@ -46,14 +47,20 @@ export function useSlotMachineController() {
   const gameStateRef = useRef(new GameState());
   const timeoutIdsRef = useRef([]);
   const winCounterIntervalRef = useRef(null);
+  const balanceCounterFrameRef = useRef(null);
+  const displayedBalanceRef = useRef(gameStateRef.current.getBalance());
+  const hasInitializedBalanceRef = useRef(false);
 
   const [balance, setBalance] = useState(gameStateRef.current.getBalance());
+  const [displayedBalance, setDisplayedBalance] = useState(gameStateRef.current.getBalance());
+  const [isBalanceCounting, setIsBalanceCounting] = useState(false);
   const [betAmount, setBetAmount] = useState(() =>
     pickValidBet(gameStateRef.current.getBalance(), gameStateRef.current.betAmount)
   );
   const [lifetimeWinnings, setLifetimeWinnings] = useState(gameStateRef.current.getLifetimeWinnings());
   const [winLog, setWinLog] = useState(gameStateRef.current.getWinLog());
   const [biggestWin, setBiggestWin] = useState(gameStateRef.current.getBiggestWin());
+  const [topWins, setTopWins] = useState(gameStateRef.current.getTopWins());
   const [meta, setMeta] = useState(gameStateRef.current.getMetaState());
   const [isNewBiggestWin, setIsNewBiggestWin] = useState(false);
   const [resultMessage, setResultMessage] = useState('');
@@ -106,6 +113,11 @@ export function useSlotMachineController() {
       clearInterval(winCounterIntervalRef.current);
       winCounterIntervalRef.current = null;
     }
+    if (balanceCounterFrameRef.current) {
+      cancelAnimationFrame(balanceCounterFrameRef.current);
+      balanceCounterFrameRef.current = null;
+    }
+    setIsBalanceCounting(false);
   }, []);
 
   const syncFromGameState = useCallback(() => {
@@ -115,6 +127,7 @@ export function useSlotMachineController() {
     setLifetimeWinnings(gameState.getLifetimeWinnings());
     setWinLog(gameState.getWinLog());
     setBiggestWin(gameState.getBiggestWin());
+    setTopWins(gameState.getTopWins());
     setMeta(gameState.getMetaState());
     setRecentResults([...gameState.recentResults]);
     setDailyGrantReady(gameState.canClaimDailyGrant());
@@ -145,6 +158,71 @@ export function useSlotMachineController() {
   useEffect(() => {
     setBetAmount((currentBet) => pickValidBet(balance, currentBet));
   }, [balance]);
+
+  useEffect(() => {
+    displayedBalanceRef.current = displayedBalance;
+  }, [displayedBalance]);
+
+  useEffect(() => {
+    if (!hasInitializedBalanceRef.current) {
+      hasInitializedBalanceRef.current = true;
+      setDisplayedBalance(balance);
+      setIsBalanceCounting(false);
+      return;
+    }
+
+    if (balanceCounterFrameRef.current) {
+      cancelAnimationFrame(balanceCounterFrameRef.current);
+      balanceCounterFrameRef.current = null;
+    }
+
+    if (reducedMotion || balance <= displayedBalanceRef.current) {
+      setDisplayedBalance(balance);
+      displayedBalanceRef.current = balance;
+      setIsBalanceCounting(false);
+      return;
+    }
+
+    const startBalance = displayedBalanceRef.current;
+    const targetBalance = balance;
+    const duration = 1200;
+    let startTime = 0;
+
+    setIsBalanceCounting(true);
+    if (soundEnabled) {
+      playBalanceCountSound(duration);
+    }
+
+    const animateBalance = (timestamp) => {
+      if (startTime === 0) {
+        startTime = timestamp;
+      }
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = 1 - (1 - progress) ** 3;
+      const nextValue = Math.round(startBalance + (targetBalance - startBalance) * eased);
+
+      setDisplayedBalance(nextValue);
+      displayedBalanceRef.current = nextValue;
+
+      if (progress < 1) {
+        balanceCounterFrameRef.current = requestAnimationFrame(animateBalance);
+      } else {
+        balanceCounterFrameRef.current = null;
+        setIsBalanceCounting(false);
+      }
+    };
+
+    balanceCounterFrameRef.current = requestAnimationFrame(animateBalance);
+
+    return () => {
+      if (balanceCounterFrameRef.current) {
+        cancelAnimationFrame(balanceCounterFrameRef.current);
+        balanceCounterFrameRef.current = null;
+      }
+      setIsBalanceCounting(false);
+    };
+  }, [balance, reducedMotion, soundEnabled]);
 
   const startWinCounter = useCallback(
     (targetAmount, duration) => {
@@ -418,11 +496,14 @@ export function useSlotMachineController() {
 
   return {
     balance,
+    displayedBalance,
+    isBalanceCounting,
     betAmount,
     betOptions: BET_OPTIONS,
     netGain: lifetimeWinnings,
     winLog,
     biggestWin,
+    topWins,
     meta,
     recentResults,
     isNewBiggestWin,

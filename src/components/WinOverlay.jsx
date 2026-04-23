@@ -22,6 +22,13 @@ export default function WinOverlay({
 
   const showWin = result.isWin === true;
   const layerClass = showWin ? `tier-${winTier} result-win` : 'tier-loss result-loss';
+  const particlesByTier = {
+    small: 5,
+    medium: 15,
+    big: 25,
+    jackpot: 42,
+  };
+  const particleCount = particlesByTier[winTier] ?? 10;
 
   return (
     <section
@@ -52,20 +59,21 @@ export default function WinOverlay({
 
       {showWin ? (
         <div className="particle-layer" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
+          {Array.from({ length: particleCount }, (_, index) => (
+            <span
+              key={`particle-${index}`}
+              style={{
+                left: `${4 + ((index * 13) % 92)}%`,
+                animationDelay: `${(index * 0.07) % 0.8}s`,
+              }}
+            />
+          ))}
         </div>
       ) : null}
 
-      {showWin && isNewBiggestWin ? <div className="firework-layer" aria-hidden="true" /> : null}
+      {showWin && (isNewBiggestWin || winTier === 'jackpot') ? (
+        <div className="firework-layer" aria-hidden="true" />
+      ) : null}
     </section>
   );
 }
