@@ -21,7 +21,8 @@ import {
 import { formatCredits } from '../utils/formatCredits';
 
 const BET_OPTIONS = Object.freeze([5, 10, 25, 50, 100]);
-const RESULT_POPUP_DURATION_MS = 2500;
+const RESULT_POPUP_DURATION_MS = 1600;
+const MILESTONE_POPUP_DURATION_MS = 1200;
 const SAVE_STORAGE_KEY = 'slot-machine-save-v2';
 
 function pickValidBet(balance, currentBet) {
@@ -382,6 +383,10 @@ export function useSlotMachineController() {
               ? '25-Spin Bonus'
               : '10-Spin Bonus';
         setMilestonePopup(`${milestoneLabel} +${formatCredits(spinResult.result.milestoneBonus)} VC`);
+        const clearMilestoneTimer = setTimeout(() => {
+          setMilestonePopup(null);
+        }, MILESTONE_POPUP_DURATION_MS);
+        timeoutIdsRef.current.push(clearMilestoneTimer);
         if (soundEnabled) {
           playMilestoneSound();
         }
@@ -394,6 +399,10 @@ export function useSlotMachineController() {
           random: 'Lucky Free Roll',
         };
         setMilestonePopup(`${labelMap[spinResult.freeRollAwarded] ?? 'Free Roll'} Unlocked`);
+        const clearFreeRollTimer = setTimeout(() => {
+          setMilestonePopup(null);
+        }, MILESTONE_POPUP_DURATION_MS);
+        timeoutIdsRef.current.push(clearFreeRollTimer);
       }
 
       if (!isWin && soundEnabled) {

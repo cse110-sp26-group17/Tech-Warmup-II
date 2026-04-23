@@ -474,8 +474,8 @@ body {
 
 .showcase-card.celebrate {
   border-color: var(--gold);
-  box-shadow: 0 0 22px rgba(255, 193, 61, 0.55);
-  animation: gold-pulse 520ms ease-in-out 4 alternate;
+  box-shadow: 0 0 8px rgba(255, 193, 61, 0.28);
+  animation: none;
 }
 
 .showcase-card.hall-of-fame {
@@ -535,7 +535,8 @@ body {
   height: 6px;
   border-radius: 50%;
   background: linear-gradient(180deg, #fff1b4, #ffba3f);
-  animation: hall-firework-burst 0.95s ease-out infinite;
+  animation: none;
+  opacity: 0.4;
 }
 
 .hall-fireworks span:nth-child(1) {
@@ -621,9 +622,9 @@ body {
   color: #271206;
   background: linear-gradient(180deg, #fff0a7, var(--gold-strong));
   box-shadow:
-    0 0 16px rgba(255, 202, 82, 0.75),
+    0 0 8px rgba(255, 202, 82, 0.32),
     inset 0 -8px 14px rgba(170, 101, 0, 0.3);
-  animation: daily-bait 980ms ease-in-out infinite alternate;
+  animation: none;
 }
 
 .action-button.daily-grant.claimed {
@@ -741,13 +742,21 @@ body {
 }
 
 .bet-button.option {
-  font-size: 0.95rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 8px;
 }
 
 .bet-button.option.max-bet {
   border-color: #ffd777;
-  box-shadow: 0 0 14px rgba(255, 206, 88, 0.62);
-  animation: max-bet-glow 850ms ease-in-out infinite alternate;
+  box-shadow: 0 0 8px rgba(255, 206, 88, 0.3);
+  animation: none;
 }
 
 .bet-button.option.selected {
@@ -974,7 +983,7 @@ body {
   font-size: 0.82rem;
   font-weight: 900;
   letter-spacing: 0.05em;
-  box-shadow: 0 0 18px rgba(255, 190, 70, 0.7);
+  box-shadow: 0 0 8px rgba(255, 190, 70, 0.25);
   animation: milestone-burst 900ms ease-out;
 }
 
@@ -1147,8 +1156,9 @@ body {
   min-height: 44px;
   display: flex;
   align-items: center;
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   font-weight: 800;
   color: #dbc79a;
@@ -1373,7 +1383,7 @@ body {
 @media (max-width: 767px) {
   .slot-machine {
     width: 100%;
-    padding: 10px;
+    padding: calc(58px + env(safe-area-inset-top, 0px)) 10px 10px;
     gap: 8px;
   }
 
@@ -1426,8 +1436,10 @@ body {
 
   .bet-button.option {
     min-height: 44px;
-    font-size: 0.88rem;
-    padding: 0 4px;
+    font-size: 0.94rem;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    padding: 0 6px;
   }
 
   .toggle-row {
@@ -1452,6 +1464,11 @@ body {
     bottom: auto;
     width: min(94%, 260px);
   }
+
+  .settings-panel {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    right: 8px;
+  }
 }
 
 @media (max-width: 320px) {
@@ -1473,7 +1490,8 @@ body {
   }
 
   .bet-button.option {
-    font-size: 0.84rem;
+    font-size: 0.9rem;
+    line-height: 1.2;
   }
 
   .live-feed-title {

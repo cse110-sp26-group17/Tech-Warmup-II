@@ -22,7 +22,7 @@
   height: 8px;
   border-radius: 50%;
   background: #ff4b4b;
-  animation: live-dot-pulse 900ms ease-in-out infinite alternate;
+  animation: none;
 }
 
 .live-feed-title {

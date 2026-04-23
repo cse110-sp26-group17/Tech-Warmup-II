@@ -1591,7 +1591,71 @@ a smaller screen size, as intended. However, the setting button covers the "Hide
 
 ### What we learned
 
-AI handled layout changes well when breakpoints were explicit with 320, 768, and 1024. There weren't many  overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
+- AI handled layout changes well when breakpoints were explicit with 320, 768, and 1024. There weren't many
+overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
 ---
 
-  
+# Prompt 18:
+
+## Prompt
+You are Codex working in an existing slot-machine web app codebase.                                    
+  Implement only the requested UI/UX changes. Do not refactor unrelated code.                            
+                                                                                                         
+  Objectives                                                                                             
+  1. On mobile, the Settings button is covering the Live Feed area.                                      
+  2. The top win-streak popup stays visible too long.              
+  3. The tab bar below the main slot machine has text that is too small/awkward relative to tab size.
+
+  Hard constraints                                                                                       
+  - Do NOT change any slot logic, RNG, payout, state machine, or API behavior.
+  - Do NOT change feature behavior except where explicitly requested (popup timing + layout updates).    
+  - Do NOT remove existing components/features.                                                      
+  - Keep edits minimal and localized.
+  - Reuse existing style system/tokens if present.                                                       
+  - Preserve accessibility (contrast, focus visibility, readable text on mobile).
+                                                                                                         
+  Implementation requirements
+
+  A) Mobile overlap fix (Settings vs Live Feed)
+  - Find the Settings button and Live Feed container in mobile layout.
+  - Update layout/CSS so Settings never overlaps Live Feed in phone widths.                              
+  - Use responsive positioning/sizing/spacing (avoid one-off pixel hacks). 
+  - Ensure Settings remains visible, tappable, and not clipped.                                          
+  - Validate behavior for widths ~320px, 360px, 390px, 430px.  
+
+  B Win-streak popup timing                                                                             
+  - Locate the top win-streak popup component/timer.
+  - Reduce on-screen duration to a clearly shorter value while preserving readability and animation      
+  smoothness.          
+  - Do not change popup trigger logic or message content rules unless required for timing.               
+  - Keep transition in/out polished.
+                                                                                                         
+  C Tab text readability
+  - Increase tab label readability below main slot machine:
+    - larger font size                                     
+    - improved line-height/weight/letter spacing as needed
+    - better padding and vertical alignment
+  - Ensure visual hierarchy is balanced with the larger tab container.                                   
+  - Keep responsive behavior intact.
+                                                                                                         
+  Execution plan       
+  1. Inspect existing tab, settings, live-feed, and win-streak popup files.
+  2. Apply targeted edits only in relevant component/style files.                                        
+  3. Run project checks/build if available.
+  4. Self-verify against acceptance criteria.                                                            
+  5. Return concise changelog.
+
+  Acceptance criteria (must pass)
+  - Settings button does not overlap Live Feed on phone layouts.
+  - Settings remains easy to tap and visible on mobile.                                                  
+  - Win-streak popup display time is reduced from current behavior.
+  - Tab text is noticeably more readable and proportionate.                                              
+  - No regressions in gameplay logic or unrelated UI.      
+
+  Output format                                                                                          
+  - Brief summary of what changed.
+  - File-by-file list of modifications.                                                                  
+  - Verification notes for each acceptance criterion.
+  - Mention any assumptions or follow-ups if something could not be fully validated.
+
+---
