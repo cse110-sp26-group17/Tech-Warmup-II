@@ -36,3 +36,4 @@ Synthesizes visual language (color, typography, symbols), the fast spin cycle an
 4. Raymond Chen - Domain Research (Functions)
 5. Sohum Mehta - Domain Research
 6. Mohamed Ali - Domain Research
+7. Ivan Del Rio - UI/UX Research
