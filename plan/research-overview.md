@@ -40,4 +40,4 @@ Synthesizes visual language (color, typography, symbols), the fast spin cycle an
 8. Andrew Pham - Reviewed and Approved Research
 9. Sanjana Kalarickal
 10.Paul Jimenez Chavez
-11.Luke Deverian
+11. Luke Deverian - UI/UX Research
