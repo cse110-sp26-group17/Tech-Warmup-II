@@ -1,0 +1,18 @@
+.loss-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  width: min(92%, 280px);
+  z-index: 6;
+}
+
+.loss-toast-card {
+  border: 1px solid rgba(181, 126, 86, 0.8);
+  border-radius: 12px;
+  text-align: center;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, rgba(62, 40, 28, 0.95), rgba(46, 28, 20, 0.94));
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}

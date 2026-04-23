@@ -14,11 +14,12 @@ export const WIN_TIERS = Object.freeze({
 });
 
 export const SYMBOL_DISPLAY = Object.freeze({
-  cherry: { code: '🍒', label: 'Cherries' },
+  cherry: { code: '🍒', label: 'Cherry' },
   bar: { code: '🍋', label: 'Lemon' },
   bell: { code: '🔔', label: 'Bell' },
   seven: { code: '7️⃣', label: 'Seven' },
   none: { code: '⭐', label: 'Star' },
+  bonus: { code: '🎁', label: 'Bonus' },
 });
 
 const SYMBOL_ORDER = ['cherry', 'bar', 'bell', 'seven', 'none'];
@@ -47,24 +48,24 @@ export function getRandomSymbol() {
 export function getSpinProfile({ turboMode, reducedMotion }) {
   if (reducedMotion) {
     return {
-      reelDurations: [1000, 1160, 1320],
-      totalSpinDuration: 1360,
-      resultHoldDuration: 160,
+      reelDurations: [500, 590, 680, 770, 860],
+      totalSpinDuration: 900,
+      resultHoldDuration: 120,
     };
   }
 
   if (turboMode) {
     return {
-      reelDurations: [1050, 1250, 1450],
-      totalSpinDuration: 1520,
-      resultHoldDuration: 130,
+      reelDurations: [520, 640, 780, 900, 1020],
+      totalSpinDuration: 1060,
+      resultHoldDuration: 110,
     };
   }
 
   return {
-    reelDurations: [1160, 1420, 1680],
-    totalSpinDuration: 1760,
-    resultHoldDuration: 280,
+    reelDurations: [900, 1100, 1300, 1500, 1720],
+    totalSpinDuration: 1780,
+    resultHoldDuration: 240,
   };
 }
 
@@ -72,13 +73,13 @@ export function getWinTier(result) {
   if (!result || result.isWin !== true || result.multiplier <= 0) {
     return WIN_TIERS.LOSS;
   }
-  if (result.multiplier >= 100) {
+  if (result.jackpotBonus > 0 || result.multiplier >= 9) {
     return WIN_TIERS.JACKPOT;
   }
-  if (result.multiplier >= 50) {
+  if (result.multiplier >= 4) {
     return WIN_TIERS.BIG;
   }
-  if (result.multiplier >= 25) {
+  if (result.multiplier >= 2) {
     return WIN_TIERS.MEDIUM;
   }
   return WIN_TIERS.SMALL;
@@ -86,17 +87,17 @@ export function getWinTier(result) {
 
 export function getPayoutDuration({ tier, turboMode, reducedMotion }) {
   if (reducedMotion) {
-    return tier === WIN_TIERS.LOSS ? 120 : 250;
+    return tier === WIN_TIERS.LOSS ? 120 : 200;
   }
   if (turboMode) {
     if (tier === WIN_TIERS.JACKPOT) {
-      return 380;
+      return 360;
     }
     if (tier === WIN_TIERS.BIG || tier === WIN_TIERS.MEDIUM) {
       return 260;
     }
     if (tier === WIN_TIERS.SMALL) {
-      return 180;
+      return 170;
     }
     return 130;
   }
@@ -104,31 +105,45 @@ export function getPayoutDuration({ tier, turboMode, reducedMotion }) {
     return 1200;
   }
   if (tier === WIN_TIERS.BIG) {
-    return 900;
+    return 850;
   }
   if (tier === WIN_TIERS.MEDIUM) {
-    return 680;
+    return 640;
   }
   if (tier === WIN_TIERS.SMALL) {
-    return 450;
+    return 420;
   }
   return 220;
 }
 
 export function getFeedbackLabel(tier) {
   if (tier === WIN_TIERS.JACKPOT) {
-    return 'Jackpot';
+    return 'JACKPOT';
   }
   if (tier === WIN_TIERS.BIG) {
-    return 'Big Win';
+    return 'BIG WIN';
   }
   if (tier === WIN_TIERS.MEDIUM) {
-    return 'Medium Win';
+    return 'MEGA WIN';
   }
   if (tier === WIN_TIERS.SMALL) {
-    return 'Small Win';
+    return 'WIN';
   }
-  return 'No Win';
+  return 'NO WIN';
+}
+
+export function getMachineTemperatureBadge(recentResults) {
+  const winsInLastTen = recentResults.filter(Boolean).length;
+  if (winsInLastTen >= 4) {
+    return { label: 'MACHINE ON FIRE', tone: 'fire' };
+  }
+  if (winsInLastTen >= 3) {
+    return { label: 'Machine Hot', tone: 'hot' };
+  }
+  if (winsInLastTen >= 2) {
+    return { label: 'Machine Warm', tone: 'warm' };
+  }
+  return { label: 'Machine Cold', tone: 'cold' };
 }
 
 function getAdjacentSymbol(symbolName) {
@@ -145,17 +160,28 @@ function getAdjacentSymbol(symbolName) {
 }
 
 export function createNearMissHint({ isWin, finalSymbols }) {
-  if (isWin === true || Math.random() > 0.35) {
+  if (isWin === true) {
     return null;
   }
 
-  const targetBase = finalSymbols[0] === finalSymbols[1] ? finalSymbols[0] : finalSymbols[0];
-  const nearMissSymbol = getAdjacentSymbol(targetBase);
+  const firstTwoMatch =
+    finalSymbols[0] === finalSymbols[1] && finalSymbols[0] !== 'none' && finalSymbols[1] !== 'none';
+  const thirdMisses = finalSymbols[2] !== finalSymbols[0];
+
+  if (!firstTwoMatch || !thirdMisses || Math.random() > 0.35) {
+    return null;
+  }
+
+  const targetBase = finalSymbols[0];
+  const safeMissSymbol = getAdjacentSymbol(targetBase);
 
   return {
     reelIndex: 2,
-    previewSymbol: nearMissSymbol,
-    previewDurationMs: 150,
-    message: `Near miss: ${SYMBOL_DISPLAY[targetBase].label}`,
+    previewSymbol: targetBase,
+    finalMissSymbol: safeMissSymbol,
+    previewDurationMs: 320,
+    slowDownFactor: 1.35,
+    bannerText: 'SO CLOSE!',
+    message: `So close! ${SYMBOL_DISPLAY[targetBase].label} almost hit`,
   };
 }

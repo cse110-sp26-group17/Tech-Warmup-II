@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import SlotMachine from './SlotMachine';
-import './styles.css';
+import './styles/index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

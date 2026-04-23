@@ -2,6 +2,9 @@ const defaultHooks = {
   playSpinSound: () => {},
   playStopSound: () => {},
   playWinSound: () => {},
+  playLossSound: () => {},
+  playMilestoneSound: () => {},
+  playBalanceCountSound: () => {},
 };
 
 const registeredHooks = { ...defaultHooks };
@@ -10,12 +13,18 @@ const activeMedia = {
   spin: null,
   stop: null,
   win: null,
+  loss: null,
+  milestone: null,
+  count: null,
 };
 
 const activeSynth = {
   spin: { timers: [], nodes: [] },
   stop: { timers: [], nodes: [] },
   win: { timers: [], nodes: [] },
+  loss: { timers: [], nodes: [] },
+  milestone: { timers: [], nodes: [] },
+  count: { timers: [], nodes: [] },
 };
 
 let cachedAudioContext = null;
@@ -39,7 +48,7 @@ function stopSynthChannel(channel) {
   activeSynth[channel].nodes.forEach((node) => {
     try {
       node.stop();
-    } catch (error) {
+    } catch {
       // Node may already be stopped; ignore.
     }
     node.disconnect();
@@ -93,12 +102,12 @@ function scheduleTone(channel, { atMs, durationMs, frequency, volume = 0.05, typ
     oscillator.onended = () => {
       try {
         oscillator.disconnect();
-      } catch (error) {
+      } catch {
         // Ignore disconnect races.
       }
       try {
         gainNode.disconnect();
-      } catch (error) {
+      } catch {
         // Ignore disconnect races.
       }
       activeSynth[channel].nodes = activeSynth[channel].nodes.filter((node) => node !== oscillator);
@@ -143,6 +152,58 @@ function playFallbackWin(tier) {
       volume: 0.06,
       type: 'triangle',
     });
+  });
+}
+
+function playFallbackLoss() {
+  stopChannel('loss');
+  scheduleTone('loss', { atMs: 0, durationMs: 120, frequency: 190, volume: 0.06, type: 'sawtooth' });
+  scheduleTone('loss', { atMs: 90, durationMs: 140, frequency: 135, volume: 0.05, type: 'triangle' });
+}
+
+function playFallbackMilestone() {
+  stopChannel('milestone');
+  [523, 659, 784].forEach((frequency, index) => {
+    scheduleTone('milestone', {
+      atMs: index * 80,
+      durationMs: 140,
+      frequency,
+      volume: 0.065,
+      type: 'triangle',
+    });
+  });
+}
+
+function playFallbackBalanceCount(durationMs) {
+  stopChannel('count');
+
+  const safeDuration = Number.isFinite(durationMs) ? durationMs : 900;
+  const burstCount = Math.max(6, Math.min(16, Math.floor(safeDuration / 80)));
+
+  for (let index = 0; index < burstCount; index += 1) {
+    scheduleTone('count', {
+      atMs: index * 70,
+      durationMs: 40,
+      frequency: 380 + index * 24,
+      volume: 0.032,
+      type: 'square',
+    });
+  }
+
+  const finishAt = burstCount * 70;
+  scheduleTone('count', {
+    atMs: finishAt,
+    durationMs: 110,
+    frequency: 1046,
+    volume: 0.06,
+    type: 'triangle',
+  });
+  scheduleTone('count', {
+    atMs: finishAt + 90,
+    durationMs: 140,
+    frequency: 1318,
+    volume: 0.045,
+    type: 'sine',
   });
 }
 
@@ -216,6 +277,15 @@ export function registerSoundHooks(hooks) {
   if (typeof hooks.playWinSound === 'function') {
     registeredHooks.playWinSound = hooks.playWinSound;
   }
+  if (typeof hooks.playLossSound === 'function') {
+    registeredHooks.playLossSound = hooks.playLossSound;
+  }
+  if (typeof hooks.playMilestoneSound === 'function') {
+    registeredHooks.playMilestoneSound = hooks.playMilestoneSound;
+  }
+  if (typeof hooks.playBalanceCountSound === 'function') {
+    registeredHooks.playBalanceCountSound = hooks.playBalanceCountSound;
+  }
 }
 
 export function playSpinSound() {
@@ -230,4 +300,18 @@ export function playStopSound() {
 export function playWinSound(tier) {
   stopChannel('spin');
   runHook('win', 'playWinSound', [tier], () => playFallbackWin(tier));
+}
+
+export function playLossSound() {
+  runHook('loss', 'playLossSound', [], playFallbackLoss);
+}
+
+export function playMilestoneSound() {
+  runHook('milestone', 'playMilestoneSound', [], playFallbackMilestone);
+}
+
+export function playBalanceCountSound(durationMs = 900) {
+  runHook('count', 'playBalanceCountSound', [durationMs], () =>
+    playFallbackBalanceCount(durationMs)
+  );
 }
