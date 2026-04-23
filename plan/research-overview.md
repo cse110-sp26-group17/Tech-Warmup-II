@@ -38,6 +38,6 @@ Synthesizes visual language (color, typography, symbols), the fast spin cycle an
 6. Mohamed Ali - Domain Research
 7. Ivan Del Rio - UI/UX Research
 8. Andrew Pham - Reviewed and Approved Research
-9. Sanjana Kalarickal
-10.Paul Jimenez Chavez
+9. Sanjana Kalarickal - User Stories, PR Reviews, Reports 
+10.Paul Jimenez Chavez- 
 11. Luke Deverian - UI/UX Research
