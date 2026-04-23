@@ -589,126 +589,17 @@ todos:
     content: "Add tests for new GameState features: streaks, combo, jackpot, milestones, pity, persistence"
     status: pending
 isProject: false
----
-
-# Slot Machine: Bug Fixes + Hyper-Gamification
-
-## Bugs Found
-
-### Bug 1 -- Near-miss ternary is a no-op
-In [`src/animations/reelAnimation.js`](src/animations/reelAnimation.js) line 152:
-
-```147:153:src/animations/reelAnimation.js
-export function createNearMissHint({ isWin, finalSymbols }) {
-  if (isWin === true || Math.random() > 0.26) {
-    return null;
-  }
-
-  const targetBase = finalSymbols[0] === finalSymbols[1] ? finalSymbols[0] : finalSymbols[0];
-```
-
-Both branches of the ternary return `finalSymbols[0]` -- the condition is meaningless. Should only trigger near-miss when the first two reels match (a true "almost won" scenario), and show the matching symbol as the tease on reel 3.
-
-### Bug 2 -- WinOverlay vanishes during PAYOUT phase
-[`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx) line 16 checks `machineState !== MACHINE_STATES.RESULT` and returns null. But the controller transitions RESULT -> PAYOUT -> IDLE. So the overlay disappears while the win counter is still animating. The overlay should remain visible during both RESULT and PAYOUT states.
-
-### Bug 3 -- Unused `effectsToken`
-The controller exports `effectsToken` but [`src/SlotMachine.jsx`](src/SlotMachine.jsx) never passes it to any child component. Dead code to remove.
-
-### Bug 4 -- Duplicated `formatCredits` in 5 files
-`formatCredits` / `formatValue` is independently defined in `SlotMachine.jsx`, `useSlotMachineController.js`, `HUD.jsx`, `WinOverlay.jsx`, and `BetControls.jsx`. Extract to a single shared utility.
-
-### Bug 5 -- RTP is 855% (player always profits)
-The current math: `0.3 win rate * (0.45*10 + 0.30*25 + 0.17*50 + 0.08*100) = 0.3 * 28.5 = 8.55x`. For every 1 VC wagered, expected return is 8.55 VC. There is zero tension because the player always comes out massively ahead. Needs tuning to ~92% RTP for realistic feel with occasional big wins.
 
 ---
-
-## Gamification Enhancements
-
-### 1. Win/Loss Streak System
-- Track consecutive wins (`currentWinStreak`) and consecutive losses (`currentLossStreak`) in `GameState`
-- Display streak counter in HUD with fire animation when >= 3
-- Show "HOT STREAK x5!" overlay text during sustained runs
-- After 3+ losses, show "DUE FOR A WIN" messaging (loss aversion hook)
-
-### 2. Combo Multiplier
-- Consecutive wins apply escalating payout bonus: streak 2 = 1.2x, streak 3 = 1.5x, streak 5 = 2x
-- Golden glow on the HUD when combo is active
-- Visual "COMBO x1.5" badge appears on screen during active combo
-- Combo breaks on any loss (creates tension to keep spinning)
-
-### 3. Progressive Jackpot Pool
-- 2% of every bet feeds a visible progressive jackpot pool
-- Pool displays prominently at the top with a ticking counter
-- When triple-sevens hit, the jackpot pool is awarded ON TOP of the normal payout
-- Pool persists in localStorage
-
-### 4. Spin Milestone Bonuses
-- Track total spins across sessions (persisted)
-- Every 10 spins: small bonus (50 VC)
-- Every 25 spins: medium bonus (150 VC)
-- Every 50 spins: big bonus (500 VC) + guaranteed win on next spin
-- Show "Next bonus in X spins" countdown in the HUD
-- Animated milestone celebration popup
-
-### 5. Lucky Spin Guarantee
-- After 8 consecutive losses, force the next spin to be a win (pity system)
-- Show subtle "luck is building..." messaging after 5+ losses
-- Creates the illusion of hot/cold cycles
-
-### 6. Enhanced Near-Miss System (fix + upgrade)
-- Fix the ternary bug so near-miss only fires when reels 1+2 match
-- Increase near-miss frequency to ~35% of losses when first two match
-- Add dramatic slow-down animation on reel 3 during near-miss
-- Flash "SO CLOSE!" text
-- Near-misses are the strongest driver of continued play in slot research
-
-### 7. Balance + State Persistence
-- Save full game state to localStorage on every spin: balance, streaks, total spins, jackpot pool, biggest win, win log
-- Hydrate on mount so progress survives page refresh
-- Show "Welcome back! Balance: X VC" on return
-
-### 8. Visual/Audio Juice
-- Scale screen shake intensity with win tier (small = subtle, jackpot = heavy shake)
-- Add pulsing "SPIN NOW" urgency animation that speeds up after losses
-- Win counter counts up with accelerating tick sound
-- Jackpot wins get extended celebration with multiple firework layers
-- Losses get a quick "whomp" deflation sound rather than silence
-- Reel stage border color pulses with combo multiplier color
-
-### 9. "Machine Temperature" Indicator
-- Visual thermometer or "hot/cold" badge based on recent win rate
-- Updates after each spin based on last 10 results
-- "MACHINE IS ON FIRE" when 4+ of last 10 were wins
-- Pure psychological decoration (outcome is still random) but creates narrative
-
-### 10. Quick Stats Banner
-- Replace the plain "State: Idle/Spinning" HUD bar with useful info:
-  - Total spins this session
-  - Current streak (wins or losses)
-  - Next milestone countdown
-  - Jackpot pool amount
+### Result
+All features implemented: bugs fixed, streaks/combo/jackpot/milestones/pity wired up, persistence added, audio and visual enhancements in place.
+### What We Learned
+Mismatched contracts between upgraded state/controller logic and UI props were the biggest stability risk. Reconciling those interfaces first prevented cascading bugs.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
 ---
-
-## File Changes Summary
-
-- [`src/state/GameState.js`](src/state/GameState.js) -- Add streak tracking, combo multiplier, jackpot pool, milestone tracking, pity timer, persistence, tune RTP
-- [`src/controller/useSlotMachineController.js`](src/controller/useSlotMachineController.js) -- Wire new state, persistence, combo/streak/milestone logic, pity system
-- [`src/animations/reelAnimation.js`](src/animations/reelAnimation.js) -- Fix near-miss bug, add combo tier, machine temperature helpers
-- [`src/components/HUD.jsx`](src/components/HUD.jsx) -- Show jackpot pool, streak, combo, next milestone countdown, machine temp
-- [`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx) -- Fix PAYOUT visibility bug, add streak/combo celebration text, milestone popup
-- [`src/components/SpinButton.jsx`](src/components/SpinButton.jsx) -- Urgency pulse that scales with loss streak
-- [`src/components/BetControls.jsx`](src/components/BetControls.jsx) -- Minor: use shared formatCredits
-- [`src/SlotMachine.jsx`](src/SlotMachine.jsx) -- Wire new props, remove dead effectsToken, add combo/streak/jackpot display sections
-- [`src/styles.css`](src/styles.css) -- Streak fire animation, combo glow, jackpot ticker, milestone popup, temperature indicator, enhanced near-miss, urgency pulse
-- [`src/audio/soundHooks.js`](src/audio/soundHooks.js) -- Add loss sound, streak sound, milestone fanfare, combo sound
-- New: `src/utils/formatCredits.js` -- Shared formatter (extract from 5 files)
-- [`src/tests/GameState.test.js`](src/tests/GameState.test.js) -- Add tests for streaks, combo, jackpot, milestones, pity, persistence
-
-Result: Implemented the full hyper-gamification plan with bug fixes, including near-miss correction, PAYOUT-phase overlay persistence, streak/combo systems, progressive jackpot, milestone bonuses, pity spins, persistence, audio/visual enhancements, and updated tests.
-
-Learned: The biggest stability risk was not missing features but mismatched contracts between upgraded state/controller logic and UI props, so reconciling those interfaces was crucial.
 
 Prompt 12: ---
 name: Slot Machine Visual Overhaul
