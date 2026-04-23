@@ -505,3 +505,52 @@ Return updated code + tests."
 Result: The animation for the last spinner is fixed. Auto-spin has a button to stop it. Last win still applies to the last roll rather than the full game lifetime.
 
 What We Learned: The odds of winning are very low so we should improve those. We need to improve the information section because it has repition. We need more clarity on the results message. In future sessions, fix/adjust the UI since visually it is bland. There are two win displays, so we should get rid of the second underneath the slots because it serves little functionality and is repetitive. 
+
+Entry #9
+
+prompt: Update the existing slot machine web app (do NOT rewrite from scratch). Improve and fix the current code to make it a hyper-addictive, sensory-rich Roblox-style gacha slot machine that triggers constant "just one more spin" dopamine.
+
+### CRITICAL FIXES
+1. Net Gain → Change "Net Gain" to show lifetime total winnings only (never losses or spent amount). It must accumulate across all spins, not reset to the last spin.
+2. Remove the second/duplicated win/loss display under the reels.
+3. Fix win detection & payout logic so matching symbols (all three reels identical) correctly pay out every time.
+4. Improve win/loss message in the result popup: clear, short, exciting (e.g. "BIG WIN! +420 VC" or "Better luck next spin").
+5. Increase win odds significantly (make the game feel rewarding and fun — target ~25-35% win rate).
+
+### VISUAL & UX UPGRADES (make it juicy)
+- Dark purple/red casino theme, neon glows, gold accents
+- Make the 100 VC bet button glow brightly by default
+- Bet buttons: 5 / 10 / 25 / 50 / 100 (highlight selected)
+- Larger, more dominant SPIN button with glow pulse
+- Reels: realistic vertical spin with staggered stops, screen shake on spin
+- Every win = confetti explosion + victory sound + screen flash + camera shake
+- Result popup stays 2.5 seconds, green for wins, red for losses
+
+### NEW ADDICTIVE FEATURES
+- Auto-Spin button that keeps spinning until balance = 0 or manually stopped (big visible Stop button)
+- Turbo checkbox (faster ~0.8s spins)
+- "Info" modal → clean payout table with emoji symbols + multipliers
+- Biggest Win showcase (fireworks + multiplier pop-up)
+- Win log panel that ONLY shows gains (never spent amounts)
+- Daily VC Grant button (once per day, tempting visual)
+
+Keep using the existing GameState class as source of truth. Keep the app fully runnable (index.html + all files). Add helpful comments. Return all updated files clearly labeled.
+
+Result:
+Upgraded the existing app (not rewritten) with fixed payout/win logic, lifetime-winnings-only tracking, cleaner result popup messaging, ~30% win rate, and new addictive features (auto-spin, turbo, payout info, biggest win, win-only log, daily VC grant) plus stronger casino-style visuals/effects.
+
+Learned:
+Single-source state in GameState made updates reliable; separating lifetime winnings from balance avoided logic bugs; stronger feedback loops and validated odds improved fun while keeping behavior correct.
+
+
+
+# Run 10
+
+Prompt:
+fix the winning amount display. its not accurately reflecting the win amount. 
+
+Result:
+Fixed the win amount display so the popup now always shows the exact payout for the current spin immediately, instead of a delayed or stale value.
+
+Learned:
+The displayed win value was tied to a later animation phase; setting it at result reveal keeps UI feedback accurate and in sync with game logic.

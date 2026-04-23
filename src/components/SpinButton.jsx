@@ -21,7 +21,7 @@ export default function SpinButton({
         onClick={onSpin}
         aria-label={isSpinning ? 'Reels are spinning' : 'Spin'}
       >
-        {isSpinning ? 'SPINNING' : 'SPIN'}
+        {isSpinning ? 'SPINNING' : 'SPIN NOW'}
       </button>
 
       <div className="toggle-row">
@@ -32,7 +32,7 @@ export default function SpinButton({
             onChange={(event) => onToggleTurbo(event.target.checked)}
             disabled={disabled}
           />
-          <span>Turbo</span>
+          <span>Turbo (0.8s)</span>
         </label>
 
         <label className="toggle-pill">
@@ -47,12 +47,8 @@ export default function SpinButton({
       </div>
 
       {autoSpin ? (
-        <button
-          type="button"
-          className="action-button stop-auto"
-          onClick={onStopAutoSpin}
-        >
-          Stop Auto-Spin
+        <button type="button" className="action-button stop-auto" onClick={onStopAutoSpin}>
+          STOP AUTO-SPIN
         </button>
       ) : null}
     </section>

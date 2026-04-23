@@ -1,4 +1,4 @@
-import { MACHINE_STATES, SYMBOL_DISPLAY, WIN_TIERS, getFeedbackLabel } from '../animations/reelAnimation';
+import { MACHINE_STATES } from '../animations/reelAnimation';
 
 function formatCredits(value) {
   return new Intl.NumberFormat('en-US').format(value);
@@ -10,15 +10,14 @@ export default function WinOverlay({
   result,
   displayedWin,
   reducedMotion,
+  resultMessage,
+  isNewBiggestWin,
 }) {
-  // Keep popup strictly tied to the RESULT phase.
   if (!result || machineState !== MACHINE_STATES.RESULT) {
     return null;
   }
 
   const showWin = result.isWin === true;
-  const heading = showWin ? getFeedbackLabel(winTier) : 'No Win';
-  const symbolLabel = SYMBOL_DISPLAY[result.symbolName].label;
   const layerClass = showWin ? `tier-${winTier} result-win` : 'tier-loss result-loss';
 
   return (
@@ -28,19 +27,22 @@ export default function WinOverlay({
       role="status"
     >
       <article className="win-card">
-        <p className="win-heading">{heading}</p>
-        <p className="win-symbol">Symbol: {symbolLabel}</p>
+        <p className="win-heading">{resultMessage}</p>
         {showWin ? (
           <>
-            <p className="win-value">+{formatCredits(displayedWin)}</p>
+            <p className="win-value">+{formatCredits(displayedWin)} VC</p>
             <p className="win-detail">Multiplier x{result.multiplier}</p>
           </>
         ) : (
-          <p className="win-detail">Try another spin</p>
+          <p className="win-detail">Keep the streak alive</p>
         )}
+
+        {showWin && isNewBiggestWin ? (
+          <p className="biggest-win-badge">NEW BIGGEST WIN x{result.multiplier}</p>
+        ) : null}
       </article>
 
-      {showWin && (winTier === WIN_TIERS.MEDIUM || winTier === WIN_TIERS.BIG || winTier === WIN_TIERS.JACKPOT) ? (
+      {showWin ? (
         <div className="particle-layer" aria-hidden="true">
           <span />
           <span />
@@ -54,6 +56,8 @@ export default function WinOverlay({
           <span />
         </div>
       ) : null}
+
+      {showWin && isNewBiggestWin ? <div className="firework-layer" aria-hidden="true" /> : null}
     </section>
   );
 }

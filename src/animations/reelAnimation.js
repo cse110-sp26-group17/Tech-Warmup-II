@@ -14,7 +14,7 @@ export const WIN_TIERS = Object.freeze({
 });
 
 export const SYMBOL_DISPLAY = Object.freeze({
-  cherry: { code: '🍒', label: 'Cherries' },
+  cherry: { code: '🍒', label: 'Cherry' },
   bar: { code: '🍋', label: 'Lemon' },
   bell: { code: '🔔', label: 'Bell' },
   seven: { code: '7️⃣', label: 'Seven' },
@@ -47,24 +47,24 @@ export function getRandomSymbol() {
 export function getSpinProfile({ turboMode, reducedMotion }) {
   if (reducedMotion) {
     return {
-      reelDurations: [1000, 1160, 1320],
-      totalSpinDuration: 1360,
-      resultHoldDuration: 160,
+      reelDurations: [560, 640, 720],
+      totalSpinDuration: 760,
+      resultHoldDuration: 120,
     };
   }
 
   if (turboMode) {
     return {
-      reelDurations: [1050, 1250, 1450],
-      totalSpinDuration: 1520,
-      resultHoldDuration: 130,
+      reelDurations: [560, 700, 820],
+      totalSpinDuration: 860,
+      resultHoldDuration: 100,
     };
   }
 
   return {
-    reelDurations: [1160, 1420, 1680],
-    totalSpinDuration: 1760,
-    resultHoldDuration: 280,
+    reelDurations: [980, 1230, 1480],
+    totalSpinDuration: 1540,
+    resultHoldDuration: 220,
   };
 }
 
@@ -86,31 +86,31 @@ export function getWinTier(result) {
 
 export function getPayoutDuration({ tier, turboMode, reducedMotion }) {
   if (reducedMotion) {
-    return tier === WIN_TIERS.LOSS ? 120 : 250;
+    return tier === WIN_TIERS.LOSS ? 100 : 180;
   }
   if (turboMode) {
     if (tier === WIN_TIERS.JACKPOT) {
-      return 380;
+      return 300;
     }
     if (tier === WIN_TIERS.BIG || tier === WIN_TIERS.MEDIUM) {
-      return 260;
+      return 220;
     }
     if (tier === WIN_TIERS.SMALL) {
-      return 180;
+      return 150;
     }
-    return 130;
+    return 120;
   }
   if (tier === WIN_TIERS.JACKPOT) {
-    return 1200;
+    return 980;
   }
   if (tier === WIN_TIERS.BIG) {
-    return 900;
+    return 760;
   }
   if (tier === WIN_TIERS.MEDIUM) {
-    return 680;
+    return 560;
   }
   if (tier === WIN_TIERS.SMALL) {
-    return 450;
+    return 420;
   }
   return 220;
 }
@@ -123,10 +123,10 @@ export function getFeedbackLabel(tier) {
     return 'Big Win';
   }
   if (tier === WIN_TIERS.MEDIUM) {
-    return 'Medium Win';
+    return 'Mega Win';
   }
   if (tier === WIN_TIERS.SMALL) {
-    return 'Small Win';
+    return 'Win';
   }
   return 'No Win';
 }
@@ -145,7 +145,7 @@ function getAdjacentSymbol(symbolName) {
 }
 
 export function createNearMissHint({ isWin, finalSymbols }) {
-  if (isWin === true || Math.random() > 0.35) {
+  if (isWin === true || Math.random() > 0.26) {
     return null;
   }
 
@@ -155,7 +155,7 @@ export function createNearMissHint({ isWin, finalSymbols }) {
   return {
     reelIndex: 2,
     previewSymbol: nearMissSymbol,
-    previewDurationMs: 150,
+    previewDurationMs: 120,
     message: `Near miss: ${SYMBOL_DISPLAY[targetBase].label}`,
   };
 }

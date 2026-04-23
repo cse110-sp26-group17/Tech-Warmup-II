@@ -12,13 +12,19 @@ class GameState {
     this.balance = initialBalance;
     this.betAmount = 10;
     this.gameHistory = [];
+    this.winLog = [];
+    this.lifetimeWinnings = 0;
+    this.biggestWin = null;
+    this.lastDailyGrantDate = null;
+    this.dailyGrantAmount = 250;
+    this.targetWinRate = 0.3;
     this.isSpinning = false;
     this.payoutTable = {
-      cherry: { multiplier: 10, probability: 0.20 },
-      bar: { multiplier: 25, probability: 0.10 },
-      bell: { multiplier: 50, probability: 0.05 },
-      seven: { multiplier: 100, probability: 0.02 },
-      none: { multiplier: 0, probability: 0.63 },
+      cherry: { multiplier: 10, probability: 0.45 },
+      bar: { multiplier: 25, probability: 0.30 },
+      bell: { multiplier: 50, probability: 0.17 },
+      seven: { multiplier: 100, probability: 0.08 },
+      none: { multiplier: 0, probability: 0 },
     };
   }
 
@@ -48,11 +54,7 @@ class GameState {
 
     this.isSpinning = true;
 
-    const reels = [
-      Math.floor(Math.random() * 10),
-      Math.floor(Math.random() * 10),
-      Math.floor(Math.random() * 10),
-    ];
+    const reels = this.generateSpinReels();
 
     this.balance -= betAmount;
 
@@ -115,6 +117,33 @@ class GameState {
   }
 
   /**
+   * Gets winnings-only history entries.
+   *
+   * @returns {Array<{payout:number, multiplier:number, symbolName:string, timestamp:number}>}
+   */
+  getWinLog() {
+    return [...this.winLog];
+  }
+
+  /**
+   * Gets the cumulative winnings amount.
+   *
+   * @returns {number} Lifetime winnings.
+   */
+  getLifetimeWinnings() {
+    return this.lifetimeWinnings;
+  }
+
+  /**
+   * Gets the largest single win.
+   *
+   * @returns {{payout:number, multiplier:number, symbolName:string, betAmount:number, timestamp:number}|null}
+   */
+  getBiggestWin() {
+    return this.biggestWin;
+  }
+
+  /**
    * Gets the payout table used to define multipliers and probabilities.
    *
    * @returns {Object} The payout table.
@@ -129,11 +158,13 @@ class GameState {
    * @returns {number} RTP as decimal (e.g., 0.94).
    */
   calculateRTP() {
-    let rtp = 0;
-    for (const symbolData of Object.values(this.payoutTable)) {
-      rtp += symbolData.multiplier * symbolData.probability;
-    }
-    return rtp;
+    const averageWinMultiplier =
+      (this.payoutTable.cherry.multiplier * this.payoutTable.cherry.probability) +
+      (this.payoutTable.bar.multiplier * this.payoutTable.bar.probability) +
+      (this.payoutTable.bell.multiplier * this.payoutTable.bell.probability) +
+      (this.payoutTable.seven.multiplier * this.payoutTable.seven.probability);
+
+    return this.targetWinRate * averageWinMultiplier;
   }
 
   /**
@@ -182,23 +213,13 @@ class GameState {
   evaluateSpin(reels, betAmount = this.betAmount) {
     const symbols = reels.map((reelValue) => this.getSymbolName(reelValue));
     const allSymbolsMatch = symbols[0] === symbols[1] && symbols[1] === symbols[2];
-
-    // Win when all three symbols match, even if reel numbers differ inside a symbol bucket.
-    if (!allSymbolsMatch) {
-      return {
-        isWin: false,
-        symbolName: 'none',
-        multiplier: 0,
-        payout: 0,
-      };
-    }
-
-    const symbolName = symbols[0];
+    const symbolName = allSymbolsMatch ? symbols[0] : 'none';
     const multiplier = this.getSymbolMultiplier(symbolName);
-    const payout = multiplier * betAmount;
+    const isWin = allSymbolsMatch && multiplier > 0;
+    const payout = isWin ? multiplier * betAmount : 0;
 
     return {
-      isWin: true,
+      isWin,
       symbolName,
       multiplier,
       payout,
@@ -216,6 +237,25 @@ class GameState {
 
     if (spinResult.result.isWin === true) {
       this.balance += spinResult.result.payout;
+      this.lifetimeWinnings += spinResult.result.payout;
+
+      const winRecord = {
+        payout: spinResult.result.payout,
+        multiplier: spinResult.result.multiplier,
+        symbolName: spinResult.result.symbolName,
+        timestamp: Date.now(),
+      };
+      this.winLog.unshift(winRecord);
+
+      if (!this.biggestWin || spinResult.result.payout > this.biggestWin.payout) {
+        this.biggestWin = {
+          payout: spinResult.result.payout,
+          multiplier: spinResult.result.multiplier,
+          symbolName: spinResult.result.symbolName,
+          betAmount,
+          timestamp: Date.now(),
+        };
+      }
     }
 
     return {
@@ -224,6 +264,55 @@ class GameState {
       betAmount: spinResult.betAmount,
       result: spinResult.result,
     };
+  }
+
+  /**
+   * Returns whether a daily grant can be claimed right now.
+   *
+   * @returns {boolean}
+   */
+  canClaimDailyGrant() {
+    return this.lastDailyGrantDate !== this.getTodayKey();
+  }
+
+  /**
+   * Grants daily credits once per local day.
+   *
+   * @returns {{amount:number,balance:number,lastClaimDate:string}}
+   * @throws {Error} If already claimed today.
+   */
+  claimDailyGrant() {
+    const todayKey = this.getTodayKey();
+    if (this.lastDailyGrantDate === todayKey) {
+      throw new Error('Daily VC already claimed today');
+    }
+
+    this.lastDailyGrantDate = todayKey;
+    this.balance += this.dailyGrantAmount;
+
+    return {
+      amount: this.dailyGrantAmount,
+      balance: this.balance,
+      lastClaimDate: todayKey,
+    };
+  }
+
+  /**
+   * Hydrates persisted daily grant claim date.
+   *
+   * @param {string | null} dateKey
+   */
+  hydrateDailyGrantDate(dateKey) {
+    this.lastDailyGrantDate = typeof dateKey === 'string' ? dateKey : null;
+  }
+
+  /**
+   * Gets stored daily grant claim date.
+   *
+   * @returns {string | null}
+   */
+  getLastDailyGrantDate() {
+    return this.lastDailyGrantDate;
   }
 
   /**
@@ -236,7 +325,84 @@ class GameState {
     this.balance = newInitialBalance;
     this.betAmount = 10;
     this.gameHistory = [];
+    this.winLog = [];
+    this.lifetimeWinnings = 0;
+    this.biggestWin = null;
+    this.lastDailyGrantDate = null;
     this.isSpinning = false;
+  }
+
+  generateSpinReels() {
+    if (Math.random() < this.targetWinRate) {
+      return this.generateWinningReels();
+    }
+    return this.generateLosingReels();
+  }
+
+  generateWinningReels() {
+    const winningSymbol = this.pickWinningSymbol();
+    const reelValues = this.getReelValuesForSymbol(winningSymbol);
+
+    const pickValue = () => reelValues[Math.floor(Math.random() * reelValues.length)];
+
+    return [pickValue(), pickValue(), pickValue()];
+  }
+
+  generateLosingReels() {
+    let reels = [
+      Math.floor(Math.random() * 10),
+      Math.floor(Math.random() * 10),
+      Math.floor(Math.random() * 10),
+    ];
+
+    while (this.evaluateSpin(reels, this.betAmount).isWin) {
+      reels = [
+        Math.floor(Math.random() * 10),
+        Math.floor(Math.random() * 10),
+        Math.floor(Math.random() * 10),
+      ];
+    }
+
+    return reels;
+  }
+
+  pickWinningSymbol() {
+    const random = Math.random();
+    let cumulative = 0;
+
+    const symbols = ['cherry', 'bar', 'bell', 'seven'];
+    for (const symbolName of symbols) {
+      cumulative += this.payoutTable[symbolName].probability;
+      if (random <= cumulative) {
+        return symbolName;
+      }
+    }
+
+    return 'cherry';
+  }
+
+  getReelValuesForSymbol(symbolName) {
+    if (symbolName === 'cherry') {
+      return [0, 1];
+    }
+    if (symbolName === 'bar') {
+      return [2, 3];
+    }
+    if (symbolName === 'bell') {
+      return [4, 5];
+    }
+    if (symbolName === 'seven') {
+      return [6, 7];
+    }
+    return [8, 9];
+  }
+
+  getTodayKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
 

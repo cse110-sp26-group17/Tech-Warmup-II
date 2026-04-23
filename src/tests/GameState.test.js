@@ -6,10 +6,14 @@ describe('GameState', () => {
     const gameState = new GameState(500);
     const randomSpy = vi
       .spyOn(Math, 'random')
-      // 0,1,0 => cherry,cherry,cherry (same symbol bucket)
-      .mockReturnValueOnce(0.01)
-      .mockReturnValueOnce(0.19)
-      .mockReturnValueOnce(0.02);
+      // targetWinRate check -> win path
+      .mockReturnValueOnce(0.1)
+      // pickWinningSymbol -> cherry
+      .mockReturnValueOnce(0.1)
+      // pick values from [0,1] -> 0,1,0
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.1);
 
     const result = gameState.spinWithPayout(10);
 
@@ -18,19 +22,20 @@ describe('GameState', () => {
     expect(result.result.symbolName).toBe('cherry');
     expect(result.result.multiplier).toBe(10);
     expect(result.result.payout).toBe(100);
-    // 500 - 10 + 100
     expect(result.balance).toBe(590);
 
     randomSpy.mockRestore();
   });
 
-  it('credits payout after a winning spinWithPayout call', () => {
+  it('credits payout and lifetime winnings after a winning spinWithPayout call', () => {
     const gameState = new GameState(1000);
     const randomSpy = vi
       .spyOn(Math, 'random')
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(0);
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.0)
+      .mockReturnValueOnce(0.0);
 
     const result = gameState.spinWithPayout(20);
 
@@ -39,6 +44,8 @@ describe('GameState', () => {
     expect(result.result.payout).toBe(200);
     expect(result.balance).toBe(1180);
     expect(gameState.getBalance()).toBe(1180);
+    expect(gameState.getLifetimeWinnings()).toBe(200);
+    expect(gameState.getWinLog()).toHaveLength(1);
 
     randomSpy.mockRestore();
   });
@@ -47,7 +54,9 @@ describe('GameState', () => {
     const gameState = new GameState(100);
     const randomSpy = vi
       .spyOn(Math, 'random')
-      // 0,2,4 => cherry,bar,bell
+      // targetWinRate check -> force losing path
+      .mockReturnValueOnce(0.99)
+      // reels 0,2,4 => cherry,bar,bell
       .mockReturnValueOnce(0.0)
       .mockReturnValueOnce(0.2)
       .mockReturnValueOnce(0.4);
@@ -58,8 +67,21 @@ describe('GameState', () => {
     expect(result.result.payout).toBe(0);
     expect(result.balance).toBe(75);
     expect(gameState.getBalance()).toBe(75);
+    expect(gameState.getLifetimeWinnings()).toBe(0);
 
     randomSpy.mockRestore();
+  });
+
+  it('does not treat triple none as a win', () => {
+    const gameState = new GameState(100);
+    const result = gameState.evaluateSpin([8, 9, 8], 10);
+
+    expect(result).toEqual({
+      isWin: false,
+      symbolName: 'none',
+      multiplier: 0,
+      payout: 0,
+    });
   });
 
   it('throws on invalid and unaffordable bets', () => {
@@ -80,6 +102,8 @@ describe('GameState', () => {
     const gameState = new GameState(100);
     const randomSpy = vi
       .spyOn(Math, 'random')
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.1)
       .mockReturnValueOnce(0.0)
       .mockReturnValueOnce(0.0)
       .mockReturnValueOnce(0.0);
@@ -100,10 +124,27 @@ describe('GameState', () => {
     randomSpy.mockRestore();
   });
 
-  it('resets balance, bet, history, and spin lock on resetGame', () => {
+  it('supports daily grant only once per day', () => {
+    const gameState = new GameState(100);
+    vi.spyOn(gameState, 'getTodayKey').mockReturnValue('2026-04-22');
+
+    expect(gameState.canClaimDailyGrant()).toBe(true);
+    const grant = gameState.claimDailyGrant();
+
+    expect(grant.amount).toBe(250);
+    expect(gameState.getBalance()).toBe(350);
+    expect(gameState.canClaimDailyGrant()).toBe(false);
+    expect(() => gameState.claimDailyGrant()).toThrow('Daily VC already claimed today');
+  });
+
+  it('resets balance, bet, history, win aggregates, and spin lock on resetGame', () => {
     const gameState = new GameState(100);
     gameState.betAmount = 25;
     gameState.gameHistory.push({ betAmount: 10, reels: [1, 2, 3], timestamp: Date.now() });
+    gameState.winLog.push({ payout: 200, multiplier: 10, symbolName: 'cherry', timestamp: Date.now() });
+    gameState.lifetimeWinnings = 200;
+    gameState.biggestWin = { payout: 200, multiplier: 10, symbolName: 'cherry', betAmount: 20, timestamp: Date.now() };
+    gameState.lastDailyGrantDate = '2026-04-22';
     gameState.isSpinning = true;
 
     gameState.resetGame(300);
@@ -111,6 +152,10 @@ describe('GameState', () => {
     expect(gameState.getBalance()).toBe(300);
     expect(gameState.betAmount).toBe(10);
     expect(gameState.getGameHistory()).toEqual([]);
+    expect(gameState.getWinLog()).toEqual([]);
+    expect(gameState.getLifetimeWinnings()).toBe(0);
+    expect(gameState.getBiggestWin()).toBeNull();
+    expect(gameState.getLastDailyGrantDate()).toBeNull();
     expect(gameState.isSpinning).toBe(false);
   });
 
