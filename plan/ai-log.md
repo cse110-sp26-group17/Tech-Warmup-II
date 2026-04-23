@@ -869,9 +869,9 @@ a smaller screen size, as intended. However, the setting button covers the "Hide
 overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
 ---
 
-# Prompt 18:
+## Prompt 18:
 
-## Prompt
+### Prompt
 You are Codex working in an existing slot-machine web app codebase.                                    
   Implement only the requested UI/UX changes. Do not refactor unrelated code.                            
                                                                                                          
@@ -934,3 +934,48 @@ You are Codex working in an existing slot-machine web app codebase.
 
 ---
 
+## Prompt 19
+
+### Prompt:
+  You are Codex. Implement only the requested changes. Do not refactor unrelated code.                   
+   
+  Changes required                                                                                       
+                                                                                                       
+  1. Top-left win-streak popup timing
+  - Locate the win-streak multiplier popup (upper-left of machine).
+  - Set display duration to exactly 3000ms. Popup auto-dismisses after 3s and reappears on next          
+  streak/multiplier update.                                                                    
+  - Keep trigger logic and message content unchanged.                                                    
+                                                                                                       
+  2. Tab text-box UI below slot machine ("Set Your Bet" / "Spin")
+  - Fix size/spacing proportionality:                                                                    
+    - Increase/adjust font size for balance with tab container
+    - Adjust padding, min-height, line-height, vertical alignment                                        
+    - Center text visually within each tab                                                             
+  - Critical: When stats/history dropdown opens/closes, text-box padding must remain stable (do not
+  compress/expand).
+  - Ensure responsive behavior on mobile + desktop.                                                      
+  
+  3. Center winning popup duration                                                                       
+  - Locate the winning popup at machine center.                                                        
+  - Increase current display time by exactly 2 seconds (current duration + 2000ms).
+  - Keep trigger logic and message content unchanged.
+                                                                                                         
+  Hard constraints
+  - Do NOT modify RNG, payout logic, spin/state-machine, or business rules.                              
+  - Do NOT remove existing features/components.                                                        
+  - Do NOT perform broad refactors.
+  - Maintain accessibility: readable text, visible focus, proper contrast.
+
+  Validation checklist
+  - Top-left streak popup displays for exactly 3s, then auto-dismisses
+  - Tab text-box size/spacing is proportional and centered            
+  - Tab text-box padding stable when dropdown opens/closes
+  - Center winning popup duration increased by 2s (verify new duration)
+  - No gameplay logic changes or regressions                                                             
+  - Mobile + desktop layouts remain usable
+                                                                                                         
+  Output format                                                                                        
+  1. Brief summary of changes made.
+  2. File-by-file list of edits.                                                                         
+  3. Verification notes against each checklist item.

@@ -21,7 +21,7 @@ import {
 import { formatCredits } from '../utils/formatCredits';
 
 const BET_OPTIONS = Object.freeze([5, 10, 25, 50, 100]);
-const RESULT_POPUP_DURATION_MS = 1600;
+const RESULT_POPUP_DURATION_MS = 1600 + 2000;
 const MILESTONE_POPUP_DURATION_MS = 1200;
 const SAVE_STORAGE_KEY = 'slot-machine-save-v2';
 

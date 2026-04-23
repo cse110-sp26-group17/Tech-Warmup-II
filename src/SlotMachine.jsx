@@ -8,7 +8,6 @@ import SettingsOverlay from './components/overlays/SettingsOverlay';
 import SymbolInfoModal from './components/overlays/SymbolInfoModal';
 import StreakCounter from './components/indicators/StreakCounter';
 import LuckMeter from './components/indicators/LuckMeter';
-import RecentSpins from './components/indicators/RecentSpins';
 import WinsTicker from './components/feed/WinsTicker';
 import { useSlotMachineController } from './hooks/useSlotMachineController';
 import { formatCredits } from './utils/formatCredits';
@@ -123,10 +122,9 @@ export default function SlotMachine() {
         {statusMessage}
       </p>
 
-      <section className={`insight-row ${freeRolls > 0 ? 'free-roll-ready' : ''}`} aria-label="Spin insights">
+      <div className="luck-meter-container">
         <LuckMeter lossStreak={meta.currentLossStreak} />
-        <RecentSpins recentResults={recentResults} />
-      </section>
+      </div>
 
       <section className="action-zone" aria-label="Primary actions">
         <BetControls

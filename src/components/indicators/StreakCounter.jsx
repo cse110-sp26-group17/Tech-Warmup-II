@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './indicators.css';
 
+const STREAK_POPUP_DURATION_MS = 3000;
+
 function getStreakMultiplier(winStreak) {
   if (winStreak <= 0) {
     return 1;
@@ -27,6 +29,7 @@ function getStreakTone(winStreak) {
 export default function StreakCounter({ winStreak, comboMultiplier, variant = 'default' }) {
   const previousWinStreakRef = useRef(winStreak);
   const [resetPulse, setResetPulse] = useState(false);
+  const [popupVisible, setPopupVisible] = useState(true);
 
   useEffect(() => {
     const hadStreak = previousWinStreakRef.current > 0;
@@ -47,7 +50,26 @@ export default function StreakCounter({ winStreak, comboMultiplier, variant = 'd
   const tone = getStreakTone(winStreak);
   const isIdle = winStreak === 0 && comboMultiplier <= 1;
 
+  useEffect(() => {
+    if (variant !== 'in-stage') {
+      return undefined;
+    }
+
+    if (isIdle) {
+      setPopupVisible(false);
+      return undefined;
+    }
+
+    setPopupVisible(true);
+    const timerId = setTimeout(() => setPopupVisible(false), STREAK_POPUP_DURATION_MS);
+    return () => clearTimeout(timerId);
+  }, [variant, winStreak, comboMultiplier, isIdle]);
+
   if (variant === 'in-stage' && isIdle) {
+    return null;
+  }
+
+  if (variant === 'in-stage' && !popupVisible) {
     return null;
   }
 
