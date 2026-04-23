@@ -35,7 +35,34 @@ function getNextDelayMs() {
 }
 
 export default function WinsTicker() {
+  const [isCompactViewport, setIsCompactViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false
+  );
+  const [isCollapsed, setIsCollapsed] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false
+  );
   const [events, setEvents] = useState(() => Array.from({ length: 4 }, () => createTickerEvent()));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleViewportChange = (event) => {
+      setIsCompactViewport(event.matches);
+      if (event.matches) {
+        setIsCollapsed(true);
+      }
+    };
+
+    handleViewportChange(mediaQuery);
+    mediaQuery.addEventListener('change', handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleViewportChange);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -70,10 +97,29 @@ export default function WinsTicker() {
   return (
     <section className="wins-ticker live-feed" aria-label="Live wins feed">
       <header className="live-feed-header">
-        <span className="live-dot" aria-hidden="true" />
-        <p className="live-feed-title">LIVE FEED</p>
+        <div className="live-feed-heading">
+          <span className="live-dot" aria-hidden="true" />
+          <p className="live-feed-title">LIVE FEED</p>
+        </div>
+        {isCompactViewport ? (
+          <button
+            type="button"
+            className="feed-toggle"
+            onClick={() => setIsCollapsed((value) => !value)}
+            aria-expanded={!isCollapsed}
+            aria-controls="live-feed-items"
+          >
+            {isCollapsed ? 'Show' : 'Hide'}
+          </button>
+        ) : null}
       </header>
-      <div className="live-feed-list" role="log" aria-live="polite" aria-atomic="false">
+      <div
+        id="live-feed-items"
+        className={`live-feed-list ${isCollapsed ? 'is-collapsed' : ''}`}
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+      >
         {events.map((event, index) => (
           <article
             key={event.id}

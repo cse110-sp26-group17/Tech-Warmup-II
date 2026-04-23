@@ -34,6 +34,7 @@ body,
 body {
   font-family: 'Rajdhani', 'Trebuchet MS', sans-serif;
   color: var(--text-main);
+  overflow-x: hidden;
   background:
     radial-gradient(ellipse at 50% -20%, rgba(212, 164, 74, 0.08) 0%, transparent 50%),
     linear-gradient(180deg, var(--bg-deep), var(--bg-black));
@@ -41,6 +42,7 @@ body {
 
 .slot-machine {
   width: min(100%, 640px);
+  max-width: 100%;
   min-height: 100dvh;
   margin: 0 auto;
   padding: 12px;
@@ -48,6 +50,7 @@ body {
   grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto;
   gap: 8px;
   position: relative;
+  overflow-x: clip;
 }
 
 .slot-machine.state-spinning {
@@ -454,6 +457,7 @@ body {
   font-weight: 700;
   text-align: center;
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .showcase-row {
@@ -516,6 +520,7 @@ body {
   font-size: 0.78rem;
   font-weight: 700;
   color: #f8e7b4;
+  overflow-wrap: anywhere;
 }
 
 .hall-fireworks {
@@ -762,7 +767,7 @@ body {
 }
 
 .settings-toggle {
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid #65563a;
   border-radius: 999px;
   background: rgba(23, 30, 37, 0.92);
@@ -782,7 +787,7 @@ body {
 }
 
 .settings-row {
-  min-height: 36px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -829,7 +834,7 @@ body {
 }
 
 .info-close {
-  min-height: 36px;
+  min-height: 44px;
   border: 1px solid #66583c;
   border-radius: 999px;
   background: rgba(23, 30, 37, 0.92);
@@ -1117,8 +1122,8 @@ body {
   top: 10px;
   right: 10px;
   z-index: 8;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   border: 1px solid #776743;
   background: rgba(21, 29, 36, 0.9);
@@ -1139,6 +1144,9 @@ body {
   list-style: none;
   cursor: pointer;
   padding: 8px 12px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1359,6 +1367,117 @@ body {
 
   .toggle-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .slot-machine {
+    width: 100%;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .wins-ticker,
+  .live-feed,
+  .reel-stage,
+  .action-zone,
+  .stats-drawer,
+  .showcase-card {
+    max-width: 100%;
+  }
+
+  .hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .hud-card {
+    padding: 10px 8px;
+  }
+
+  .reel-stage {
+    padding: 46px 8px 10px;
+  }
+
+  .reel-set {
+    gap: 6px;
+  }
+
+  .reel {
+    min-height: clamp(206px, 38vh, 300px);
+  }
+
+  .symbol-code {
+    font-size: 1.5rem;
+  }
+
+  .symbol-label {
+    font-size: 0.72rem;
+  }
+
+  .action-zone {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .bet-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bet-button.option {
+    min-height: 44px;
+    font-size: 0.88rem;
+    padding: 0 4px;
+  }
+
+  .toggle-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-stat {
+    overflow-wrap: anywhere;
+  }
+
+  .win-overlay {
+    align-items: flex-start;
+    padding-top: 50px;
+  }
+
+  .win-card {
+    width: min(94%, 330px);
+  }
+
+  .loss-toast {
+    top: 10px;
+    bottom: auto;
+    width: min(94%, 260px);
+  }
+}
+
+@media (max-width: 320px) {
+  .slot-machine {
+    padding: 8px;
+    gap: 7px;
+  }
+
+  .hud {
+    grid-template-columns: 1fr;
+  }
+
+  .hud-value {
+    font-size: 0.95rem;
+  }
+
+  .bet-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bet-button.option {
+    font-size: 0.84rem;
+  }
+
+  .live-feed-title {
+    font-size: 0.68rem;
   }
 }
 

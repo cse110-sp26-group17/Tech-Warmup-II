@@ -1504,3 +1504,94 @@ make the leaderboard not rounded. its ugly. make the feed viewable.
 Result: The leaderboard/feed is now not rounded and uses square edges, and the live feed is viewable with a fixed-height scrollable list.
 
 Learned: A global .wins-ticker style was forcing pill corners and overriding the feed’s local styles. Making the feed readable required both shape fixes and explicit viewport/overflow rules, not just border-radius changes. Build verification confirmed no CSS regressions after the patch.
+
+## Prompt 17:
+
+### Prompt:
+  
+  Requirements:
+  - Fix UI readability and spacing across all breakpoints
+  - Eliminate horizontal scroll on mobile devices        
+  - Ensure all tap targets ≥ 44px                        
+  - Collapse/hide secondary panels (stats, history, feed)
+   by default on small screens with visible toggles      
+  - Prevent overlays/toasts from blocking core game      
+  controls on phones                               
+  - Maintain smooth animations and stable desktop
+  behavior
+                                                         
+  Constraints:
+  - Do not modify game logic or payout systems           
+  - Do not remove or disable existing features
+  - Do not rewrite major components—edit within current
+  architecture
+  - Do not introduce new CSS files; update existing
+  responsive rules only
+  - Do not change component structure
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - Do not remove or disable existing features
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - npm --prefix ./src run build (succeeds)
+  - Manual viewport check: 320px, 768px, desktop (no horizontal
+  - Do not remove or disable existing features
+  - Do not rewrite major components—edit within current
+  architecture
+  - Do not introduce new CSS files; update existing responsive
+  rules only
+  - Do not change component structure
+
+  Validation:
+   rules only
+  - Do not change component structure
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - npm --prefix ./src run build (succeeds)
+  - Manual viewport check: 320px, 768px, desktop (no horizontal scroll, 44px+ tap targets, panels toggle
+  correctly)
+  - No new console errors or warnings
+  - Desktop behavior unchanged
+
+  Return updated files with a summary of changes made. 
+
+### Result
+
+It worked and the UI was dynamic for desktop, mobile, and tablets. The button sizes become more prominent with
+a smaller screen size, as intended. However, the setting button covers the "Hide Feed" button. 
+
+### Changes Made
+
+- Hand-edited: No, the AI output works fine for the most part and the next prompt will already cover the changes we wanted
+- Tests/builds: Code passes npm run build and tests. looks good overall with npm run dev
+
+### What we learned
+
+AI handled layout changes well when breakpoints were explicit with 320, 768, and 1024. There weren't many  overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
+---
+
+  
