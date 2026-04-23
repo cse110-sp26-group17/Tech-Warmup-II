@@ -123,10 +123,9 @@ export default function SlotMachine() {
         {statusMessage}
       </p>
 
-      <section className={`insight-row ${freeRolls > 0 ? 'free-roll-ready' : ''}`} aria-label="Spin insights">
+      <div className="luck-meter-container">
         <LuckMeter lossStreak={meta.currentLossStreak} />
-        <RecentSpins recentResults={recentResults} />
-      </section>
+      </div>
 
       <section className="action-zone" aria-label="Primary actions">
         <BetControls
@@ -178,7 +177,7 @@ export default function SlotMachine() {
                   {topWins.map((entry, index) => (
                     <p key={`${entry.timestamp}-${index}`} className="hall-of-fame-item">
                       #{index + 1} +{formatCredits(entry.payout)} VC{' '}
-                      {typeof entry.symbolName === 'string' ? entry.symbolName.toUpperCase() : 'WIN'} ·{' '}
+                      {typeof entry.symbolName === 'string' ? entry.symbolName.toUpperCase() : 'WIN'} |{' '}
                       {formatRelativeTime(entry.timestamp)}
                     </p>
                   ))}
@@ -209,6 +208,8 @@ export default function SlotMachine() {
               </div>
             </article>
           </div>
+
+          <RecentSpins recentResults={recentResults} />
         </section>
       </details>
 

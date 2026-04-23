@@ -7,6 +7,13 @@
 .live-feed-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.live-feed-heading {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -15,7 +22,7 @@
   height: 8px;
   border-radius: 50%;
   background: #ff4b4b;
-  animation: live-dot-pulse 900ms ease-in-out infinite alternate;
+  animation: none;
 }
 
 .live-feed-title {
@@ -36,6 +43,19 @@
   align-content: start;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 215, 125, 0.65) rgba(20, 27, 34, 0.85);
+}
+
+.feed-toggle {
+  min-height: 44px;
+  border: 1px solid rgba(232, 184, 48, 0.7);
+  border-radius: 999px;
+  background: rgba(25, 31, 38, 0.95);
+  color: #ffe7aa;
+  padding: 0 14px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .feed-item {
@@ -89,4 +109,17 @@
   color: #f4e6c9;
   font-size: 0.8rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .feed-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .live-feed-list.is-collapsed {
+    display: none;
+  }
 }

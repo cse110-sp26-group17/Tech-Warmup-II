@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import GameState from '../state/GameState';
 import {
+  MACHINE_EVENTS,
   MACHINE_STATES,
   SYMBOL_DISPLAY,
   WIN_TIERS,
@@ -9,6 +10,7 @@ import {
   getPayoutDuration,
   getSpinProfile,
   getWinTier,
+  transitionMachineState,
 } from '../animations/reelAnimation';
 import {
   playBalanceCountSound,
@@ -21,9 +23,37 @@ import {
 import { formatCredits } from '../utils/formatCredits';
 
 const BET_OPTIONS = Object.freeze([5, 10, 25, 50, 100]);
-const RESULT_POPUP_DURATION_MS = 2500;
+const RESULT_POPUP_DURATION_MS = 3600;
+const MILESTONE_POPUP_DURATION_MS = 1200;
 const SAVE_STORAGE_KEY = 'slot-machine-save-v2';
 
+const STATUS_MESSAGES = Object.freeze({
+  READY: 'Set your bet and spin',
+  INITIAL: 'Set your bet, then spin',
+  SPINNING: 'Spinning reels...',
+  TURBO_SPINNING: 'Turbo spin in progress...',
+  LUCK_BUILDING: 'Luck is building...',
+  BALANCE_TOO_LOW: 'Balance too low for that bet',
+  AUTO_SPIN_STOPPED: 'Auto-spin stopped',
+  AUTO_SPIN_STOPPED_LOW_BALANCE: 'Auto-spin stopped: insufficient balance',
+  FREE_ROLL_USED: 'FREE ROLL USED',
+  DUE_FOR_WIN: 'DUE FOR A WIN',
+  RESULT_READY: 'Ready for your next spin',
+  RESET: 'Game reset. Place your bet.',
+});
+
+const FREE_ROLL_LABELS = Object.freeze({
+  milestone: 'Milestone Free Roll',
+  consolation: 'Consolation Free Roll',
+  random: 'Lucky Free Roll',
+});
+
+/**
+ * Returns the highest affordable bet from BET_OPTIONS, preserving the current bet if still valid.
+ * @param {number} balance - Current credit balance.
+ * @param {number} currentBet - Currently selected bet amount.
+ * @returns {number} A valid bet amount from BET_OPTIONS.
+ */
 function pickValidBet(balance, currentBet) {
   const affordableOptions = BET_OPTIONS.filter((option) => option <= balance);
   if (affordableOptions.length === 0) {
@@ -35,12 +65,92 @@ function pickValidBet(balance, currentBet) {
   return affordableOptions[affordableOptions.length - 1];
 }
 
+/**
+ * Parses a JSON string, returning null instead of throwing on invalid input.
+ * @param {string | null} jsonText - JSON string to parse.
+ * @returns {*} Parsed value, or null if parsing fails.
+ */
 function safeParse(jsonText) {
+  if (typeof jsonText !== 'string') {
+    return null;
+  }
+
   try {
     return JSON.parse(jsonText);
   } catch {
     return null;
   }
+}
+
+/**
+ * Returns true when a spin can begin.
+ * @param {{machineState: string, controlsLocked: boolean, spinLocked: boolean}} options
+ * @returns {boolean}
+ */
+export function canStartSpin({ machineState, controlsLocked, spinLocked }) {
+  return machineState === MACHINE_STATES.IDLE && !controlsLocked && !spinLocked;
+}
+
+/**
+ * Returns a pre-check error message for an attempted spin, or null when valid.
+ * @param {{balance: number, betAmount: number, freeRolls: number}} options
+ * @returns {string | null}
+ */
+export function getSpinPrecheckError({ balance, betAmount, freeRolls }) {
+  const hasFreeRoll = freeRolls > 0;
+  if (hasFreeRoll) {
+    return null;
+  }
+
+  if (balance < 1 || betAmount > balance) {
+    return STATUS_MESSAGES.BALANCE_TOO_LOW;
+  }
+
+  return null;
+}
+
+/**
+ * Returns the status line text shown when a spin starts.
+ * @param {{lossStreak: number, turboMode: boolean}} options
+ * @returns {string}
+ */
+export function getSpinStartStatusMessage({ lossStreak, turboMode }) {
+  if (lossStreak >= 5) {
+    return STATUS_MESSAGES.LUCK_BUILDING;
+  }
+
+  if (turboMode) {
+    return STATUS_MESSAGES.TURBO_SPINNING;
+  }
+
+  return STATUS_MESSAGES.SPINNING;
+}
+
+/**
+ * Returns the status line text shown after result reveal.
+ * @param {{usedFreeRoll: boolean, shouldShowDueForWin: boolean, isWin: boolean}} options
+ * @returns {string}
+ */
+export function getPostResultStatusMessage({ usedFreeRoll, shouldShowDueForWin, isWin }) {
+  if (usedFreeRoll) {
+    return STATUS_MESSAGES.FREE_ROLL_USED;
+  }
+
+  if (shouldShowDueForWin && !isWin) {
+    return STATUS_MESSAGES.DUE_FOR_WIN;
+  }
+
+  return STATUS_MESSAGES.RESULT_READY;
+}
+
+function getMilestoneLabel(milestoneType) {
+  if (milestoneType === 'major') {
+    return '50-Spin Bonus';
+  }
+  if (milestoneType === 'medium') {
+    return '25-Spin Bonus';
+  }
+  return '10-Spin Bonus';
 }
 
 export function useSlotMachineController() {
@@ -50,6 +160,7 @@ export function useSlotMachineController() {
   const balanceCounterFrameRef = useRef(null);
   const displayedBalanceRef = useRef(gameStateRef.current.getBalance());
   const hasInitializedBalanceRef = useRef(false);
+  const spinLockRef = useRef(false);
 
   const [balance, setBalance] = useState(gameStateRef.current.getBalance());
   const [displayedBalance, setDisplayedBalance] = useState(gameStateRef.current.getBalance());
@@ -68,7 +179,7 @@ export function useSlotMachineController() {
   const [machineState, setMachineState] = useState(MACHINE_STATES.IDLE);
   const [result, setResult] = useState(null);
   const [winTier, setWinTier] = useState(WIN_TIERS.LOSS);
-  const [statusMessage, setStatusMessage] = useState('Set your bet, then spin');
+  const [statusMessage, setStatusMessage] = useState(STATUS_MESSAGES.INITIAL);
   const [controlsLocked, setControlsLocked] = useState(false);
   const [reelSymbols, setReelSymbols] = useState(['none', 'none', 'none', 'none', 'none']);
   const [spinToken, setSpinToken] = useState(0);
@@ -106,18 +217,25 @@ export function useSlotMachineController() {
       }));
   }, []);
 
+  const transitionState = useCallback((eventName) => {
+    setMachineState((currentState) => transitionMachineState(currentState, eventName));
+  }, []);
+
   const clearAllTimers = useCallback(() => {
-    timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+    timeoutIdsRef.current.forEach((timerId) => clearTimeout(timerId));
     timeoutIdsRef.current = [];
 
     if (winCounterIntervalRef.current) {
       clearInterval(winCounterIntervalRef.current);
       winCounterIntervalRef.current = null;
     }
+
     if (balanceCounterFrameRef.current) {
       cancelAnimationFrame(balanceCounterFrameRef.current);
       balanceCounterFrameRef.current = null;
     }
+
+    spinLockRef.current = false;
     setIsBalanceCounting(false);
   }, []);
 
@@ -137,9 +255,15 @@ export function useSlotMachineController() {
 
   const persistState = useCallback(() => {
     if (typeof window === 'undefined') {
-      return;
+      return true;
     }
-    window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(gameStateRef.current.getPersistenceState()));
+
+    try {
+      window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(gameStateRef.current.getPersistenceState()));
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   useEffect(() => () => clearAllTimers(), [clearAllTimers]);
@@ -149,11 +273,17 @@ export function useSlotMachineController() {
       return;
     }
 
-    const saved = safeParse(window.localStorage.getItem(SAVE_STORAGE_KEY));
-    if (saved) {
-      gameStateRef.current.hydrateFromState(saved);
+    try {
+      const savedState = safeParse(window.localStorage.getItem(SAVE_STORAGE_KEY));
+      if (!savedState) {
+        return;
+      }
+
+      gameStateRef.current.hydrateFromState(savedState);
       syncFromGameState();
       setStatusMessage(`Welcome back! Balance: ${formatCredits(gameStateRef.current.getBalance())} VC`);
+    } catch {
+      setStatusMessage('Could not load saved game state. Continuing with a fresh session.');
     }
   }, [syncFromGameState]);
 
@@ -187,22 +317,23 @@ export function useSlotMachineController() {
 
     const startBalance = displayedBalanceRef.current;
     const targetBalance = balance;
-    const duration = 1200;
-    let startTime = 0;
+    const durationMs = 1200;
+    let startTimeMs = 0;
 
     setIsBalanceCounting(true);
     if (soundEnabled) {
-      playBalanceCountSound(duration);
+      playBalanceCountSound(durationMs);
     }
 
-    const animateBalance = (timestamp) => {
-      if (startTime === 0) {
-        startTime = timestamp;
+    const animateBalance = (timestampMs) => {
+      if (startTimeMs === 0) {
+        startTimeMs = timestampMs;
       }
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      const nextValue = Math.round(startBalance + (targetBalance - startBalance) * eased);
+
+      const elapsedMs = timestampMs - startTimeMs;
+      const progress = Math.min(1, elapsedMs / durationMs);
+      const easedProgress = 1 - (1 - progress) ** 3;
+      const nextValue = Math.round(startBalance + (targetBalance - startBalance) * easedProgress);
 
       setDisplayedBalance(nextValue);
       displayedBalanceRef.current = nextValue;
@@ -227,7 +358,7 @@ export function useSlotMachineController() {
   }, [balance, reducedMotion, soundEnabled]);
 
   const startWinCounter = useCallback(
-    (targetAmount, duration) => {
+    (targetAmount, durationMs) => {
       if (winCounterIntervalRef.current) {
         clearInterval(winCounterIntervalRef.current);
         winCounterIntervalRef.current = null;
@@ -244,13 +375,13 @@ export function useSlotMachineController() {
       }
 
       const tickEveryMs = 34;
-      const steps = Math.max(1, Math.floor(duration / tickEveryMs));
+      const totalSteps = Math.max(1, Math.floor(durationMs / tickEveryMs));
       let currentStep = 0;
 
       setDisplayedWin(0);
       winCounterIntervalRef.current = setInterval(() => {
         currentStep += 1;
-        const progress = Math.min(1, currentStep / steps);
+        const progress = Math.min(1, currentStep / totalSteps);
         setDisplayedWin(Math.floor(targetAmount * progress));
 
         if (progress >= 1) {
@@ -267,44 +398,45 @@ export function useSlotMachineController() {
       if (controlsLocked) {
         return;
       }
+
       if (!BET_OPTIONS.includes(nextBet)) {
         return;
       }
+
       if (nextBet > balance) {
         return;
       }
+
       setBetAmount(nextBet);
     },
     [controlsLocked, balance]
   );
 
   const spin = useCallback(() => {
-    if (machineState !== MACHINE_STATES.IDLE || controlsLocked) {
+    if (!canStartSpin({ machineState, controlsLocked, spinLocked: spinLockRef.current })) {
       return;
     }
 
-    if (balance < 1 && freeRolls < 1) {
-      setStatusMessage('Balance too low for that bet');
+    const precheckError = getSpinPrecheckError({ balance, betAmount, freeRolls });
+    if (precheckError) {
+      setStatusMessage(precheckError);
       setAutoSpin(false);
       return;
     }
 
-    if (betAmount > balance && freeRolls < 1) {
-      setStatusMessage('Balance too low for that bet');
-      setAutoSpin(false);
-      return;
-    }
+    const failSpin = (message) => {
+      spinLockRef.current = false;
+      setControlsLocked(false);
+      transitionState(MACHINE_EVENTS.END_SPIN);
+      setStatusMessage(message);
+    };
 
     clearAllTimers();
+    spinLockRef.current = true;
+
     setControlsLocked(true);
-    setMachineState(MACHINE_STATES.SPINNING);
-    setStatusMessage(
-      meta.currentLossStreak >= 5
-        ? 'Luck is building...'
-        : turboMode
-          ? 'Turbo spin in progress...'
-          : 'Spinning reels...'
-    );
+    transitionState(MACHINE_EVENTS.START_SPIN);
+    setStatusMessage(getSpinStartStatusMessage({ lossStreak: meta.currentLossStreak, turboMode }));
     setDisplayedWin(0);
     setResult(null);
     setResultMessage('');
@@ -318,9 +450,7 @@ export function useSlotMachineController() {
     try {
       gameState.updateBet(betAmount);
     } catch (error) {
-      setControlsLocked(false);
-      setMachineState(MACHINE_STATES.IDLE);
-      setStatusMessage(error.message);
+      failSpin(error?.message ?? 'Unable to update bet amount.');
       return;
     }
 
@@ -329,24 +459,23 @@ export function useSlotMachineController() {
       spinResult = gameState.spinWithPayout(betAmount);
       persistState();
     } catch (error) {
-      setControlsLocked(false);
-      setMachineState(MACHINE_STATES.IDLE);
-      setStatusMessage(error.message);
+      failSpin(error?.message ?? 'Unable to spin right now.');
       return;
     }
 
     const finalSymbols = spinResult.reels.map((reelValue) => gameState.getSymbolName(reelValue));
     const tier = getWinTier(spinResult.result);
-    const payoutDuration = getPayoutDuration({ tier, turboMode, reducedMotion });
+    const payoutDurationMs = getPayoutDuration({ tier, turboMode, reducedMotion });
     const nearMiss = createNearMissHint({
       isWin: spinResult.result.isWin,
       finalSymbols,
     });
 
-    const nearMissDelay =
+    const nearMissDelayMs =
       nearMiss && nearMiss.reelIndex === 2 && !reducedMotion ? nearMiss.previewDurationMs : 0;
-    const resultRevealDelay =
-      Math.max(750, spinProfile.totalSpinDuration, ...spinProfile.reelDurations) + nearMissDelay + 40;
+
+    const resultRevealDelayMs =
+      Math.max(750, spinProfile.totalSpinDuration, ...spinProfile.reelDurations) + nearMissDelayMs + 40;
 
     setNearMissHint(nearMiss);
     setReelSymbols(finalSymbols);
@@ -363,10 +492,11 @@ export function useSlotMachineController() {
       const popupMessage = isWin
         ? `${feedbackLabel}! +${formatCredits(totalPayout)} VC`
         : nearMiss?.bannerText ?? 'Better luck next spin';
+
       const currentBiggest = gameState.getBiggestWin();
       const becameBiggest = isWin && currentBiggest && totalPayout > previousBiggestPayout;
 
-      setMachineState(MACHINE_STATES.RESULT);
+      transitionState(MACHINE_EVENTS.SHOW_RESULT);
       setResult(spinResult.result);
       setResultMessage(popupMessage);
       setWinTier(tier);
@@ -375,62 +505,64 @@ export function useSlotMachineController() {
       setIsNewBiggestWin(Boolean(becameBiggest));
 
       if (spinResult.result.milestoneBonus > 0) {
-        const milestoneLabel =
-          spinResult.result.milestoneType === 'major'
-            ? '50-Spin Bonus'
-            : spinResult.result.milestoneType === 'medium'
-              ? '25-Spin Bonus'
-              : '10-Spin Bonus';
+        const milestoneLabel = getMilestoneLabel(spinResult.result.milestoneType);
         setMilestonePopup(`${milestoneLabel} +${formatCredits(spinResult.result.milestoneBonus)} VC`);
+        const clearMilestoneTimer = setTimeout(() => {
+          setMilestonePopup(null);
+        }, MILESTONE_POPUP_DURATION_MS);
+        timeoutIdsRef.current.push(clearMilestoneTimer);
+
         if (soundEnabled) {
           playMilestoneSound();
         }
       }
 
       if (spinResult.freeRollAwarded) {
-        const labelMap = {
-          milestone: 'Milestone Free Roll',
-          consolation: 'Consolation Free Roll',
-          random: 'Lucky Free Roll',
-        };
-        setMilestonePopup(`${labelMap[spinResult.freeRollAwarded] ?? 'Free Roll'} Unlocked`);
+        const freeRollLabel = FREE_ROLL_LABELS[spinResult.freeRollAwarded] ?? 'Free Roll';
+        setMilestonePopup(`${freeRollLabel} Unlocked`);
+
+        const clearFreeRollTimer = setTimeout(() => {
+          setMilestonePopup(null);
+        }, MILESTONE_POPUP_DURATION_MS);
+        timeoutIdsRef.current.push(clearFreeRollTimer);
       }
 
       if (!isWin && soundEnabled) {
         playLossSound();
       }
 
-      if (spinResult.result.usedFreeRoll) {
-        setStatusMessage('FREE ROLL USED');
-      } else if (spinResult.shouldShowDueForWin && !isWin) {
-        setStatusMessage('DUE FOR A WIN');
-      } else {
-        setStatusMessage('Ready for your next spin');
-      }
-    }, resultRevealDelay);
+      setStatusMessage(
+        getPostResultStatusMessage({
+          usedFreeRoll: spinResult.result.usedFreeRoll,
+          shouldShowDueForWin: spinResult.shouldShowDueForWin,
+          isWin,
+        })
+      );
+    }, resultRevealDelayMs);
 
     const payoutTimer = setTimeout(() => {
-      setMachineState(MACHINE_STATES.PAYOUT);
-      if (spinResult.result.isWin) {
-        if (soundEnabled) {
-          playWinSound(tier);
-        }
-        startWinCounter(spinResult.result.totalPayout, payoutDuration);
+      transitionState(MACHINE_EVENTS.START_PAYOUT);
+
+      if (!spinResult.result.isWin) {
+        return;
       }
-    }, resultRevealDelay + RESULT_POPUP_DURATION_MS);
+
+      if (soundEnabled) {
+        playWinSound(tier);
+      }
+
+      startWinCounter(spinResult.result.totalPayout, payoutDurationMs);
+    }, resultRevealDelayMs + RESULT_POPUP_DURATION_MS);
 
     const idleTimer = setTimeout(() => {
-      setMachineState(MACHINE_STATES.IDLE);
+      spinLockRef.current = false;
+      transitionState(MACHINE_EVENTS.END_SPIN);
       setControlsLocked(false);
       setNearMissHint(null);
-      setStatusMessage('Set your bet and spin');
+      setStatusMessage(STATUS_MESSAGES.READY);
       setIsNewBiggestWin(false);
-      if (spinResult.result.isWin) {
-        setDisplayedWin(spinResult.result.totalPayout);
-      } else {
-        setDisplayedWin(0);
-      }
-    }, resultRevealDelay + RESULT_POPUP_DURATION_MS + payoutDuration);
+      setDisplayedWin(spinResult.result.isWin ? spinResult.result.totalPayout : 0);
+    }, resultRevealDelayMs + RESULT_POPUP_DURATION_MS + payoutDurationMs);
 
     timeoutIdsRef.current.push(resultTimer, payoutTimer, idleTimer);
   }, [
@@ -447,11 +579,13 @@ export function useSlotMachineController() {
     startWinCounter,
     meta.currentLossStreak,
     syncFromGameState,
+    transitionState,
     persistState,
   ]);
 
   const claimDailyGrant = useCallback(() => {
     const gameState = gameStateRef.current;
+
     try {
       const grantResult = gameState.claimDailyGrant();
       persistState();
@@ -459,7 +593,7 @@ export function useSlotMachineController() {
       setStatusMessage(`Daily grant claimed: +${formatCredits(grantResult.amount)} VC`);
     } catch (error) {
       setDailyGrantReady(false);
-      setStatusMessage(error.message);
+      setStatusMessage(error?.message ?? 'Unable to claim daily grant right now.');
     }
   }, [persistState, syncFromGameState]);
 
@@ -469,32 +603,33 @@ export function useSlotMachineController() {
     persistState();
     syncFromGameState();
 
+    spinLockRef.current = false;
     setResultMessage('');
     setDisplayedWin(0);
-    setMachineState(MACHINE_STATES.IDLE);
+    transitionState(MACHINE_EVENTS.RESET);
     setResult(null);
     setWinTier(WIN_TIERS.LOSS);
-    setStatusMessage('Game reset. Place your bet.');
+    setStatusMessage(STATUS_MESSAGES.RESET);
     setControlsLocked(false);
     setReelSymbols(['none', 'none', 'none', 'none', 'none']);
     setNearMissHint(null);
     setAutoSpin(false);
     setMilestonePopup(null);
-  }, [clearAllTimers, persistState, syncFromGameState]);
+  }, [clearAllTimers, persistState, syncFromGameState, transitionState]);
 
   const stopAutoSpin = useCallback(() => {
     setAutoSpin(false);
-    setStatusMessage('Auto-spin stopped');
+    setStatusMessage(STATUS_MESSAGES.AUTO_SPIN_STOPPED);
   }, []);
 
   useEffect(() => {
-    if (!autoSpin || controlsLocked || machineState !== MACHINE_STATES.IDLE) {
+    if (!autoSpin || controlsLocked || machineState !== MACHINE_STATES.IDLE || spinLockRef.current) {
       return;
     }
 
     if (freeRolls < 1 && (balance < 1 || betAmount > balance)) {
       setAutoSpin(false);
-      setStatusMessage('Auto-spin stopped: insufficient balance');
+      setStatusMessage(STATUS_MESSAGES.AUTO_SPIN_STOPPED_LOW_BALANCE);
       return;
     }
 

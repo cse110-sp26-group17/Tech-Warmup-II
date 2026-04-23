@@ -589,128 +589,21 @@ todos:
     content: "Add tests for new GameState features: streaks, combo, jackpot, milestones, pity, persistence"
     status: pending
 isProject: false
+
 ---
-
-# Slot Machine: Bug Fixes + Hyper-Gamification
-
-## Bugs Found
-
-### Bug 1 -- Near-miss ternary is a no-op
-In [`src/animations/reelAnimation.js`](src/animations/reelAnimation.js) line 152:
-
-```147:153:src/animations/reelAnimation.js
-export function createNearMissHint({ isWin, finalSymbols }) {
-  if (isWin === true || Math.random() > 0.26) {
-    return null;
-  }
-
-  const targetBase = finalSymbols[0] === finalSymbols[1] ? finalSymbols[0] : finalSymbols[0];
-```
-
-Both branches of the ternary return `finalSymbols[0]` -- the condition is meaningless. Should only trigger near-miss when the first two reels match (a true "almost won" scenario), and show the matching symbol as the tease on reel 3.
-
-### Bug 2 -- WinOverlay vanishes during PAYOUT phase
-[`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx) line 16 checks `machineState !== MACHINE_STATES.RESULT` and returns null. But the controller transitions RESULT -> PAYOUT -> IDLE. So the overlay disappears while the win counter is still animating. The overlay should remain visible during both RESULT and PAYOUT states.
-
-### Bug 3 -- Unused `effectsToken`
-The controller exports `effectsToken` but [`src/SlotMachine.jsx`](src/SlotMachine.jsx) never passes it to any child component. Dead code to remove.
-
-### Bug 4 -- Duplicated `formatCredits` in 5 files
-`formatCredits` / `formatValue` is independently defined in `SlotMachine.jsx`, `useSlotMachineController.js`, `HUD.jsx`, `WinOverlay.jsx`, and `BetControls.jsx`. Extract to a single shared utility.
-
-### Bug 5 -- RTP is 855% (player always profits)
-The current math: `0.3 win rate * (0.45*10 + 0.30*25 + 0.17*50 + 0.08*100) = 0.3 * 28.5 = 8.55x`. For every 1 VC wagered, expected return is 8.55 VC. There is zero tension because the player always comes out massively ahead. Needs tuning to ~92% RTP for realistic feel with occasional big wins.
+### Result
+All features implemented: bugs fixed, streaks/combo/jackpot/milestones/pity wired up, persistence added, audio and visual enhancements in place.
+### What We Learned
+Mismatched contracts between upgraded state/controller logic and UI props were the biggest stability risk. Reconciling those interfaces first prevented cascading bugs.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
 ---
 
-## Gamification Enhancements
-
-### 1. Win/Loss Streak System
-- Track consecutive wins (`currentWinStreak`) and consecutive losses (`currentLossStreak`) in `GameState`
-- Display streak counter in HUD with fire animation when >= 3
-- Show "HOT STREAK x5!" overlay text during sustained runs
-- After 3+ losses, show "DUE FOR A WIN" messaging (loss aversion hook)
-
-### 2. Combo Multiplier
-- Consecutive wins apply escalating payout bonus: streak 2 = 1.2x, streak 3 = 1.5x, streak 5 = 2x
-- Golden glow on the HUD when combo is active
-- Visual "COMBO x1.5" badge appears on screen during active combo
-- Combo breaks on any loss (creates tension to keep spinning)
-
-### 3. Progressive Jackpot Pool
-- 2% of every bet feeds a visible progressive jackpot pool
-- Pool displays prominently at the top with a ticking counter
-- When triple-sevens hit, the jackpot pool is awarded ON TOP of the normal payout
-- Pool persists in localStorage
-
-### 4. Spin Milestone Bonuses
-- Track total spins across sessions (persisted)
-- Every 10 spins: small bonus (50 VC)
-- Every 25 spins: medium bonus (150 VC)
-- Every 50 spins: big bonus (500 VC) + guaranteed win on next spin
-- Show "Next bonus in X spins" countdown in the HUD
-- Animated milestone celebration popup
-
-### 5. Lucky Spin Guarantee
-- After 8 consecutive losses, force the next spin to be a win (pity system)
-- Show subtle "luck is building..." messaging after 5+ losses
-- Creates the illusion of hot/cold cycles
-
-### 6. Enhanced Near-Miss System (fix + upgrade)
-- Fix the ternary bug so near-miss only fires when reels 1+2 match
-- Increase near-miss frequency to ~35% of losses when first two match
-- Add dramatic slow-down animation on reel 3 during near-miss
-- Flash "SO CLOSE!" text
-- Near-misses are the strongest driver of continued play in slot research
-
-### 7. Balance + State Persistence
-- Save full game state to localStorage on every spin: balance, streaks, total spins, jackpot pool, biggest win, win log
-- Hydrate on mount so progress survives page refresh
-- Show "Welcome back! Balance: X VC" on return
-
-### 8. Visual/Audio Juice
-- Scale screen shake intensity with win tier (small = subtle, jackpot = heavy shake)
-- Add pulsing "SPIN NOW" urgency animation that speeds up after losses
-- Win counter counts up with accelerating tick sound
-- Jackpot wins get extended celebration with multiple firework layers
-- Losses get a quick "whomp" deflation sound rather than silence
-- Reel stage border color pulses with combo multiplier color
-
-### 9. "Machine Temperature" Indicator
-- Visual thermometer or "hot/cold" badge based on recent win rate
-- Updates after each spin based on last 10 results
-- "MACHINE IS ON FIRE" when 4+ of last 10 were wins
-- Pure psychological decoration (outcome is still random) but creates narrative
-
-### 10. Quick Stats Banner
-- Replace the plain "State: Idle/Spinning" HUD bar with useful info:
-  - Total spins this session
-  - Current streak (wins or losses)
-  - Next milestone countdown
-  - Jackpot pool amount
-
+## Prompt 12
+### Prompt
 ---
-
-## File Changes Summary
-
-- [`src/state/GameState.js`](src/state/GameState.js) -- Add streak tracking, combo multiplier, jackpot pool, milestone tracking, pity timer, persistence, tune RTP
-- [`src/controller/useSlotMachineController.js`](src/controller/useSlotMachineController.js) -- Wire new state, persistence, combo/streak/milestone logic, pity system
-- [`src/animations/reelAnimation.js`](src/animations/reelAnimation.js) -- Fix near-miss bug, add combo tier, machine temperature helpers
-- [`src/components/HUD.jsx`](src/components/HUD.jsx) -- Show jackpot pool, streak, combo, next milestone countdown, machine temp
-- [`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx) -- Fix PAYOUT visibility bug, add streak/combo celebration text, milestone popup
-- [`src/components/SpinButton.jsx`](src/components/SpinButton.jsx) -- Urgency pulse that scales with loss streak
-- [`src/components/BetControls.jsx`](src/components/BetControls.jsx) -- Minor: use shared formatCredits
-- [`src/SlotMachine.jsx`](src/SlotMachine.jsx) -- Wire new props, remove dead effectsToken, add combo/streak/jackpot display sections
-- [`src/styles.css`](src/styles.css) -- Streak fire animation, combo glow, jackpot ticker, milestone popup, temperature indicator, enhanced near-miss, urgency pulse
-- [`src/audio/soundHooks.js`](src/audio/soundHooks.js) -- Add loss sound, streak sound, milestone fanfare, combo sound
-- New: `src/utils/formatCredits.js` -- Shared formatter (extract from 5 files)
-- [`src/tests/GameState.test.js`](src/tests/GameState.test.js) -- Add tests for streaks, combo, jackpot, milestones, pity, persistence
-
-Result: Implemented the full hyper-gamification plan with bug fixes, including near-miss correction, PAYOUT-phase overlay persistence, streak/combo systems, progressive jackpot, milestone bonuses, pity spins, persistence, audio/visual enhancements, and updated tests.
-
-Learned: The biggest stability risk was not missing features but mismatched contracts between upgraded state/controller logic and UI props, so reconciling those interfaces was crucial.
-
-Prompt 12: ---
 name: Slot Machine Visual Overhaul
 overview: Remove the full-screen white flash on wins and replace it with a suite of polished, tier-scaled visual features that make the slot machine feel like a real casino game.
 todos:
@@ -734,103 +627,26 @@ todos:
     status: pending
 isProject: false
 ---
-
-# Slot Machine Visual Overhaul
-
-## Features Selected
-
-From the suggestions, these five deliver the best bang-for-effort and work together as a cohesive experience. "Multiple Slot Machines" and "Perk Shop" are excluded — they're large scope and change game balance/architecture significantly.
-
----
-
-## 1. Remove the blinding flash (mandatory)
-
-The flash lives in [`src/styles.css`](src/styles.css) as `.slot-machine.win-impact::before` with a `win-flash` keyframe (full-viewport white radial gradient at 0.6 opacity). Remove the `::before` pseudo-element and the `win-flash` keyframe entirely. Keep the `win-shake` animation on `.win-impact` but reduce intensity for small wins (see feature 5).
+### Result
+Flash removed, tiered celebrations working, ticker and streak display added, balance animates smoothly, Hall of Fame shows top-3 wins.
+### What We Learned
+Building polish features works best when game state, animation, and audio are coordinated through a single controller. Persistence should be extended alongside UI so new features feel cohesive across sessions.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
 ---
-
-## 2. Win Streak Multiplier Display
-
-The combo system already exists in `GameState.getComboMultiplier()` (1x / 1.2x / 1.5x / 2x at streaks 1/2-2/3-4/5+). What's missing is a **prominent visual**.
-
-- Add a new `StreakCounter` component rendered above the reel stage in [`src/SlotMachine.jsx`](src/SlotMachine.jsx).
-- Shows the current streak count and multiplier (e.g., "x1.5 STREAK 3") with a pulsing glow that intensifies with streak level.
-- Animates in on win, shakes/fades on loss (reset). Uses CSS `text-shadow` glow + scale keyframes.
-- Data already available: `currentWinStreak` is in `GameState` and exposed via the controller's `syncFromGameState`.
-
----
-
-## 3. Live Wins Ticker
-
-- Add a new `WinsTicker` component as a scrolling banner at the very top of the app in [`src/SlotMachine.jsx`](src/SlotMachine.jsx).
-- Every 8-12 seconds (random interval), generate a fake message like `"Player_7291 just won 1,250 VC!"` using random name/amount generation.
-- CSS `marquee`-style animation (use `@keyframes ticker-scroll` translateX from right to left).
-- Pauses on hover. Semi-transparent dark background strip. Gold text.
-
----
-
-## 4. Smooth Balance Counter
-
-The controller already has a `startWinCounter` mechanism in [`src/controller/useSlotMachineController.js`](src/controller/useSlotMachineController.js). Enhance it:
-
-- Use `requestAnimationFrame` to animate `displayedBalance` counting up from old value to new value over ~1.2 seconds with an ease-out curve.
-- Add a CSS class `balance-counting` to the HUD balance element during the animation (glow pulse, slight scale-up).
-- Play a rapid ticking sound (short oscillator bursts at increasing pitch) during the count-up, ending with a satisfying "ding" from the existing Web Audio system in [`src/audio/soundHooks.js`](src/audio/soundHooks.js).
-
----
-
-## 5. Scaled Celebration Intensity
-
-Replace the removed flash with tier-appropriate celebrations. Modify [`src/styles.css`](src/styles.css) and [`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx):
-
-| Tier | Visual |
-|------|--------|
-| **Small** | Subtle green glow on reel border, light confetti (5 particles), no shake |
-| **Medium** | Gold glow on reel border, moderate confetti (15 particles), gentle shake (1 cycle) |
-| **Big** | Bright gold border pulse, heavy confetti (25 particles), strong shake (2 cycles), screen edge vignette |
-| **Jackpot** | Full confetti storm (40+ particles), extended shake (3 cycles), radial gold vignette, firework bursts, special jackpot sound |
-
-The existing `impact-${winTier}` CSS classes already exist on `.slot-machine` — rework their animations from flash-based to glow/vignette/shake-based. Particle count in `WinOverlay.jsx` currently hardcoded at 10 — make it dynamic based on `winTier`.
-
----
-
-## 6. Biggest Win Hall of Fame
-
-The "Biggest Win" showcase already exists in [`src/SlotMachine.jsx`](src/SlotMachine.jsx) with a `celebrate` class. Enhance it:
-
-- Add a persistent firework animation (CSS-only, 3-4 small bursts) when the showcase is in `celebrate` mode (new record).
-- Add a "HALL OF FAME" header with a gold gradient text effect.
-- Show the top 3 biggest wins (not just the single biggest). Store `topWins` array (max 3) in `GameState` persistence alongside existing `biggestWin`.
-- Each entry shows: amount, symbol, timestamp formatted as relative time.
-
----
-
-## Key Files to Modify
-
-- [`src/styles.css`](src/styles.css) — Remove flash, add tier glows/vignettes, ticker styles, streak glow, balance counting animation, hall of fame styles
-- [`src/SlotMachine.jsx`](src/SlotMachine.jsx) — Add `StreakCounter`, `WinsTicker`, `HallOfFame` sections; adjust particle counts
-- [`src/controller/useSlotMachineController.js`](src/controller/useSlotMachineController.js) — Expose `winStreak`, enhance balance counter with rAF, expose `topWins`
-- [`src/state/GameState.js`](src/state/GameState.js) — Add `topWins` array tracking, persist it
-- [`src/components/WinOverlay.jsx`](src/components/WinOverlay.jsx) — Dynamic particle count by tier
-- [`src/components/HUD.jsx`](src/components/HUD.jsx) — Balance counting CSS class
-- [`src/audio/soundHooks.js`](src/audio/soundHooks.js) — Add balance tick sound + jackpot-specific sound
-- New: `src/components/StreakCounter.jsx`, `src/components/WinsTicker.jsx`
-
-Result: The win experience was fully overhauled by removing the blinding flash and replacing it with tiered celebration effects, plus a live wins ticker, streak multiplier display, smooth balance count-up with sound, and a persistent Hall of Fame top-3 wins system.
-
-Learned: Building polish features works best when game-state, animation, and audio are coordinated through a single controller, and persistence (localStorage) should be extended alongside UI so new features feel cohesive across sessions.
-
-Prompt 13:
-
+## Prompt 13
+### Prompt
 ---
 name: layout hero refocus
-overview: Re-architect the slot machine layout into three clear zones (compact HUD, hero reel+win stage, thumb-zone spin action) so the reels, win value, and Spin button dominate the screen, while secondary stats/menus move out of the primary flow — aligned with Findings 4, 6, 8 of `plan/raw-research/ux-research/ux-research1.md`.
+overview: Re-architect the slot machine layout into three clear zones (compact HUD, hero reel+win stage, thumb-zone spin action) so the reels, win value, and Spin button dominate the screen, while secondary stats/menus move out of the primary flow.
 todos:
   - id: hud-slim
     content: "Slim HUD: drop quick-stats, relabel third card to Last Win, accept lastWin prop"
     status: pending
   - id: layout-restructure
-    content: Reorder SlotMachine.jsx into 3 zones (compact HUD → hero reels → thumb-zone action) and wrap bet+spin in .action-zone
+    content: Reorder SlotMachine.jsx into 3 zones (compact HUD, hero reels, thumb-zone action) and wrap bet+spin in .action-zone
     status: pending
   - id: reel-hero
     content: "Enlarge reel stage via CSS: responsive min-height, bigger symbols, stronger frame"
@@ -858,231 +674,18 @@ todos:
     status: pending
 isProject: false
 ---
+### Result
+Layout now uses 3 clear zones. Reels and Spin button are visible in viewport on small phones. Win value scales by tier and dominates during wins. Layout uses screen space better on tablet/laptop with breakpoints at 768px and 1024px.
+### What We Learned
+Strong hierarchy (hero reel stage plus thumb-zone actions) makes the app feel faster and more focused without changing game logic. Compact always-on HUD info works better than showing every metric at once. Rebalancing component prominence matters more than raw pixel scaling for perceived quality.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
-## Problem
-
-Current [src/SlotMachine.jsx](src/SlotMachine.jsx) renders 9 stacked full-width rows (`grid-template-rows: repeat(9, auto)` in [src/styles.css](src/styles.css)). Above the reels there is a ticker + 3 HUD cards + a 5-row quick-stats block + a standalone StreakCounter card. Below the reels, a large `showcase-row` (Hall of Fame + Win Log) sits between the reels and the Spin button. The result: reels occupy a small slice of the viewport, the Spin button is pushed below the fold on small phones, and the Win value (`2.2rem` in `.win-value`) is not the biggest text on screen during a win. This contradicts research: reels should be ~60–70% of height, Spin in the thumb zone, win amount the largest element, menus pushed to the background.
-
-## Target layout
-
-```mermaid
-flowchart TD
-    Top["TOP STRIP (compact, ~8 vh)<br/>Balance (hero) | Bet | Last Win<br/>+ slim ticker above"] --> Hero
-    Hero["HERO REEL STAGE (~55–60 vh)<br/>3 reels, bigger frame<br/>StreakCounter → overlay pill<br/>WinOverlay with XXL win value"] --> Action
-    Action["THUMB ZONE (~25 vh)<br/>Bet chips row → SPIN (hero) → turbo/auto toggles<br/>Status line thin, one row"]
-    Action --> Drawer["Collapsible 'Stats' drawer (below fold)<br/>Hall of Fame, Win Log, quick-stats, jackpot, temp pill"]
-```
-
-## Key changes
-
-### 1. Restructure `SlotMachine.jsx` layout order
-
-Rewrite the JSX render order in [src/SlotMachine.jsx](src/SlotMachine.jsx) to:
-
-1. `WinsTicker` (thin band, unchanged position)
-2. `HUD` (compact 3-up only: Balance, Bet, Last Win)
-3. `reel-stage` — now the visual hero; `StreakCounter` moves INSIDE this section as an absolutely-positioned top-left pill
-4. `status-line` (kept, made thinner, single row)
-5. `BetControls` (moved up, directly above Spin)
-6. `SpinButton` (thumb zone)
-7. `stats-drawer` — new collapsible `<details>` wrapping the current `showcase-row` (Hall of Fame + Win Log) AND the quick-stats block that currently lives in HUD
-8. `action-row` (Info + Daily Grant + Reset) — kept at the very bottom, daily-grant retains its bait glow
-
-### 2. Slim the HUD — move quick stats out
-
-In [src/components/HUD.jsx](src/components/HUD.jsx):
-
-- Rename the third card's label from `Lifetime Winnings` to `Last Win` and wire it to `displayedWin`/`result.payout` (added prop). Research: "Last win amount" is a must-have top-level metric; lifetime winnings is secondary.
-- Remove the entire `.quick-stats` block (spins, streak, next bonus, jackpot, temp pill). These render in the new stats drawer instead. This alone reclaims ~5 rows of vertical space above the reels.
-- Pass `meta` through to the drawer (via `SlotMachine`), not through HUD.
-
-### 3. Promote the reel stage to hero
-
-In [src/styles.css](src/styles.css):
-
-- `.slot-machine` → change `grid-template-rows: repeat(9, auto)` to a semantic 3-zone layout: `grid-template-rows: auto auto 1fr auto auto auto` and `min-height: 100dvh` so the hero row flexes.
-- `.reel { min-height: 194px }` → `min-height: clamp(260px, 44vh, 360px)` (desktop) and `clamp(220px, 38vh, 300px)` in the `max-width: 420px` media query. Reels now own the visual center.
-- `.reel-stage` — increase padding, border thickness, stronger neon glow on idle to read as the focal element.
-- `.symbol-code` bump `1.4rem → 1.9rem`, `.symbol-label` to `0.78rem` so symbols stay legible at the new size.
-
-### 4. Make the Win value THE biggest element during a win
-
-In [src/styles.css](src/styles.css):
-
-- `.win-value` base `2.2rem` → `3.4rem`; add tier escalation:
-  - `.win-overlay.tier-medium .win-value { font-size: 4.2rem }`
-  - `.win-overlay.tier-big .win-value { font-size: 5.2rem }`
-  - `.win-overlay.tier-jackpot .win-value { font-size: 6rem; letter-spacing: 0.02em }`
-- `.win-card` width `min(88%, 320px)` → `min(92%, 380px)`; tighten padding so the value dominates, not the card chrome.
-- `.win-heading` shrink from `1.25rem` to `1rem` and de-emphasize; the amount, not the label, is the hero.
-
-### 5. Fold secondary surfaces into a collapsed drawer
-
-In [src/SlotMachine.jsx](src/SlotMachine.jsx), replace the `showcase-row` section + removed `quick-stats` with a single `<details className="stats-drawer">`:
-
-```jsx
-<details className="stats-drawer">
-  <summary>Stats & History</summary>
-  <div className="stats-drawer-body">
-    {/* quick-stats block moved here */}
-    {/* hall-of-fame card */}
-    {/* win-log card */}
-  </div>
-</details>
-```
-
-Style `.stats-drawer` in [src/styles.css](src/styles.css) as a thin pill when closed (so it reads as "More") and an expanding card when open. Keeps content accessible without dominating the loop (Finding 4: "Menus are designed to be accessible but in the background so the game can always dominate the screen").
-
-### 6. StreakCounter → in-stage pill
-
-In [src/components/StreakCounter.jsx](src/components/StreakCounter.jsx): no logic change, but rendered inside `.reel-stage` (pass through from `SlotMachine`) with a new `.streak-counter.in-stage` variant in CSS: absolute-positioned top-left, compact width, translucent background. When `winStreak === 0` and no combo active, render nothing (don't waste pixels on "Land a win to start your streak" — that belongs in the status line).
-
-### 7. Bet chips + Spin action grouped (thumb zone)
-
-In [src/styles.css](src/styles.css):
-
-- Wrap `BetControls` + `SpinButton` visually via a new `.action-zone` class on a wrapping `<div>` in `SlotMachine.jsx`. Keep them visually adjacent with minimal gap.
-- Collapse the `.bet-display` (current 48px-tall "Bet: 10 VC" row) into the selected chip's appearance — the selected chip already has a gold gradient; the redundant display adds noise.
-- `.spin-button min-height: 118px` → `clamp(110px, 16vh, 140px)`, keep the pulse animation. Slightly larger Spin on tall screens; unchanged on short phones.
-
-### 8. Trim the action row
-
-In [src/SlotMachine.jsx](src/SlotMachine.jsx) `action-row`:
-
-- Keep `Daily Grant` prominent (it's intentional bait per research).
-- Move `Info` into a small circular icon button that sits at the top-right of `.reel-stage` (aligned with research: paytable opens from a small "i"/"?" icon).
-- `Reset` stays conditionally rendered when balance is 0, but full-width at the bottom so it's not confused with primary controls.
-
-## Out of scope
-
-- No new audio/haptics (already in `src/audio/soundHooks.js`).
-- No new state machine changes — all edits are layout/CSS/structural JSX.
-- No new dependencies.
-
-## Files touched
-
-- [src/SlotMachine.jsx](src/SlotMachine.jsx) — JSX layout order, new `stats-drawer`, move StreakCounter into reel-stage, move Info into reel-stage corner, wrap bet+spin in `.action-zone`.
-- [src/components/HUD.jsx](src/components/HUD.jsx) — drop `quick-stats`, relabel third card to `Last Win`, accept `lastWin` prop.
-- [src/components/StreakCounter.jsx](src/components/StreakCounter.jsx) — hide when idle (no streak, no combo); accept optional `variant="in-stage"` prop for class composition.
-- [src/components/BetControls.jsx](src/components/BetControls.jsx) — remove the `.bet-display` row.
-- [src/styles.css](src/styles.css) — grid restructure, larger reels, larger tiered win value, `.stats-drawer`, `.action-zone`, `.streak-counter.in-stage`, `.info-icon-button`, responsive tweaks in `@media (max-width: 420px)`.
-
-## Validation
-
-- Sanity: run the app and confirm reels + spin are both in viewport on 390×844 (iPhone 13), and the win value visually dominates on a medium/big/jackpot mock.
-- No logic changes → existing tests in `src/tests` should still pass (`npm test`).
-- `ReadLints` on changed files.
-
-Result: The layout now prioritizes the gameplay loop by keeping reels and the Spin action in the visual center while moving secondary stats/history into a collapsible drawer.
-Learned: Strong hierarchy (hero reel stage + thumb-zone actions) makes the app feel faster and more focused without changing game logic.
-
-Learned: Win feedback is much clearer when the amount is the largest text and scales by tier.
-Learned: Compact always-on HUD info (Balance, Bet, Last Win) works better than showing every metric at once.
-
-Result: The layout now uses screen space much better on tablet/laptop with breakpoints at 768px and 1024px, including a two-column arrangement on larger screens.
-
-Learned: The biggest UX gain came from changing layout structure (grid areas) rather than only increasing widths.
-Learned: Keeping mobile defaults intact and layering larger breakpoints reduced risk and avoided regressions.
-Learned: Rebalancing component prominence (reels vs controls) matters more than raw pixel scaling for perceived quality.
-
-
-
-
-Prompt 14: ---
-name: Laptop Responsive Scaling
-overview: Add responsive breakpoints so the slot machine uses available laptop screen space instead of being locked to a 520px-wide mobile column.
-todos:
-  - id: tablet-bp
-    content: "Add @media (min-width: 768px) breakpoint with wider container and adjusted sizing"
-    status: pending
-  - id: laptop-bp
-    content: "Add @media (min-width: 1024px) breakpoint with two-column grid layout"
-    status: pending
-  - id: verify
-    content: Check for linter errors and verify the layout renders correctly
-    status: pending
-isProject: false
 ---
 
-# Laptop Responsive Scaling
-
-## Problem
-
-The entire UI is constrained to `width: min(100%, 520px)` in [src/styles.css](src/styles.css) (line 42). There is only one media query (`max-width: 420px`) which makes things *smaller* for phones. On a laptop (1280px+ wide), the app renders as a narrow phone-width strip in the center with massive empty margins.
-
-## Approach
-
-Add two new `@media` breakpoints at the bottom of [src/styles.css](src/styles.css):
-
-- **`min-width: 768px`** (tablet/small laptop) -- widen the container, relax the single-column constraint
-- **`min-width: 1024px`** (full laptop) -- adopt a two-column layout where the reel stage sits beside the controls
-
-No component JSX changes are needed; all changes are CSS-only.
-
-## Key Changes in `src/styles.css`
-
-### 1. Tablet breakpoint (`min-width: 768px`)
-
-- `.slot-machine` -- increase max-width from `520px` to `680px`, increase padding to `16px`
-- `.reel` -- increase `min-height` clamp upper bound to ~400px
-- `.spin-button` -- reduce `min-height` to `clamp(80px, 10vh, 100px)` and bump font-size to `2.6rem` (a laptop user doesn't need a giant touch target)
-- `.hud-value` -- bump to `1.15rem`
-- `.info-modal-card` -- widen to `min(100%, 480px)`
-
-### 2. Laptop breakpoint (`min-width: 1024px`)
-
-- `.slot-machine` -- increase max-width to `960px`, switch grid to **two columns**:
-
-```css
-grid-template-columns: 1.4fr 1fr;
-grid-template-rows: auto minmax(0, 1fr) auto;
-```
-
-  The left column holds the reel stage (spanning all rows for height), the right column stacks HUD, controls, stats, and action row.
-
-- Assign grid areas to the major sections:
-  - `.wins-ticker` -- spans full width (both columns)
-  - `.reel-stage` -- left column, spanning rows
-  - `.hud`, `.action-zone`, `.stats-drawer`, `.action-row`, `.status-line` -- right column, stacked
-
-- `.spin-button` -- further reduce min-height to `clamp(64px, 8vh, 88px)` since mouse clicks don't need oversized targets
-- `.reel` -- bump min-height clamp to `clamp(300px, 50vh, 480px)` for taller reels on bigger screens
-- `.symbol-code` -- bump font-size to `2.2rem`
-- `.showcase-row` -- switch to side-by-side `grid-template-columns: 1fr 1fr`
-
-### 3. Font/spacing quality-of-life at wider screens
-
-- `.hud-label`, `.showcase-label`, `.streak-counter-label` -- slightly larger font sizes
-- `.quick-stats` -- always use 2-column grid (already default, but enforce it)
-- `.toggle-row` -- always use 2-column grid
-
-## Files Changed
-
-- [src/styles.css](src/styles.css) -- add ~80-100 lines of new media queries at the end of the file
-
-## Layout Diagram (1024px+)
-
-```mermaid
-graph TD
-  subgraph twoCol ["Two-Column Grid (.slot-machine)"]
-    direction TB
-    Ticker["Wins Ticker (full width)"]
-    subgraph leftCol ["Left Column"]
-      ReelStage["Reel Stage (spans rows)"]
-    end
-    subgraph rightCol ["Right Column"]
-      HUD["HUD (Balance / Bet / Last Win)"]
-      StatusLine["Status Line"]
-      ActionZone["Action Zone (Bet + Spin + Toggles)"]
-      StatsDrawer["Stats Drawer"]
-      ActionRow["Daily Grant / Reset"]
-    end
-  end
-```
-
-
-# Prompt 14
-
+## Prompt 14
+### Prompt
 ---
 name: Slot Machine Overhaul
 overview: Expand from 3 to 5 reels with a "match from left" pay system, overhaul the color theme to a warm casino aesthetic, make the reels the visual centerpiece, and add laptop-responsive layout.
@@ -1113,213 +716,15 @@ todos:
     status: pending
 isProject: false
 ---
-
-# Slot Machine Overhaul
-
-## Scope
-
-Four intertwined changes: 5-reel expansion, casino color theme, reel-dominant layout, and laptop responsiveness.
-
----
-
-## 1. Expand to 5 Reels (Game Logic)
-
-Going from 3 to 5 reels requires a new win condition. The current rule is "all 3 match" -- that would be nearly impossible with 5 reels. Real 5-reel slots use **"3+ matching from left to right"**: match on reels 1-2-3 pays base, 1-2-3-4 pays more, 1-2-3-4-5 pays the most.
-
-### [src/state/GameState.js](src/state/GameState.js)
-
-**`evaluateSpin` (line 166)** -- rewrite to scan left-to-right:
-
-```javascript
-evaluateSpin(reels, betAmount = this.betAmount) {
-  const symbols = reels.map((v) => this.getSymbolName(v));
-  const first = symbols[0];
-  let matchCount = 1;
-  for (let i = 1; i < symbols.length; i++) {
-    if (symbols[i] === first) matchCount++;
-    else break;
-  }
-  const isWin = matchCount >= 3 && this.getSymbolMultiplier(first) > 0;
-  const tierMultiplier = matchCount === 5 ? 3 : matchCount === 4 ? 1.8 : 1;
-  const baseMultiplier = this.getSymbolMultiplier(first);
-  const multiplier = isWin ? baseMultiplier * tierMultiplier : 0;
-  const payout = isWin ? Math.round(multiplier * betAmount) : 0;
-  return { isWin, symbolName: isWin ? first : 'none', multiplier, payout, matchCount };
-}
-```
-
-**`generateWinningReels` (line 488)** -- produce 5 reels where at least 3 left-most match:
-
-```javascript
-generateWinningReels() {
-  const sym = this.pickWinningSymbol();
-  const vals = this.getReelValuesForSymbol(sym);
-  const pick = () => vals[Math.floor(Math.random() * vals.length)];
-  const matchLen = Math.random() < 0.08 ? 5 : Math.random() < 0.25 ? 4 : 3;
-  const reels = [];
-  for (let i = 0; i < matchLen; i++) reels.push(pick());
-  while (reels.length < 5) reels.push(Math.floor(Math.random() * 10));
-  // ensure trailing reels don't accidentally extend the match
-  for (let i = matchLen; i < 5; i++) {
-    while (this.getSymbolName(reels[i]) === sym) {
-      reels[i] = Math.floor(Math.random() * 10);
-    }
-  }
-  return reels;
-}
-```
-
-**`generateLosingReels` (line 496)** -- produce 5 random reels, re-roll until not a win.
-
-**`targetWinRate`** -- bump from 0.30 to ~0.35 since matching 3-of-5 from left is harder than 3-of-3.
-
-### [src/animations/reelAnimation.js](src/animations/reelAnimation.js)
-
-**`getSpinProfile`** -- return 5 durations with staggered stops (the classic cascading-stop feel):
-
-```javascript
-// normal mode
-reelDurations: [900, 1100, 1300, 1500, 1720]
-```
-
-**`createNearMissHint`** -- trigger on reel index 2 (the 3rd reel) when reels 0+1 match but reel 2 misses, giving the "so close to 3-match" feel.
-
-### [src/controller/useSlotMachineController.js](src/controller/useSlotMachineController.js)
-
-- Initial `reelSymbols` state: `['none','none','none','none','none']` (line 73)
-- Reset state: same 5-element array (line ~340)
-
-### [src/components/ReelSet.jsx](src/components/ReelSet.jsx) / [src/components/Reel.jsx](src/components/Reel.jsx)
-
-No logic changes -- they already `.map()` over `reelSymbols` dynamically. Just need 5 entries.
+### Result
+Game runs with 5 reels and left-to-right win tiers. Warm casino theme applied. Reels are the focal element. Laptop layout renders in two columns.
+### What We Learned
+Moving from 3 to 5 reels required coordinated updates across logic, animation timing, UI messaging, and tests. Exposing matchCount in spin results made payout tiers and player feedback easier to implement. Test updates were essential to keep payout assumptions correct after changing core win conditions.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
 ---
-
-## 2. Casino Color Theme
-
-Replace the current purple/magenta/neon palette with a warm casino aesthetic: **deep blacks, rich golds, emerald green accents, warm amber**.
-
-### [src/styles.css](src/styles.css) -- `:root` variables (line 1)
-
-```css
-:root {
-  --bg-black: #0a0a0a;
-  --bg-deep: #0d1117;
-  --bg-felt: #0b1a12;       /* dark green felt undertone */
-  --panel: #141a1f;
-  --panel-soft: #1c2530;
-  --line: #3d3522;           /* muted gold border */
-  --text-main: #f0e8d8;      /* warm off-white */
-  --text-muted: #9a8e7a;     /* warm gray */
-  --gold: #d4a44a;
-  --gold-strong: #e8b830;
-  --gold-bright: #ffd666;
-  --red: #c44040;
-  --green: #2ecc71;
-  --green-felt: #1a5c35;
-  --neon: #50d8e0;            /* kept but de-emphasized */
-}
-```
-
-**`body` background** -- dark gradient with subtle warm vignette instead of purple/red radials:
-
-```css
-body {
-  background:
-    radial-gradient(ellipse at 50% -20%, rgba(212,164,74,0.08) 0%, transparent 50%),
-    linear-gradient(180deg, #0d1117, #0a0a0a);
-}
-```
-
-**Key surface changes:**
-- `.reel-stage` -- dark felt green border/glow instead of purple; inner background stays near-black
-- `.hud-card`, `.action-zone`, `.stats-drawer` -- dark charcoal panels with subtle gold borders
-- `.spin-button` -- warm red-to-gold gradient (classic casino lever feel) instead of neon orange-pink
-- `.reel` -- deeper black with faint gold inner border for that recessed slot-machine look
-- `.reel-cell.main` -- subtle gold highlight strip across the payline
-- Win overlays -- gold-dominant instead of green/red
-
----
-
-## 3. Make Reels the Star
-
-### Layout changes in [src/styles.css](src/styles.css)
-
-- `.slot-machine` max-width: increase to `640px` (mobile) / wider on laptop
-- `.reel-stage` padding: reduce top padding, let reels fill more space
-- `.reel` min-height: increase clamp to `clamp(280px, 48vh, 420px)`
-- `.spin-button` min-height: **reduce** to `clamp(64px, 8vh, 80px)` -- still prominent but not a massive block
-- `.reel-set` grid: `repeat(5, minmax(0, 1fr))` for 5 columns
-- `.symbol-code` font-size: bump to `2rem` so symbols are bold and readable across 5 reels
-- `.hud` -- more compact: smaller card padding, font sizes
-- `.bet-options` -- 5 columns already, stays the same
-- `.action-zone` -- compact padding, sits below reels unobtrusively
-
-### Payline indicator
-
-Add a subtle horizontal gold line across the center row of all 5 reels (the `.reel-cell.main` border already hints at this -- make it more prominent with a `::before` pseudo-element on `.reel-set`).
-
----
-
-## 4. Laptop Responsive Layout
-
-### `@media (min-width: 768px)` -- tablet
-
-- `.slot-machine` max-width `780px`
-- Reels get taller, controls stay compact
-
-### `@media (min-width: 1024px)` -- laptop
-
-- `.slot-machine` max-width `1060px`, **two-column grid**:
-  - Left (wider): ticker + reel stage (the star)
-  - Right (narrower): HUD, status, bet controls, spin button, stats, actions
-
-```mermaid
-graph TD
-  subgraph layout ["Laptop Layout (1024px+)"]
-    direction TB
-    subgraph leftCol ["Left Column - The Reels"]
-      Ticker["Wins Ticker"]
-      ReelStage["5-Reel Stage (hero)"]
-      StatusLine["Status Line"]
-    end
-    subgraph rightCol ["Right Column - Controls"]
-      HUD["HUD Cards"]
-      BetControls["Bet Options"]
-      SpinBtn["SPIN Button"]
-      Toggles["Turbo / Auto-Spin"]
-      Stats["Stats Drawer"]
-      Actions["Daily Grant / Reset"]
-    end
-  end
-```
-
----
-
-## Files Changed
-
-| File | Nature of change |
-|------|-----------------|
-| `src/state/GameState.js` | 5-reel generation, left-to-right win eval, tier multipliers |
-| `src/animations/reelAnimation.js` | 5 reel durations, near-miss on reel 2 |
-| `src/controller/useSlotMachineController.js` | 5-element initial/reset state |
-| `src/styles.css` | Color theme overhaul, 5-column reel grid, reel-dominant sizing, laptop breakpoints |
-| `src/components/SymbolInfoModal.jsx` | Add "match count" info (3/4/5 tiers) to the payout table |
-
-Components `ReelSet.jsx`, `Reel.jsx`, `HUD.jsx`, `BetControls.jsx`, `SpinButton.jsx` require **no** logic changes (they already map dynamically). `SlotMachine.jsx` requires no structural changes.
-
----
-
-## Existing Test
-
-[src/tests/GameState.test.js](src/tests/GameState.test.js) will need updates since `evaluateSpin` now returns `matchCount` and the win condition changed. Will update assertions to match the new 5-reel, 3+ match system.
-
-
-Result: The game now runs with 5 reels, left-to-right 3+/4/5 match tiers, updated near-miss behavior, and a warmer casino-style visual identity with reels as the focal point.
-Learned: Moving from 3 to 5 reels required coordinated updates across logic, animation timing, UI messaging, and tests—not just CSS changes.
-Learned: Exposing matchCount in core spin results made it much easier to support payout tiers and display clearer player feedback.
-Learned: Test updates were essential to keep balancing and payout assumptions correct after changing core win conditions.
-
 
 # Prompt 15:
 ---
@@ -1362,137 +767,6 @@ todos:
 isProject: false
 ---
 
-# Slot Machine UI Polish, Feature Additions, and Refactor
-
-## 1. Fix the "Due for Win" Box Sizing
-
-The `WinOverlay` component renders a full-height overlay (`position: absolute; inset: 0`) inside the `.reel-stage` even on loss results, which makes the loss card ("Keep the streak alive") fill the entire reel area needlessly. Additionally, the `.win-card` at `.win-overlay.result-loss` has no max-height constraint.
-
-**Changes:**
-- In [src/styles.css](src/styles.css): Constrain `.win-overlay.result-loss .win-card` to a compact size -- reduce padding, add `max-width` closer to `260px`, and auto-center it. Remove the full-inset background tint on loss results so it doesn't obscure the reels.
-- In [src/components/WinOverlay.jsx](src/components/WinOverlay.jsx): For loss results, render as a smaller "toast-style" notification positioned at the bottom of the reel-stage instead of a centered full overlay. Keep the full overlay only for wins.
-
-## 2. Dropdown Chevron on Stats & History Toggle
-
-The `<details>` element at line 164 of [src/SlotMachine.jsx](src/SlotMachine.jsx) has its native marker hidden via CSS (`::-webkit-details-marker { display: none }`), leaving no visual indicator it's interactive.
-
-**Changes:**
-- In [src/styles.css](src/styles.css): Add a `::after` pseudo-element on `.stats-drawer > summary` with a CSS chevron arrow (using borders or a unicode character like `\25BE`). Rotate it on `.stats-drawer[open] > summary::after` to point upward.
-
-## 3. Animated Background
-
-The current body background is a simple static gradient. The user wants visual interest -- animated particles, a subtle pattern, or a wallpaper.
-
-**Changes:**
-- In [src/styles.css](src/styles.css): Add a full-page background layer using either:
-  - A subtle CSS-only particle/star field using multiple radial-gradient layers with a slow `@keyframes` drift animation on a `::before` pseudo on `body` or `.slot-machine`.
-  - A repeating geometric casino-themed subtle pattern (diamonds/card suits) at very low opacity as a background-image data URI.
-- Add a slow-moving ambient glow that shifts position using keyframes, giving the feeling of a "living" casino floor.
-
-## 4. More Visual Content (Make the Page Feel Fuller)
-
-**Changes:**
-- Expand the `WinsTicker` to show individual "event cards" that pop in/out (not just a scrolling text line). Each card shows a player name, win amount, and the symbol emoji.
-- Add a visual "luck meter" or progress bar near the status line that fills up based on `currentLossStreak` toward a pity win, giving players a visible sense of progress.
-- Add a "Recent Spins" mini-trail: show the last 5 result icons (win/loss dots) inline near the HUD area using small colored circles.
-
-## 5. Make the Live Feed More Fun
-
-The current `WinsTicker` is a simple scrolling marquee. To make it feel "live":
-
-**Changes in [src/components/WinsTicker.jsx](src/components/WinsTicker.jsx):**
-- Replace the single scrolling `<p>` with individual "toast" items that slide in from the right with a staggered animation, stay briefly, then fade/slide out.
-- Add symbol emojis next to win amounts (e.g., "Lucky4521 hit CHERRY for 2,400 VC!").
-- Vary the visual intensity -- bigger wins get a gold glow/highlight, smaller wins are subtle.
-- Speed up the interval from 8-12s to 4-7s for more activity.
-
-**CSS changes:**
-- New `@keyframes` for slide-in, glow pulse, and fade-out on ticker items.
-- Gold border highlight for "big" fake wins.
-
-## 6. Free Roll Triggers
-
-Add a mechanic where certain conditions award a "free spin" (no bet deducted).
-
-**Changes in [src/state/GameState.js](src/state/GameState.js):**
-- Add `freeRollsAvailable` property (default 0) and `freeRollReason` tracking.
-- Award free rolls on: every 20th spin (milestone), 10+ loss streak (consolation), and randomly on any spin at ~3% chance.
-- New methods: `awardFreeRoll(reason)`, `consumeFreeRoll()`, `getFreeRollCount()`.
-- In `spinWithPayout`: if freeRolls > 0, skip the balance deduction and decrement the counter.
-- Persist `freeRollsAvailable` in `getPersistenceState` / `hydrateFromState`.
-
-**Changes in [src/controller/useSlotMachineController.js](src/controller/useSlotMachineController.js):**
-- Track `freeRolls` state. Before calling `spinWithPayout`, check if a free roll should be consumed. Update status message to "FREE SPIN!" when triggered.
-
-**Changes in [src/SlotMachine.jsx](src/SlotMachine.jsx):**
-- Show a "Free Spins: X" badge in the HUD or near the spin button when available.
-- Flash animation when a free roll is awarded.
-
-**Changes in [src/tests/GameState.test.js](src/tests/GameState.test.js):**
-- Add tests for free roll award, consume, and persistence.
-
-## 7. Refactor src/ Folder Structure
-
-The current structure is flat with a single 1500-line `styles.css`. Reorganize for a shared codebase:
-
-**New folder structure:**
-```
-src/
-  components/
-    hud/
-      HUD.jsx
-      HUD.css
-    reels/
-      Reel.jsx
-      ReelSet.jsx
-      reels.css
-    overlays/
-      WinOverlay.jsx
-      SettingsOverlay.jsx
-      SymbolInfoModal.jsx
-      overlays.css
-    controls/
-      SpinButton.jsx
-      BetControls.jsx
-      controls.css
-    feed/
-      WinsTicker.jsx
-      feed.css
-    indicators/
-      StreakCounter.jsx
-      LuckMeter.jsx       (new)
-      RecentSpins.jsx      (new)
-      indicators.css
-  hooks/                   (rename from controller/)
-    useSlotMachineController.js
-  state/
-    GameState.js
-  animations/
-    reelAnimation.js
-  audio/
-    soundHooks.js
-  utils/
-    formatCredits.js
-    formatRelativeTime.js  (extract from SlotMachine.jsx)
-  tests/
-    GameState.test.js
-  styles/
-    base.css               (root vars, resets, body)
-    layout.css             (slot-machine grid, responsive)
-    animations.css         (all @keyframes)
-    background.css         (ambient background effects)
-  main.jsx
-  SlotMachine.jsx
-```
-
-**Key moves:**
-- Split `styles.css` into `styles/base.css`, `styles/layout.css`, `styles/animations.css`, `styles/background.css`, and component-scoped CSS files imported by each component.
-- Rename `controller/` to `hooks/` (standard React convention).
-- Extract `formatRelativeTime` from `SlotMachine.jsx` into `utils/formatRelativeTime.js`.
-- Group components into semantic subdirectories (`hud/`, `reels/`, `overlays/`, `controls/`, `feed/`, `indicators/`).
-- Add new components: `LuckMeter.jsx` and `RecentSpins.jsx` for the "more to see" requirement.
-- Update all import paths in affected files.
-
 result: Implemented all plan to-dos: due-for-win box resized into a compact loss toast, history toggle got a chevron indicator, background/live feed were upgraded, free-roll triggers were added, and src/ was refactored into a cleaner shared-codebase structure with updated imports.
 
 learned: Combining UX polish and architecture refactor works best when you wire features incrementally and validate continuously; tests/build checks kept this safe and prevented regressions.
@@ -1504,3 +778,340 @@ make the leaderboard not rounded. its ugly. make the feed viewable.
 Result: The leaderboard/feed is now not rounded and uses square edges, and the live feed is viewable with a fixed-height scrollable list.
 
 Learned: A global .wins-ticker style was forcing pill corners and overriding the feed’s local styles. Making the feed readable required both shape fixes and explicit viewport/overflow rules, not just border-radius changes. Build verification confirmed no CSS regressions after the patch.
+
+## Prompt 17:
+
+### Prompt:
+  
+  Requirements:
+  - Fix UI readability and spacing across all breakpoints
+  - Eliminate horizontal scroll on mobile devices        
+  - Ensure all tap targets ≥ 44px                        
+  - Collapse/hide secondary panels (stats, history, feed)
+   by default on small screens with visible toggles      
+  - Prevent overlays/toasts from blocking core game      
+  controls on phones                               
+  - Maintain smooth animations and stable desktop
+  behavior
+                                                         
+  Constraints:
+  - Do not modify game logic or payout systems           
+  - Do not remove or disable existing features
+  - Do not rewrite major components—edit within current
+  architecture
+  - Do not introduce new CSS files; update existing
+  responsive rules only
+  - Do not change component structure
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - Do not remove or disable existing features
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - npm --prefix ./src run build (succeeds)
+  - Manual viewport check: 320px, 768px, desktop (no horizontal
+  - Do not remove or disable existing features
+  - Do not rewrite major components—edit within current
+  architecture
+  - Do not introduce new CSS files; update existing responsive
+  rules only
+  - Do not change component structure
+
+  Validation:
+   rules only
+  - Do not change component structure
+  - Do not rewrite major components—edit within current architecture
+  - Do not introduce new CSS files; update existing responsive rules only
+  - Do not change component structure
+
+  Validation:
+  - npm --prefix ./src test (passes)
+  - npm --prefix ./src run build (succeeds)
+  - Manual viewport check: 320px, 768px, desktop (no horizontal scroll, 44px+ tap targets, panels toggle
+  correctly)
+  - No new console errors or warnings
+  - Desktop behavior unchanged
+
+  Return updated files with a summary of changes made. 
+
+### Result
+
+It worked and the UI was dynamic for desktop, mobile, and tablets. The button sizes become more prominent with
+a smaller screen size, as intended. However, the setting button covers the "Hide Feed" button. 
+
+### Changes Made
+
+- Hand-edited: No, the AI output works fine for the most part and the next prompt will already cover the changes we wanted
+- Tests/builds: Code passes npm run build and tests. looks good overall with npm run dev
+
+### What we learned
+
+- AI handled layout changes well when breakpoints were explicit with 320, 768, and 1024. There weren't many
+overlapping issues with the UI, except the settings button for the most part. It didn't change any of the other files we told it not to change, so it abided with that part of the prompt.
+---
+
+## Prompt 18:
+
+### Prompt
+You are Codex working in an existing slot-machine web app codebase.                                    
+  Implement only the requested UI/UX changes. Do not refactor unrelated code.                            
+                                                                                                         
+  Objectives                                                                                             
+  1. On mobile, the Settings button is covering the Live Feed area.                                      
+  2. The top win-streak popup stays visible too long.              
+  3. The tab bar below the main slot machine has text that is too small/awkward relative to tab size.
+
+  Hard constraints                                                                                       
+  - Do NOT change any slot logic, RNG, payout, state machine, or API behavior.
+  - Do NOT change feature behavior except where explicitly requested (popup timing + layout updates).    
+  - Do NOT remove existing components/features.                                                      
+  - Keep edits minimal and localized.
+  - Reuse existing style system/tokens if present.                                                       
+  - Preserve accessibility (contrast, focus visibility, readable text on mobile).
+                                                                                                         
+  Implementation requirements
+
+  A) Mobile overlap fix (Settings vs Live Feed)
+  - Find the Settings button and Live Feed container in mobile layout.
+  - Update layout/CSS so Settings never overlaps Live Feed in phone widths.                              
+  - Use responsive positioning/sizing/spacing (avoid one-off pixel hacks). 
+  - Ensure Settings remains visible, tappable, and not clipped.                                          
+  - Validate behavior for widths ~320px, 360px, 390px, 430px.  
+
+  B Win-streak popup timing                                                                             
+  - Locate the top win-streak popup component/timer.
+  - Reduce on-screen duration to a clearly shorter value while preserving readability and animation      
+  smoothness.          
+  - Do not change popup trigger logic or message content rules unless required for timing.               
+  - Keep transition in/out polished.
+                                                                                                         
+  C Tab text readability
+  - Increase tab label readability below main slot machine:
+    - larger font size                                     
+    - improved line-height/weight/letter spacing as needed
+    - better padding and vertical alignment
+  - Ensure visual hierarchy is balanced with the larger tab container.                                   
+  - Keep responsive behavior intact.
+                                                                                                         
+  Execution plan       
+  1. Inspect existing tab, settings, live-feed, and win-streak popup files.
+  2. Apply targeted edits only in relevant component/style files.                                        
+  3. Run project checks/build if available.
+  4. Self-verify against acceptance criteria.                                                            
+  5. Return concise changelog.
+
+  Acceptance criteria (must pass)
+  - Settings button does not overlap Live Feed on phone layouts.
+  - Settings remains easy to tap and visible on mobile.                                                  
+  - Win-streak popup display time is reduced from current behavior.
+  - Tab text is noticeably more readable and proportionate.                                              
+  - No regressions in gameplay logic or unrelated UI.      
+
+  Output format                                                                                          
+  - Brief summary of what changed.
+  - File-by-file list of modifications.                                                                  
+  - Verification notes for each acceptance criterion.
+  - Mention any assumptions or follow-ups if something could not be fully validated.
+
+### Result:
+The prompt mostly worked and the overlap issue was improved. However, the tab text readability stayed the same and there was still that popup timing issue. It shorted a different popup, not the one we wanted. However, the app stayed usable across screen sizes. 
+
+### Changes made:
+- Hand-edited: no
+- Tests/builds: everything passed
+- Updated the result popup duration (the wrong one), and the mobile spacing
+
+### What we learned:
+
+Being specific about exact UI problems gives better AI output. Small, local CSS and timer changes are safer than broad UI rewrites. However, we should probably be more specific on what exact stuff to change because it changed some popups we didn't want it to change, and that is something we have to add to our next prompt.
+
+---
+
+## Prompt 19
+
+### Prompt:
+  You are Codex. Implement only the requested changes. Do not refactor unrelated code.                   
+   
+  Changes required                                                                                       
+                                                                                                       
+  1. Top-left win-streak popup timing
+  - Locate the win-streak multiplier popup (upper-left of machine).
+  - Set display duration to exactly 3000ms. Popup auto-dismisses after 3s and reappears on next          
+  streak/multiplier update.                                                                    
+  - Keep trigger logic and message content unchanged.                                                    
+                                                                                                       
+  2. Tab text-box UI below slot machine ("Set Your Bet" / "Spin")
+  - Fix size/spacing proportionality:                                                                    
+    - Increase/adjust font size for balance with tab container
+    - Adjust padding, min-height, line-height, vertical alignment                                        
+    - Center text visually within each tab                                                             
+  - Critical: When stats/history dropdown opens/closes, text-box padding must remain stable (do not
+  compress/expand).
+  - Ensure responsive behavior on mobile + desktop.                                                      
+  
+  3. Center winning popup duration                                                                       
+  - Locate the winning popup at machine center.                                                        
+  - Increase current display time by exactly 2 seconds (current duration + 2000ms).
+  - Keep trigger logic and message content unchanged.
+                                                                                                         
+  Hard constraints
+  - Do NOT modify RNG, payout logic, spin/state-machine, or business rules.                              
+  - Do NOT remove existing features/components.                                                        
+  - Do NOT perform broad refactors.
+  - Maintain accessibility: readable text, visible focus, proper contrast.
+
+  Validation checklist
+  - Top-left streak popup displays for exactly 3s, then auto-dismisses
+  - Tab text-box size/spacing is proportional and centered            
+  - Tab text-box padding stable when dropdown opens/closes
+  - Center winning popup duration increased by 2s (verify new duration)
+  - No gameplay logic changes or regressions                                                             
+  - Mobile + desktop layouts remain usable
+                                                                                                         
+  Output format                                                                                        
+  1. Brief summary of changes made.
+  2. File-by-file list of edits.                                                                         
+  3. Verification notes against each checklist item.
+
+### Result:
+
+The required timing and tab UI updates were implemented. The top-left streak popup now auto-dismisses after 3000ms, and center result popup time was extended by 2 seconds.
+
+### Changes made:
+- Hand-edited: no
+- Tests/build: everything passed
+- Updated the streak popup duration and improved spacing and centering
+
+### What we learned:
+
+Exact numeric requirements like "3000ms" and "+2000ms" make AI changes easier to verify. Clear constraints help prevent game logic degradations and unecessary changes
+
+---
+
+## Prompt 20:
+
+### Prompt
+
+This is more for documentation0only pass for JSDocs
+You are updating an existing JavaScript codebase. Do NOT change runtime behavior, logic, UI, CSS, imports, exports, function signatures, or tests. Only add missing JSDoc comments to JavaScript methods that currently do not have them.
+
+Scope:
+- All `.js` files under `src/`
+- Add JSDoc above methods/functions that are missing it
+- Skip files that already have complete JSDoc for every method within that file
+
+JSDoc requirements:
+- Include a short one-line description
+- Include `@param` for every parameter with accurate types
+- Include `@returns` with accurate type
+- Include `@throws` only if the method can throw
+- For object params/returns, use inline object type shapes when possible
+- Keep docs concise and accurate to current behavior (no invented behavior)
+
+Important constraints:
+- No refactors
+- No renaming
+- No formatting-only churn outside added JSDoc blocks
+- No code logic edits at all
+
+Output format:
+1) List files changed
+2) For each file, list methods that received new JSDoc
+3) Provide the exact patch/diff
+
+Prioritize these files first: `src/state/GameState.js`, then any other `src/**/*.js`.
+
+### Result:
+
+The documentation pass worked. Missing JSDoc comments were added across key JavaScript files without changing logic. We noticed some JSDocs were missing, so we made sure to add it to the files as this was a prompt fault on our side for earlier prompts as we forgot to make the AI add the docs.
+
+### Changes made:
+
+- Hand-edits: no
+- Test/build: everything passes with npm run build and npm test
+- Updated: some of the .js files within the /src folder --> added the JSDocs for some methods
+
+### What we learned:
+Strict constraints like "no logic edits" help keep the output safe and reviewable and adding this made the code "better" to read as we know what each function is doing overall.
+
+---
+
+## Prompt 21:
+
+### Prompt:
+Refactor and clean up this slot machine app's codebase. You must follow
+  ALL of these requirements:
+
+  ## Clean Code Standards
+  - Use meaningful, descriptive names for all variables, functions, and
+  - Eliminate all duplicate code (DRY principle — Don't Repeat Yourself)
+  - Handle all errors gracefully with proper error handling
+  - Apply appropriate abstraction and modularity
+  - Structure code so it is easy to update and extend
+  - Prioritize clear, readable code over clever code — the codebase should
+  ## Linting & Validation (run as code is generated)
+  - HTML: Valid, semantic markup — pass W3C HTML validation standards
+  - CSS: Clean, consistent styling — no unused rules, proper cascade usage
+  - JavaScript: Follow a consistent JS style guide (ESLint-compatible) — no
+  unused variables, no implicit globals, consistent formatting
+
+  ## Test Cases & Edge Cases
+  Add thorough test cases for all major features of the slot machine app,
+  including but not limited to:
+  - Spinning the reels (normal flow)
+  - Win condition detection (matching symbols)
+  - Loss condition detection
+  - Balance/credits updating correctly after wins and losses
+  - Betting logic — minimum bet, maximum bet, invalid bet amounts (0,
+  negative, non-numeric)
+  - Edge case: spinning with zero or insufficient balance
+  - Edge case: spinning repeatedly without stopping
+  - Edge case: all symbols matching (jackpot)
+  - Edge case: no symbols matching
+  - Edge case: UI state consistency after rapid/multiple spins
+  - Return the fully refactored HTML, CSS, and JavaScript
+  - All three must be syntactically valid and linted
+  - Include all test cases clearly labeled and runnable
+  - Add inline comments only where logic is non-obvious
+
+
+
+### Result:
+
+Refactor + cleanup pass completed across game logic, controller flow, UI wiring, styles, and tests. Core behavior stayed consistent while code became more modular and easier to extend. Validation checks (lint/tests/build + HTML/CSS validators) all passed.
+
+### Changes made:
+
+- Hand-edited: yes
+- Updated:
+  - Refactored `src/state/GameState.js`:
+  - Refactored `src/animations/reelAnimation.js`:
+  - Refactored `src/controller/useSlotMachineController.js`:
+  - Cleaned `src/styles.css` by removing unused/dead animation blocks and stale ticker styles
+  - Expanded tests in `src/tests/GameState.test.js` for invalid bets, zero-balance spin prevention, jackpot/all-match, and no-match loss
+
+### What we learned:
+
+Breaking refactors into shared constants + small helper functions + targeted tests made it possible to improve readability and maintainability without changing gameplay behavior.
+
+---
+
