@@ -636,18 +636,17 @@ Building polish features works best when game state, animation, and audio are co
 - Tests/build run: Yes (passing)
 
 ---
-
-Prompt 13:
-
+## Prompt 13
+### Prompt
 ---
 name: layout hero refocus
-overview: Re-architect the slot machine layout into three clear zones (compact HUD, hero reel+win stage, thumb-zone spin action) so the reels, win value, and Spin button dominate the screen, while secondary stats/menus move out of the primary flow — aligned with Findings 4, 6, 8 of `plan/raw-research/ux-research/ux-research1.md`.
+overview: Re-architect the slot machine layout into three clear zones (compact HUD, hero reel+win stage, thumb-zone spin action) so the reels, win value, and Spin button dominate the screen, while secondary stats/menus move out of the primary flow.
 todos:
   - id: hud-slim
     content: "Slim HUD: drop quick-stats, relabel third card to Last Win, accept lastWin prop"
     status: pending
   - id: layout-restructure
-    content: Reorder SlotMachine.jsx into 3 zones (compact HUD → hero reels → thumb-zone action) and wrap bet+spin in .action-zone
+    content: Reorder SlotMachine.jsx into 3 zones (compact HUD, hero reels, thumb-zone action) and wrap bet+spin in .action-zone
     status: pending
   - id: reel-hero
     content: "Enlarge reel stage via CSS: responsive min-height, bigger symbols, stronger frame"
@@ -675,135 +674,15 @@ todos:
     status: pending
 isProject: false
 ---
+### Result
+Layout now uses 3 clear zones. Reels and Spin button are visible in viewport on small phones. Win value scales by tier and dominates during wins. Layout uses screen space better on tablet/laptop with breakpoints at 768px and 1024px.
+### What We Learned
+Strong hierarchy (hero reel stage plus thumb-zone actions) makes the app feel faster and more focused without changing game logic. Compact always-on HUD info works better than showing every metric at once. Rebalancing component prominence matters more than raw pixel scaling for perceived quality.
+### Changes Made
+- Hand-edited: No
+- Tests/build run: Yes (passing)
 
-## Problem
-
-Current [src/SlotMachine.jsx](src/SlotMachine.jsx) renders 9 stacked full-width rows (`grid-template-rows: repeat(9, auto)` in [src/styles.css](src/styles.css)). Above the reels there is a ticker + 3 HUD cards + a 5-row quick-stats block + a standalone StreakCounter card. Below the reels, a large `showcase-row` (Hall of Fame + Win Log) sits between the reels and the Spin button. The result: reels occupy a small slice of the viewport, the Spin button is pushed below the fold on small phones, and the Win value (`2.2rem` in `.win-value`) is not the biggest text on screen during a win. This contradicts research: reels should be ~60–70% of height, Spin in the thumb zone, win amount the largest element, menus pushed to the background.
-
-## Target layout
-
-```mermaid
-flowchart TD
-    Top["TOP STRIP (compact, ~8 vh)<br/>Balance (hero) | Bet | Last Win<br/>+ slim ticker above"] --> Hero
-    Hero["HERO REEL STAGE (~55–60 vh)<br/>3 reels, bigger frame<br/>StreakCounter → overlay pill<br/>WinOverlay with XXL win value"] --> Action
-    Action["THUMB ZONE (~25 vh)<br/>Bet chips row → SPIN (hero) → turbo/auto toggles<br/>Status line thin, one row"]
-    Action --> Drawer["Collapsible 'Stats' drawer (below fold)<br/>Hall of Fame, Win Log, quick-stats, jackpot, temp pill"]
-```
-
-## Key changes
-
-### 1. Restructure `SlotMachine.jsx` layout order
-
-Rewrite the JSX render order in [src/SlotMachine.jsx](src/SlotMachine.jsx) to:
-
-1. `WinsTicker` (thin band, unchanged position)
-2. `HUD` (compact 3-up only: Balance, Bet, Last Win)
-3. `reel-stage` — now the visual hero; `StreakCounter` moves INSIDE this section as an absolutely-positioned top-left pill
-4. `status-line` (kept, made thinner, single row)
-5. `BetControls` (moved up, directly above Spin)
-6. `SpinButton` (thumb zone)
-7. `stats-drawer` — new collapsible `<details>` wrapping the current `showcase-row` (Hall of Fame + Win Log) AND the quick-stats block that currently lives in HUD
-8. `action-row` (Info + Daily Grant + Reset) — kept at the very bottom, daily-grant retains its bait glow
-
-### 2. Slim the HUD — move quick stats out
-
-In [src/components/HUD.jsx](src/components/HUD.jsx):
-
-- Rename the third card's label from `Lifetime Winnings` to `Last Win` and wire it to `displayedWin`/`result.payout` (added prop). Research: "Last win amount" is a must-have top-level metric; lifetime winnings is secondary.
-- Remove the entire `.quick-stats` block (spins, streak, next bonus, jackpot, temp pill). These render in the new stats drawer instead. This alone reclaims ~5 rows of vertical space above the reels.
-- Pass `meta` through to the drawer (via `SlotMachine`), not through HUD.
-
-### 3. Promote the reel stage to hero
-
-In [src/styles.css](src/styles.css):
-
-- `.slot-machine` → change `grid-template-rows: repeat(9, auto)` to a semantic 3-zone layout: `grid-template-rows: auto auto 1fr auto auto auto` and `min-height: 100dvh` so the hero row flexes.
-- `.reel { min-height: 194px }` → `min-height: clamp(260px, 44vh, 360px)` (desktop) and `clamp(220px, 38vh, 300px)` in the `max-width: 420px` media query. Reels now own the visual center.
-- `.reel-stage` — increase padding, border thickness, stronger neon glow on idle to read as the focal element.
-- `.symbol-code` bump `1.4rem → 1.9rem`, `.symbol-label` to `0.78rem` so symbols stay legible at the new size.
-
-### 4. Make the Win value THE biggest element during a win
-
-In [src/styles.css](src/styles.css):
-
-- `.win-value` base `2.2rem` → `3.4rem`; add tier escalation:
-  - `.win-overlay.tier-medium .win-value { font-size: 4.2rem }`
-  - `.win-overlay.tier-big .win-value { font-size: 5.2rem }`
-  - `.win-overlay.tier-jackpot .win-value { font-size: 6rem; letter-spacing: 0.02em }`
-- `.win-card` width `min(88%, 320px)` → `min(92%, 380px)`; tighten padding so the value dominates, not the card chrome.
-- `.win-heading` shrink from `1.25rem` to `1rem` and de-emphasize; the amount, not the label, is the hero.
-
-### 5. Fold secondary surfaces into a collapsed drawer
-
-In [src/SlotMachine.jsx](src/SlotMachine.jsx), replace the `showcase-row` section + removed `quick-stats` with a single `<details className="stats-drawer">`:
-
-```jsx
-<details className="stats-drawer">
-  <summary>Stats & History</summary>
-  <div className="stats-drawer-body">
-    {/* quick-stats block moved here */}
-    {/* hall-of-fame card */}
-    {/* win-log card */}
-  </div>
-</details>
-```
-
-Style `.stats-drawer` in [src/styles.css](src/styles.css) as a thin pill when closed (so it reads as "More") and an expanding card when open. Keeps content accessible without dominating the loop (Finding 4: "Menus are designed to be accessible but in the background so the game can always dominate the screen").
-
-### 6. StreakCounter → in-stage pill
-
-In [src/components/StreakCounter.jsx](src/components/StreakCounter.jsx): no logic change, but rendered inside `.reel-stage` (pass through from `SlotMachine`) with a new `.streak-counter.in-stage` variant in CSS: absolute-positioned top-left, compact width, translucent background. When `winStreak === 0` and no combo active, render nothing (don't waste pixels on "Land a win to start your streak" — that belongs in the status line).
-
-### 7. Bet chips + Spin action grouped (thumb zone)
-
-In [src/styles.css](src/styles.css):
-
-- Wrap `BetControls` + `SpinButton` visually via a new `.action-zone` class on a wrapping `<div>` in `SlotMachine.jsx`. Keep them visually adjacent with minimal gap.
-- Collapse the `.bet-display` (current 48px-tall "Bet: 10 VC" row) into the selected chip's appearance — the selected chip already has a gold gradient; the redundant display adds noise.
-- `.spin-button min-height: 118px` → `clamp(110px, 16vh, 140px)`, keep the pulse animation. Slightly larger Spin on tall screens; unchanged on short phones.
-
-### 8. Trim the action row
-
-In [src/SlotMachine.jsx](src/SlotMachine.jsx) `action-row`:
-
-- Keep `Daily Grant` prominent (it's intentional bait per research).
-- Move `Info` into a small circular icon button that sits at the top-right of `.reel-stage` (aligned with research: paytable opens from a small "i"/"?" icon).
-- `Reset` stays conditionally rendered when balance is 0, but full-width at the bottom so it's not confused with primary controls.
-
-## Out of scope
-
-- No new audio/haptics (already in `src/audio/soundHooks.js`).
-- No new state machine changes — all edits are layout/CSS/structural JSX.
-- No new dependencies.
-
-## Files touched
-
-- [src/SlotMachine.jsx](src/SlotMachine.jsx) — JSX layout order, new `stats-drawer`, move StreakCounter into reel-stage, move Info into reel-stage corner, wrap bet+spin in `.action-zone`.
-- [src/components/HUD.jsx](src/components/HUD.jsx) — drop `quick-stats`, relabel third card to `Last Win`, accept `lastWin` prop.
-- [src/components/StreakCounter.jsx](src/components/StreakCounter.jsx) — hide when idle (no streak, no combo); accept optional `variant="in-stage"` prop for class composition.
-- [src/components/BetControls.jsx](src/components/BetControls.jsx) — remove the `.bet-display` row.
-- [src/styles.css](src/styles.css) — grid restructure, larger reels, larger tiered win value, `.stats-drawer`, `.action-zone`, `.streak-counter.in-stage`, `.info-icon-button`, responsive tweaks in `@media (max-width: 420px)`.
-
-## Validation
-
-- Sanity: run the app and confirm reels + spin are both in viewport on 390×844 (iPhone 13), and the win value visually dominates on a medium/big/jackpot mock.
-- No logic changes → existing tests in `src/tests` should still pass (`npm test`).
-- `ReadLints` on changed files.
-
-Result: The layout now prioritizes the gameplay loop by keeping reels and the Spin action in the visual center while moving secondary stats/history into a collapsible drawer.
-Learned: Strong hierarchy (hero reel stage + thumb-zone actions) makes the app feel faster and more focused without changing game logic.
-
-Learned: Win feedback is much clearer when the amount is the largest text and scales by tier.
-Learned: Compact always-on HUD info (Balance, Bet, Last Win) works better than showing every metric at once.
-
-Result: The layout now uses screen space much better on tablet/laptop with breakpoints at 768px and 1024px, including a two-column arrangement on larger screens.
-
-Learned: The biggest UX gain came from changing layout structure (grid areas) rather than only increasing widths.
-Learned: Keeping mobile defaults intact and layering larger breakpoints reduced risk and avoided regressions.
-Learned: Rebalancing component prominence (reels vs controls) matters more than raw pixel scaling for perceived quality.
-
-
-
+---
 
 Prompt 14: ---
 name: Laptop Responsive Scaling
