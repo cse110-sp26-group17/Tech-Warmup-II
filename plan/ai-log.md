@@ -932,6 +932,18 @@ You are Codex working in an existing slot-machine web app codebase.
   - Verification notes for each acceptance criterion.
   - Mention any assumptions or follow-ups if something could not be fully validated.
 
+### Result:
+The prompt mostly worked and the overlap issue was improved. However, the tab text readability stayed the same and there was still that popup timing issue. It shorted a different popup, not the one we wanted. However, the app stayed usable across screen sizes. 
+
+### Changes made:
+- Hand-edited: no
+- Tests/builds: everything passed
+- Updated the result popup duration (the wrong one), and the mobile spacing
+
+### What we learned:
+
+Being specific about exact UI problems gives better AI output. Small, local CSS and timer changes are safer than broad UI rewrites. However, we should probably be more specific on what exact stuff to change because it changed some popups we didn't want it to change, and that is something we have to add to our next prompt.
+
 ---
 
 ## Prompt 19
@@ -980,6 +992,19 @@ You are Codex working in an existing slot-machine web app codebase.
   2. File-by-file list of edits.                                                                         
   3. Verification notes against each checklist item.
 
+### Result:
+
+The required timing and tab UI updates were implemented. The top-left streak popup now auto-dismisses after 3000ms, and center result popup time was extended by 2 seconds.
+
+### Changes made:
+- Hand-edited: no
+- Tests/build: everything passed
+- Updated the streak popup duration and improved spacing and centering
+
+### What we learned:
+
+Exact numeric requirements like "3000ms" and "+2000ms" make AI changes easier to verify. Clear constraints help prevent game logic degradations and unecessary changes
+
 ---
 
 ## Prompt 20:
@@ -1014,3 +1039,19 @@ Output format:
 3) Provide the exact patch/diff
 
 Prioritize these files first: `src/state/GameState.js`, then any other `src/**/*.js`.
+
+### Result:
+
+The documentation pass worked. Missing JSDoc comments were added across key JavaScript files without changing logic. We noticed some JSDocs were missing, so we made sure to add it to the files as this was a prompt fault on our side for earlier prompts as we forgot to make the AI add the docs.
+
+### Changes made:
+
+- Hand-edits: no
+- Test/build: everything passes with npm run build and npm test
+- Updated: some of the .js files within the /src folder --> added the JSDocs for some methods
+
+### What we learned:
+Strict constraints like "no logic edits" help keep the output safe and reviewable and adding this made the code "better" to read as we know what each function is doing overall.
+
+---
+
